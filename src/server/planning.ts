@@ -1,4 +1,4 @@
-import { SKILLS, type Skill } from "@/db/schema";
+import { SKILLS, type Estimates, type Skill } from "@/db/schema";
 import { isoDay } from "@/lib/format";
 
 // The planning engine: every capacity rule, and no I/O. See SPEC.md "Rules the planning engine encodes".
@@ -71,4 +71,38 @@ export function planCapacity<P extends { id: number; mainSkill: Skill }>(input: 
   });
   const total = round(people.reduce((sum, p) => sum + p.capacity, 0));
   return { workingDays: days.length, holidays, people, skills, total };
+}
+
+export type Commitment<T> = {
+  skills: {
+    skill: Skill;
+    capacity: number;
+    /** The sum of the estimates in this skill; null when no ticket has one, so it never reads as 0. */
+    committed: number | null;
+    /** Tickets with no estimate in this skill, counted apart from the committed days. */
+    notEstimated: number;
+    /** Committed days beyond capacity; 0 when the skill has room. */
+    over: number;
+  }[];
+  /** Tickets with no estimate in any skill. */
+  unestimated: T[];
+};
+
+/** Committed skill-days per skill = the sum of the sprint's ticket estimates, set against capacity. */
+export function planCommitment<T extends { estimates: Estimates }>(
+  tickets: T[],
+  capacity: Capacity<unknown>["skills"],
+): Commitment<T> {
+  const skills = capacity.map(({ skill, capacity }) => {
+    const days = tickets.flatMap((t) => t.estimates[skill] ?? []);
+    const committed = days.length ? round(days.reduce((sum, d) => sum + d, 0)) : null;
+    return {
+      skill,
+      capacity,
+      committed,
+      notEstimated: tickets.length - days.length,
+      over: round(Math.max(0, (committed ?? 0) - capacity)),
+    };
+  });
+  return { skills, unestimated: tickets.filter((t) => !SKILLS.some((k) => t.estimates[k] !== undefined)) };
 }

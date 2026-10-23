@@ -3,17 +3,21 @@ import { db } from "@/db";
 import { leave, sprints } from "@/db/schema";
 import { activePerson } from "./people";
 import { assertCanEditPod } from "./permissions";
-import { planCapacity, workingDays } from "./planning";
+import { planCapacity, planCommitment, workingDays } from "./planning";
 import type { PodPage } from "./pods";
 import { getPlanningSettings, ValidationError } from "./settings";
+import type { SprintView } from "./sprints";
 import type { Viewer } from "./viewer";
 
 type Sprint = typeof sprints.$inferSelect;
 
 export type CapacitySheet = Awaited<ReturnType<typeof getCapacitySheet>>;
 
-/** Each member's capacity in a sprint and the pod's capacity per skill, with what they are computed from. */
-export async function getCapacitySheet(page: PodPage, sprint: Sprint) {
+/**
+ * Each member's capacity in a sprint and the pod's capacity per skill, with what they are computed from,
+ * set against the skill-days committed in the pod's tickets for the sprint.
+ */
+export async function getCapacitySheet(page: PodPage, sprint: Sprint, tickets: SprintView["tickets"]) {
   const ids = page.members.map((m) => m.id);
   const [settings, rows] = await Promise.all([
     getPlanningSettings(),
@@ -31,7 +35,7 @@ export async function getCapacitySheet(page: PodPage, sprint: Sprint) {
     holidays: settings.holidays,
     focusFactor: settings.focusPercent / 100,
   });
-  return { ...plan, focusPercent: settings.focusPercent };
+  return { ...plan, focusPercent: settings.focusPercent, commitment: planCommitment(tickets, plan.skills) };
 }
 
 /** A lead enters one of their own people's leave for a sprint, in half days. Zero clears it. */

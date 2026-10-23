@@ -1,0 +1,1 @@
+ALTER TABLE "tickets" ADD COLUMN "estimates" jsonb DEFAULT '{}'::jsonb NOT NULL;

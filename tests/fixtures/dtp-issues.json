@@ -98,7 +98,9 @@
           "key": "done",
           "name": "Done"
         }
-      }
+      },
+      "customfield_11524": null,
+      "customfield_11525": null
     }
   },
   {
@@ -199,7 +201,9 @@
           "key": "done",
           "name": "Done"
         }
-      }
+      },
+      "customfield_11524": null,
+      "customfield_11525": null
     }
   },
   {
@@ -279,7 +283,9 @@
           "key": "indeterminate",
           "name": "In Progress"
         }
-      }
+      },
+      "customfield_11524": null,
+      "customfield_11525": null
     }
   },
   {
@@ -352,7 +358,9 @@
           "key": "indeterminate",
           "name": "In Progress"
         }
-      }
+      },
+      "customfield_11524": null,
+      "customfield_11525": null
     }
   },
   {
@@ -429,7 +437,9 @@
           "key": "new",
           "name": "To Do"
         }
-      }
+      },
+      "customfield_11524": null,
+      "customfield_11525": null
     }
   },
   {
@@ -498,7 +508,9 @@
           "key": "new",
           "name": "To Do"
         }
-      }
+      },
+      "customfield_11524": null,
+      "customfield_11525": null
     }
   },
   {
@@ -563,7 +575,9 @@
           "key": "new",
           "name": "To Do"
         }
-      }
+      },
+      "customfield_11524": null,
+      "customfield_11525": null
     }
   },
   {
@@ -621,7 +635,9 @@
           "key": "new",
           "name": "To Do"
         }
-      }
+      },
+      "customfield_11524": null,
+      "customfield_11525": null
     }
   }
 ]

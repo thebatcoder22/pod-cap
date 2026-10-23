@@ -56,7 +56,7 @@ async function Pod({ params, searchParams }: PageProps<"/pods/[slug]">) {
     getSyncStatus(),
   ]);
 
-  const capacity = view.sprint && (await getCapacitySheet(page, view.sprint));
+  const capacity = view.sprint && (await getCapacitySheet(page, view.sprint, view.tickets));
   const { pod, members } = page;
   const lead = members.find((m) => m.isLead);
   const isOwn = viewer.pod?.id === pod.id;
@@ -196,6 +196,13 @@ function Sprint({
       </div>
 
       <Capacity sheet={capacity} sprintId={sprint.id} canEdit={canEdit} />
+
+      {tickets.length > 0 && (
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+          <Committed commitment={capacity.commitment} />
+          <Unestimated tickets={capacity.commitment.unestimated} />
+        </div>
+      )}
 
       {tickets.length === 0 ? (
         <Empty icon={<TrayIcon size={20} aria-hidden />} title={`No ${podName} tickets in ${sprint.name}.`}>
@@ -453,6 +460,7 @@ function TicketTable({ tickets }: { tickets: Ticket[] }) {
                       {t.readyForProductionDate && (
                         <span>Ready for prod {day(new Date(t.readyForProductionDate))}</span>
                       )}
+                      <Estimates estimates={t.estimates} />
                     </p>
                     <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs md:hidden">
                       <span className="flex items-center gap-1.5 text-ink-muted">
@@ -638,6 +646,145 @@ function Capacity({ sheet, sprintId, canEdit }: { sheet: CapacitySheet; sprintId
         )}
       </section>
     </section>
+  );
+}
+
+// ---- Committed vs capacity ----
+
+type Commitment = CapacitySheet["commitment"];
+
+function Committed({ commitment }: { commitment: Commitment }) {
+  const max = Math.max(1, ...commitment.skills.flatMap((k) => [k.capacity, k.committed ?? 0]));
+  const width = (n: number) => `${(n / max) * 100}%`;
+
+  return (
+    <section aria-labelledby="committed" className={`${card} p-5`}>
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 id="committed" className={cardTitle}>
+          Committed vs capacity
+        </h3>
+        <span className="text-xs text-ink-faint">Estimated skill-days</span>
+      </div>
+      <ul className="mt-4 space-y-1">
+        {commitment.skills.map((k, i) => {
+          const over = k.over > 0;
+          const within = Math.min(k.committed ?? 0, k.capacity);
+          return (
+            <li
+              key={k.skill}
+              aria-label={`${k.skill} committed vs capacity`}
+              className={`-mx-2 rounded-lg px-2 py-1.5 ${over ? "bg-danger-soft" : ""}`}
+            >
+              <div className="grid grid-cols-[2.5rem_minmax(0,1fr)_7.5rem] items-center gap-3 text-sm">
+                <span className="flex items-center gap-1.5 font-mono text-xs text-ink-muted">
+                  <span className={`size-1.5 rounded-full ${SKILL_TONE[k.skill]}`} aria-hidden />
+                  {k.skill}
+                </span>
+                {/* The track is capacity; past it, committed days run on in red. */}
+                <span className="relative flex h-1.5 rounded-full bg-fill" aria-hidden>
+                  <span
+                    className={`grow-x block h-full rounded-l-full ${over ? "" : "rounded-r-full"} ${SKILL_TONE[k.skill]}`}
+                    style={{ width: width(within), "--i": i } as React.CSSProperties}
+                  />
+                  {over && (
+                    <span
+                      className="grow-x block h-full rounded-r-full bg-danger"
+                      style={{ width: width(k.over), "--i": i } as React.CSSProperties}
+                    />
+                  )}
+                  <span className="absolute -top-1 h-3.5 w-px bg-line-strong" style={{ left: width(k.capacity) }} />
+                </span>
+                <span className="text-right tabular-nums">
+                  {k.committed === null ? (
+                    <span className="text-ink-faint">Not estimated</span>
+                  ) : (
+                    <>
+                      <span className={over ? "font-semibold text-danger" : "font-medium"}>{k.committed}</span>
+                      <span className="text-ink-muted"> of {days(k.capacity)}</span>
+                    </>
+                  )}
+                </span>
+              </div>
+              <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 pl-[3.25rem] text-xs">
+                {over ? (
+                  <span className="flex items-center gap-1.5 font-medium text-danger">
+                    <WarningCircleIcon size={14} weight="fill" aria-hidden />
+                    Over by {days(k.over)}
+                  </span>
+                ) : (
+                  k.committed !== null && (
+                    <span className="text-ink-muted">{days(round(k.capacity - k.committed))} free</span>
+                  )
+                )}
+                {k.notEstimated > 0 && (
+                  <span className="text-ink-faint">{plural(k.notEstimated, "ticket")} not estimated</span>
+                )}
+              </p>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+const round = (n: number) => Math.round(n * 100) / 100;
+
+function Unestimated({ tickets }: { tickets: Commitment["unestimated"] }) {
+  return (
+    <section aria-labelledby="unestimated" className={card}>
+      <div className="flex items-baseline justify-between gap-3 px-4 pt-5 pb-3 sm:px-5">
+        <h3 id="unestimated" className={cardTitle}>
+          No estimates
+        </h3>
+        <span className="text-xs text-ink-faint tabular-nums">{plural(tickets.length, "ticket")}</span>
+      </div>
+      {tickets.length === 0 ? (
+        <p className="flex items-center gap-2 px-4 pb-5 text-sm text-ink-muted sm:px-5">
+          <CheckCircleIcon size={16} weight="fill" className="text-success" aria-hidden />
+          Every ticket in this sprint has an estimate.
+        </p>
+      ) : (
+        <ul className="divide-y divide-line border-t border-line">
+          {tickets.map((t) => (
+            <li key={t.key} className="flex items-baseline gap-3 px-4 py-2.5 text-sm sm:px-5">
+              <a
+                href={t.url ?? undefined}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex shrink-0 items-center gap-1 font-mono text-xs text-ink-muted hover:text-accent"
+              >
+                {t.key}
+                {t.url && (
+                  <>
+                    <ArrowSquareOutIcon size={12} aria-hidden />
+                    <span className="sr-only">(opens Jira)</span>
+                  </>
+                )}
+              </a>
+              <span className="min-w-0 truncate" title={t.summary}>
+                {t.summary}
+              </span>
+              <span className="ml-auto shrink-0 text-xs text-ink-faint">{t.type}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function Estimates({ estimates }: { estimates: Ticket["estimates"] }) {
+  const set = SKILLS.filter((k) => estimates[k] !== undefined);
+  if (!set.length) return <span>Not estimated</span>;
+  return (
+    <span className="flex items-center gap-1.5">
+      {set.map((k) => (
+        <span key={k} className="rounded-md bg-fill px-1.5 py-px font-mono text-ink-muted tabular-nums">
+          {k} {estimates[k]}d
+        </span>
+      ))}
+    </span>
   );
 }
 

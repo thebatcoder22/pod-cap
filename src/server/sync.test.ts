@@ -49,6 +49,7 @@ describe("Jira sync", () => {
         owners: [],
         epic: { key: "DTP-4819", summary: "Assigned to me Views", url: `${site}/browse/DTP-4819` },
         readyForProductionDate: null,
+        estimates: {},
       },
     ]);
   });

@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { jiraSettings, sprints, tickets, type JiraUser } from "@/db/schema";
+import { jiraSettings, sprints, tickets, type Estimates, type JiraUser } from "@/db/schema";
 
 type SprintRow = typeof sprints.$inferSelect;
 
@@ -24,6 +24,8 @@ export type SprintView = {
     owners: JiraUser[];
     epic: { key: string; summary: string; url: string | null } | null;
     readyForProductionDate: string | null;
+    /** Skill-days per skill; a missing skill is not estimated. */
+    estimates: Estimates;
   }[];
 };
 
@@ -69,6 +71,7 @@ export async function getSprintView(jiraPodValue: string, requested?: string): P
       owners: t.devOwners.length ? t.devOwners : t.assignee ? [t.assignee] : [],
       epic: t.epicKey ? { key: t.epicKey, summary: t.epicSummary ?? t.epicKey, url: browse(t.epicKey) } : null,
       readyForProductionDate: t.readyForProductionDate,
+      estimates: t.estimates,
     })),
   };
 }

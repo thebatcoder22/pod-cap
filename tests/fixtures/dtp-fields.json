@@ -1,0 +1,100 @@
+[
+  {
+    "id": "summary",
+    "key": "summary",
+    "name": "Summary",
+    "custom": false,
+    "orderable": true,
+    "navigable": true,
+    "searchable": true,
+    "clauseNames": ["summary"],
+    "schema": { "type": "string", "system": "summary" }
+  },
+  {
+    "id": "customfield_10020",
+    "key": "customfield_10020",
+    "name": "Sprint",
+    "custom": true,
+    "orderable": true,
+    "navigable": true,
+    "searchable": true,
+    "clauseNames": ["cf[10020]", "Sprint"],
+    "schema": { "type": "array", "items": "json", "custom": "com.pyxis.greenhopper.jira:gh-sprint", "customId": 10020 }
+  },
+  {
+    "id": "customfield_10777",
+    "key": "customfield_10777",
+    "name": "Dev Owners",
+    "custom": true,
+    "orderable": true,
+    "navigable": true,
+    "searchable": true,
+    "clauseNames": ["cf[10777]", "Dev Owners", "Dev Owners[User Picker (multiple users)]"],
+    "schema": {
+      "type": "array",
+      "items": "user",
+      "custom": "com.atlassian.jira.plugin.system.customfieldtypes:multiuserpicker",
+      "customId": 10777
+    }
+  },
+  {
+    "id": "customfield_11022",
+    "key": "customfield_11022",
+    "name": "QA Estimation",
+    "custom": true,
+    "orderable": true,
+    "navigable": true,
+    "searchable": true,
+    "clauseNames": ["cf[11022]", "QA Estimation", "QA Estimation[Number]"],
+    "schema": {
+      "type": "number",
+      "custom": "com.atlassian.jira.plugin.system.customfieldtypes:float",
+      "customId": 11022
+    }
+  },
+  {
+    "id": "customfield_11457",
+    "key": "customfield_11457",
+    "name": "POD",
+    "custom": true,
+    "orderable": true,
+    "navigable": true,
+    "searchable": true,
+    "clauseNames": ["cf[11457]", "POD", "POD[Dropdown]"],
+    "schema": {
+      "type": "option",
+      "custom": "com.atlassian.jira.plugin.system.customfieldtypes:select",
+      "customId": 11457
+    }
+  },
+  {
+    "id": "customfield_11524",
+    "key": "customfield_11524",
+    "name": "BE Days",
+    "custom": true,
+    "orderable": true,
+    "navigable": true,
+    "searchable": true,
+    "clauseNames": ["BE Days", "BE Days[Number]", "cf[11524]"],
+    "schema": {
+      "type": "number",
+      "custom": "com.atlassian.jira.plugin.system.customfieldtypes:float",
+      "customId": 11524
+    }
+  },
+  {
+    "id": "customfield_11525",
+    "key": "customfield_11525",
+    "name": "FE Days",
+    "custom": true,
+    "orderable": true,
+    "navigable": true,
+    "searchable": true,
+    "clauseNames": ["cf[11525]", "FE Days", "FE Days[Number]"],
+    "schema": {
+      "type": "number",
+      "custom": "com.atlassian.jira.plugin.system.customfieldtypes:float",
+      "customId": 11525
+    }
+  }
+]

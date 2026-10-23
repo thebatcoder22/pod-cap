@@ -1,7 +1,7 @@
 import { desc, eq, isNotNull, notInArray, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { sprints, syncRuns, tickets, type JiraUser } from "@/db/schema";
-import { createJiraClient, JiraError, type JiraIssue, type MakeJiraClient } from "./jira-client";
+import { SKILLS, sprints, syncRuns, tickets, type Estimates, type JiraUser, type Skill } from "@/db/schema";
+import { createJiraClient, JiraError, type JiraField, type JiraIssue, type MakeJiraClient } from "./jira-client";
 import { linkJiraAccounts } from "./people";
 import { ForbiddenError } from "./permissions";
 import { loadJiraCredentials, ValidationError } from "./settings";
@@ -18,6 +18,16 @@ const FIELD = {
   readyForProduction: "customfield_10946",
 } as const;
 const FIELDS = ["summary", "issuetype", "status", "priority", "assignee", "parent", ...Object.values(FIELD)];
+
+/** Estimate fields by skill, found by name: Data Days and AI Days start counting once the Jira admin adds them. */
+export function estimateFields(fields: JiraField[]) {
+  const ids = new Map<Skill, string>();
+  for (const skill of SKILLS) {
+    const field = fields.find((f) => f.name === `${skill} Days` && f.schema?.type === "number");
+    if (field) ids.set(skill, field.id);
+  }
+  return ids;
+}
 
 export type SyncResult = { status: "succeeded" } | { status: "skipped" } | { status: "failed"; error: string };
 
@@ -52,9 +62,10 @@ export async function runSync(makeClient: MakeJiraClient = createJiraClient): Pr
       const creds = await loadJiraCredentials();
       if (!creds) throw new ValidationError("Jira is not connected yet. The admin can connect it in Settings.");
       const jira = makeClient(creds);
+      const estimateIds = estimateFields(await jira.listFields());
       const [pagedSprints, pagedIssues] = await Promise.all([
         jira.listSprints(BOARD_ID),
-        jira.searchIssues(JQL, FIELDS),
+        jira.searchIssues(JQL, [...FIELDS, ...estimateIds.values()]),
       ]);
 
       // Jira's pages can overlap when data changes mid-sync; keep one copy of each.
@@ -97,7 +108,7 @@ export async function runSync(makeClient: MakeJiraClient = createJiraClient): Pr
 
         // ponytail: full replace of ~3k rows each hour; switch to upserts if other tables start referencing tickets.
         await w.delete(tickets);
-        const rows = issues.filter(isPlannable).map(toTicket);
+        const rows = issues.filter(isPlannable).map((i) => toTicket(i, estimateIds));
         for (let i = 0; i < rows.length; i += 500) await w.insert(tickets).values(rows.slice(i, i + 500));
         await linkJiraAccounts(w);
       });
@@ -172,8 +183,14 @@ const user = (u: JiraUser): JiraUser => ({
   ...(u.emailAddress ? { emailAddress: u.emailAddress } : {}),
 });
 
-function toTicket(issue: JiraIssue): typeof tickets.$inferInsert {
+function toTicket(issue: JiraIssue, estimateIds: Map<Skill, string>): typeof tickets.$inferInsert {
   const f = fieldsOf(issue);
+  const estimates: Estimates = {};
+  for (const [skill, id] of estimateIds) {
+    const days = issue.fields[id];
+    // Jira number fields are null when empty; 0 is a real estimate.
+    if (typeof days === "number" && days >= 0) estimates[skill] = days;
+  }
   const epic = f.parent?.fields.issuetype.name === "Epic" ? f.parent : null;
   return {
     key: issue.key,
@@ -189,6 +206,7 @@ function toTicket(issue: JiraIssue): typeof tickets.$inferInsert {
     epicKey: epic?.key ?? null,
     epicSummary: epic?.fields.summary ?? null,
     readyForProductionDate: f[FIELD.readyForProduction] ?? null,
+    estimates,
   };
 }
 

@@ -11,12 +11,17 @@ export type JiraSprint = {
   completeDate?: string;
 };
 
+/** A field from Jira's field list; custom fields are found by name, since their ids differ per site. */
+export type JiraField = { id: string; name: string; custom: boolean; schema?: { type: string } };
+
 /** An issue as Jira returns it: custom fields stay keyed by field id. */
 export type JiraIssue = { id: string; key: string; fields: Record<string, unknown> };
 
 export type JiraClient = {
   myself(): Promise<{ accountId: string; displayName: string }>;
   getProject(key: string): Promise<{ key: string; name: string }>;
+  /** Every field on the site, system and custom. */
+  listFields(): Promise<JiraField[]>;
   /** Every sprint on the board, in any state. */
   listSprints(boardId: number): Promise<JiraSprint[]>;
   /** Every issue matching the JQL, across all pages. */
@@ -87,6 +92,7 @@ export const createJiraClient: MakeJiraClient = ({ site, email, token }) => {
   return {
     myself: () => call("/rest/api/3/myself"),
     getProject: (key) => call(`/rest/api/3/project/${encodeURIComponent(key)}`),
+    listFields: () => call("/rest/api/3/field"),
 
     async listSprints(boardId) {
       const sprints: JiraSprint[] = [];

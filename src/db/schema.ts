@@ -136,7 +136,11 @@ export const tickets = pgTable("tickets", {
   epicKey: text("epic_key"),
   epicSummary: text("epic_summary"),
   readyForProductionDate: date("ready_for_production_date"),
+  // Skill-days per skill. A skill without a key is not estimated, which is not the same as 0.
+  estimates: jsonb("estimates").$type<Estimates>().notNull().default({}),
 });
+
+export type Estimates = Partial<Record<Skill, number>>;
 
 export const syncStatus = pgEnum("sync_status", ["running", "succeeded", "failed"]);
 

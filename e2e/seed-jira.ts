@@ -34,6 +34,7 @@ export async function seedSyncedJira(db: Db) {
       devOwners: [],
       epicKey: "DTP-4610",
       epicSummary: "Checklists v2",
+      estimates: { FE: 6, BE: 16.5 },
     },
     {
       key: "DTP-4395",
