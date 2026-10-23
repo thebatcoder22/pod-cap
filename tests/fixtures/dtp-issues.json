@@ -1,0 +1,627 @@
+[
+  {
+    "id": "37763",
+    "key": "DTP-1313",
+    "fields": {
+      "summary": "Workflow 2: Pre-meeting Brief",
+      "customfield_11457": null,
+      "issuetype": {
+        "id": "10011",
+        "name": "Story",
+        "subtask": false
+      },
+      "parent": {
+        "id": "23783",
+        "key": "DTP-4",
+        "fields": {
+          "summary": "AI FBC Workflows - Q2 2026",
+          "status": {
+            "name": "Open",
+            "id": "1",
+            "statusCategory": {
+              "id": 2,
+              "key": "new",
+              "name": "To Do"
+            }
+          },
+          "priority": {
+            "name": "Highest",
+            "id": "1"
+          },
+          "issuetype": {
+            "id": "10000",
+            "name": "Epic",
+            "subtask": false
+          }
+        }
+      },
+      "customfield_10777": [
+        {
+          "accountId": "712020:32635250-1878-49e5-bc85-7a3a44ef0b3f",
+          "emailAddress": "aman@delightree.com",
+          "displayName": "Aman Tyagi",
+          "active": true,
+          "accountType": "atlassian"
+        },
+        {
+          "accountId": "712020:17319a9d-0d0d-47a2-97f1-b99895af279d",
+          "displayName": "Manish Bisht",
+          "active": true,
+          "accountType": "atlassian"
+        },
+        {
+          "accountId": "712020:ac5c5701-c798-4ba0-a93d-98c44f812268",
+          "displayName": "Rahul Lanjewar",
+          "active": true,
+          "accountType": "atlassian"
+        }
+      ],
+      "customfield_10946": null,
+      "customfield_10020": [
+        {
+          "id": 299,
+          "name": "DTP Q2 Sprint 3",
+          "state": "closed",
+          "boardId": 267,
+          "goal": "",
+          "startDate": "2026-05-27T09:50:55.016Z",
+          "endDate": "2026-06-30T14:30:00.000Z",
+          "completeDate": "2026-07-07T05:12:36.322Z"
+        },
+        {
+          "id": 332,
+          "name": "ABC sprint",
+          "state": "closed",
+          "boardId": 267,
+          "goal": "",
+          "startDate": "2026-10-12T23:49:03.030Z",
+          "endDate": "2026-10-26T23:49:31.000Z",
+          "completeDate": "2026-10-14T04:33:00.677Z"
+        }
+      ],
+      "assignee": {
+        "accountId": "712020:348329eb-8d40-4a36-b9b4-e6f35ce91281",
+        "displayName": "Akshansh Deva",
+        "active": true,
+        "accountType": "atlassian"
+      },
+      "priority": {
+        "name": "Highest",
+        "id": "1"
+      },
+      "updated": "2026-10-23T05:11:02.450+0000",
+      "status": {
+        "name": "Done",
+        "id": "10037",
+        "statusCategory": {
+          "id": 3,
+          "key": "done",
+          "name": "Done"
+        }
+      }
+    }
+  },
+  {
+    "id": "30153",
+    "key": "DTP-163",
+    "fields": {
+      "summary": "Provision to define the compliance approver and restrict notifications for Zors",
+      "issuetype": {
+        "id": "10006",
+        "name": "Improvement",
+        "subtask": false
+      },
+      "customfield_11457": null,
+      "customfield_10777": [
+        {
+          "accountId": "712020:b416063a-f257-431b-9019-3b60c69d1c84",
+          "displayName": "Mayank Awasthi",
+          "active": true,
+          "accountType": "atlassian"
+        },
+        {
+          "accountId": "712020:80ad7b87-4804-45aa-816f-7d533527e444",
+          "displayName": "Praveen Singh",
+          "active": true,
+          "accountType": "atlassian"
+        },
+        {
+          "accountId": "712020:32635250-1878-49e5-bc85-7a3a44ef0b3f",
+          "emailAddress": "aman@delightree.com",
+          "displayName": "Aman Tyagi",
+          "active": true,
+          "accountType": "atlassian"
+        },
+        {
+          "accountId": "712020:442c74ca-df18-4794-bf68-ac13fdbc8568",
+          "displayName": "Arfaz Chougule",
+          "active": true,
+          "accountType": "atlassian"
+        },
+        {
+          "accountId": "712020:1e60c995-74de-4ea4-bc9a-1d839aeb9544",
+          "displayName": "Avinash Kumar",
+          "active": true,
+          "accountType": "atlassian"
+        },
+        {
+          "accountId": "712020:b23f27bd-2408-4ab2-91ca-71076a1d2c38",
+          "displayName": "gaurav",
+          "active": true,
+          "accountType": "atlassian"
+        },
+        {
+          "accountId": "712020:86bbadc3-723a-41a4-9794-12a41f54cf55",
+          "displayName": "Jatin Tyagi",
+          "active": true,
+          "accountType": "atlassian"
+        }
+      ],
+      "customfield_10946": "2026-07-02",
+      "customfield_10020": [
+        {
+          "id": 299,
+          "name": "DTP Q2 Sprint 3",
+          "state": "closed",
+          "boardId": 267,
+          "goal": "",
+          "startDate": "2026-05-27T09:50:55.016Z",
+          "endDate": "2026-06-30T14:30:00.000Z",
+          "completeDate": "2026-07-07T05:12:36.322Z"
+        },
+        {
+          "id": 332,
+          "name": "ABC sprint",
+          "state": "closed",
+          "boardId": 267,
+          "goal": "",
+          "startDate": "2026-10-12T23:49:03.030Z",
+          "endDate": "2026-10-26T23:49:31.000Z",
+          "completeDate": "2026-10-14T04:33:00.677Z"
+        }
+      ],
+      "assignee": {
+        "accountId": "62de50cb3780798663d0062c",
+        "displayName": "Nagarathna C",
+        "active": true,
+        "accountType": "atlassian"
+      },
+      "priority": {
+        "name": "Medium",
+        "id": "3"
+      },
+      "updated": "2026-10-23T05:13:33.698+0000",
+      "status": {
+        "name": "Done",
+        "id": "10037",
+        "statusCategory": {
+          "id": 3,
+          "key": "done",
+          "name": "Done"
+        }
+      }
+    }
+  },
+  {
+    "id": "68725",
+    "key": "DTP-4395",
+    "fields": {
+      "summary": "Site Visit reports: franchisee comments and flagged-item tasks",
+      "customfield_11457": {
+        "value": "Velocity",
+        "id": "11230"
+      },
+      "issuetype": {
+        "id": "10011",
+        "name": "Story",
+        "subtask": false
+      },
+      "parent": {
+        "id": "69439",
+        "key": "DTP-4700",
+        "fields": {
+          "summary": "Site visit reports: comments and flagged-item tasks",
+          "status": {
+            "name": "Open",
+            "id": "1",
+            "statusCategory": {
+              "id": 2,
+              "key": "new",
+              "name": "To Do"
+            }
+          },
+          "priority": {
+            "name": "Medium",
+            "id": "3"
+          },
+          "issuetype": {
+            "id": "10000",
+            "name": "Epic",
+            "subtask": false
+          }
+        }
+      },
+      "customfield_10777": [
+        {
+          "accountId": "712020:967674c2-fba3-4d56-99e6-0e5d19582e54",
+          "displayName": "Shahid Khan",
+          "active": true,
+          "accountType": "atlassian"
+        }
+      ],
+      "customfield_10946": null,
+      "customfield_10020": [
+        {
+          "id": 432,
+          "name": "Oct Spint 2",
+          "state": "future",
+          "boardId": 267,
+          "goal": "",
+          "startDate": "2026-10-26T04:30:00.000Z",
+          "endDate": "2026-11-06T14:30:00.000Z"
+        }
+      ],
+      "assignee": {
+        "accountId": "712020:304fb3ce-a010-402e-ab50-d36473939db6",
+        "displayName": "Adhyayan Rathi",
+        "active": true,
+        "accountType": "atlassian"
+      },
+      "priority": {
+        "name": "Medium",
+        "id": "3"
+      },
+      "status": {
+        "name": "In Requirement (With Product)",
+        "id": "10655",
+        "statusCategory": {
+          "id": 4,
+          "key": "indeterminate",
+          "name": "In Progress"
+        }
+      }
+    }
+  },
+  {
+    "id": "69363",
+    "key": "DTP-4625",
+    "fields": {
+      "summary": "Story 4: Notifications, and data repair",
+      "customfield_11457": {
+        "value": "Velocity",
+        "id": "11230"
+      },
+      "issuetype": {
+        "id": "10011",
+        "name": "Story",
+        "subtask": false
+      },
+      "parent": {
+        "id": "69348",
+        "key": "DTP-4610",
+        "fields": {
+          "summary": "Pre-pone go-live dates and Change task / phase deadlines for a chosen launching location",
+          "status": {
+            "name": "In Progress",
+            "id": "3",
+            "statusCategory": {
+              "id": 4,
+              "key": "indeterminate",
+              "name": "In Progress"
+            }
+          },
+          "priority": {
+            "name": "Medium",
+            "id": "3"
+          },
+          "issuetype": {
+            "id": "10000",
+            "name": "Epic",
+            "subtask": false
+          }
+        }
+      },
+      "customfield_10777": null,
+      "customfield_10946": null,
+      "customfield_10020": [
+        {
+          "id": 432,
+          "name": "Oct Spint 2",
+          "state": "future",
+          "boardId": 267,
+          "goal": "",
+          "startDate": "2026-10-26T04:30:00.000Z",
+          "endDate": "2026-11-06T14:30:00.000Z"
+        }
+      ],
+      "assignee": {
+        "accountId": "712020:3d5a3bd2-92d5-4261-8ec3-120c80a6e2a0",
+        "displayName": "Rahul Saharan",
+        "active": true,
+        "accountType": "atlassian"
+      },
+      "priority": {
+        "name": "High",
+        "id": "2"
+      },
+      "status": {
+        "name": "In-Dev",
+        "id": "10584",
+        "statusCategory": {
+          "id": 4,
+          "key": "indeterminate",
+          "name": "In Progress"
+        }
+      }
+    }
+  },
+  {
+    "id": "69425",
+    "key": "DTP-4687",
+    "fields": {
+      "summary": "Story 7: QA and testing, production migration, beta",
+      "customfield_11457": {
+        "value": "RoadMap 1",
+        "id": "11231"
+      },
+      "issuetype": {
+        "id": "10011",
+        "name": "Story",
+        "subtask": false
+      },
+      "parent": {
+        "id": "23145",
+        "key": "DTP-3",
+        "fields": {
+          "summary": "Territory Grouping for corporate users (Location Group v2)",
+          "status": {
+            "name": "Open",
+            "id": "1",
+            "statusCategory": {
+              "id": 2,
+              "key": "new",
+              "name": "To Do"
+            }
+          },
+          "priority": {
+            "name": "High",
+            "id": "2"
+          },
+          "issuetype": {
+            "id": "10000",
+            "name": "Epic",
+            "subtask": false
+          }
+        }
+      },
+      "customfield_10777": [
+        {
+          "accountId": "712020:3d5a3bd2-92d5-4261-8ec3-120c80a6e2a0",
+          "displayName": "Rahul Saharan",
+          "active": true,
+          "accountType": "atlassian"
+        },
+        {
+          "accountId": "712020:a91374d2-74b1-4030-93b6-c283eb0db1ef",
+          "displayName": "Vaibhav Pal",
+          "active": true,
+          "accountType": "atlassian"
+        },
+        {
+          "accountId": "712020:32ff522c-e5c4-48cc-b0c3-9a89fcbc274c",
+          "displayName": "Shadab Anjum",
+          "active": true,
+          "accountType": "atlassian"
+        }
+      ],
+      "customfield_10946": null,
+      "customfield_10020": null,
+      "assignee": null,
+      "priority": {
+        "name": "Highest",
+        "id": "1"
+      },
+      "status": {
+        "name": "To Do",
+        "id": "10003",
+        "statusCategory": {
+          "id": 2,
+          "key": "new",
+          "name": "To Do"
+        }
+      }
+    }
+  },
+  {
+    "id": "69561",
+    "key": "DTP-4820",
+    "fields": {
+      "summary": "Assigned to me Views",
+      "customfield_11457": {
+        "value": "RoadMap 1",
+        "id": "11231"
+      },
+      "issuetype": {
+        "id": "10011",
+        "name": "Story",
+        "subtask": false
+      },
+      "parent": {
+        "id": "69560",
+        "key": "DTP-4819",
+        "fields": {
+          "summary": "Assigned to me Views",
+          "status": {
+            "name": "Open",
+            "id": "1",
+            "statusCategory": {
+              "id": 2,
+              "key": "new",
+              "name": "To Do"
+            }
+          },
+          "priority": {
+            "name": "High",
+            "id": "2"
+          },
+          "issuetype": {
+            "id": "10000",
+            "name": "Epic",
+            "subtask": false
+          }
+        }
+      },
+      "customfield_10777": null,
+      "customfield_10946": null,
+      "customfield_10020": [
+        {
+          "id": 432,
+          "name": "Oct Spint 2",
+          "state": "future",
+          "boardId": 267,
+          "goal": "",
+          "startDate": "2026-10-26T04:30:00.000Z",
+          "endDate": "2026-11-06T14:30:00.000Z"
+        }
+      ],
+      "assignee": null,
+      "priority": {
+        "name": "Medium",
+        "id": "3"
+      },
+      "updated": "2026-10-23T05:08:49.704+0000",
+      "status": {
+        "name": "To Do",
+        "id": "10003",
+        "statusCategory": {
+          "id": 2,
+          "key": "new",
+          "name": "To Do"
+        }
+      }
+    }
+  },
+  {
+    "id": "69565",
+    "key": "DTP-4824",
+    "fields": {
+      "summary": "QA : Testing Closure",
+      "issuetype": {
+        "id": "10008",
+        "name": "Sub-task",
+        "subtask": true
+      },
+      "customfield_11457": null,
+      "parent": {
+        "id": "69561",
+        "key": "DTP-4820",
+        "fields": {
+          "summary": "Assigned to me Views",
+          "status": {
+            "name": "To Do",
+            "id": "10003",
+            "statusCategory": {
+              "id": 2,
+              "key": "new",
+              "name": "To Do"
+            }
+          },
+          "priority": {
+            "name": "Medium",
+            "id": "3"
+          },
+          "issuetype": {
+            "id": "10011",
+            "name": "Story",
+            "subtask": false
+          }
+        }
+      },
+      "customfield_10777": null,
+      "customfield_10946": null,
+      "customfield_10020": [
+        {
+          "id": 432,
+          "name": "Oct Spint 2",
+          "state": "future",
+          "boardId": 267,
+          "goal": "",
+          "startDate": "2026-10-26T04:30:00.000Z",
+          "endDate": "2026-11-06T14:30:00.000Z"
+        }
+      ],
+      "assignee": null,
+      "priority": {
+        "name": "Medium",
+        "id": "3"
+      },
+      "status": {
+        "name": "Open",
+        "id": "1",
+        "statusCategory": {
+          "id": 2,
+          "key": "new",
+          "name": "To Do"
+        }
+      }
+    }
+  },
+  {
+    "id": "69577",
+    "key": "DTP-4841",
+    "fields": {
+      "summary": "Story 3: Publish Training path and Assignment path without selecting assignees",
+      "customfield_11457": {
+        "value": "RoadMap 2",
+        "id": "11232"
+      },
+      "issuetype": {
+        "id": "10011",
+        "name": "Story",
+        "subtask": false
+      },
+      "parent": {
+        "id": "69566",
+        "key": "DTP-4830",
+        "fields": {
+          "summary": "Training revamp",
+          "status": {
+            "name": "Open",
+            "id": "1",
+            "statusCategory": {
+              "id": 2,
+              "key": "new",
+              "name": "To Do"
+            }
+          },
+          "priority": {
+            "name": "Medium",
+            "id": "3"
+          },
+          "issuetype": {
+            "id": "10000",
+            "name": "Epic",
+            "subtask": false
+          }
+        }
+      },
+      "customfield_10777": null,
+      "customfield_10946": null,
+      "customfield_10020": null,
+      "assignee": null,
+      "priority": {
+        "name": "Medium",
+        "id": "3"
+      },
+      "status": {
+        "name": "To Do",
+        "id": "10003",
+        "statusCategory": {
+          "id": 2,
+          "key": "new",
+          "name": "To Do"
+        }
+      }
+    }
+  }
+]

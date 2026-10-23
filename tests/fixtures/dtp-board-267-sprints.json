@@ -1,0 +1,66 @@
+{
+  "maxResults": 50,
+  "startAt": 0,
+  "isLast": true,
+  "values": [
+    {
+      "id": 167,
+      "state": "closed",
+      "name": "DTP Jan Sprint",
+      "startDate": "2026-02-02T04:59:05.872Z",
+      "endDate": "2026-02-28T15:30:00.000Z",
+      "completeDate": "2026-02-27T12:13:08.411Z",
+      "originBoardId": 267,
+      "goal": ""
+    },
+    {
+      "id": 200,
+      "state": "closed",
+      "name": "DTP Mar Sprint 2",
+      "startDate": "2026-03-02T06:35:56.000Z",
+      "endDate": "2026-03-30T15:30:00.000Z",
+      "completeDate": "2026-04-02T10:35:58.906Z",
+      "originBoardId": 267,
+      "goal": ""
+    },
+    {
+      "id": 266,
+      "state": "closed",
+      "name": "DTP April Sprint",
+      "startDate": "2026-04-01T03:30:59.085Z",
+      "endDate": "2026-04-30T14:30:00.000Z",
+      "completeDate": "2026-05-20T06:47:32.778Z",
+      "originBoardId": 267,
+      "goal": ""
+    },
+    {
+      "id": 299,
+      "state": "closed",
+      "name": "DTP Q2 Sprint 3",
+      "startDate": "2026-05-27T09:50:55.016Z",
+      "endDate": "2026-06-30T14:30:00.000Z",
+      "completeDate": "2026-07-07T05:12:36.322Z",
+      "originBoardId": 267,
+      "goal": ""
+    },
+    {
+      "id": 332,
+      "state": "closed",
+      "name": "ABC sprint",
+      "startDate": "2026-10-12T23:49:03.030Z",
+      "endDate": "2026-10-26T23:49:31.000Z",
+      "completeDate": "2026-10-14T04:33:00.677Z",
+      "originBoardId": 267,
+      "goal": ""
+    },
+    {
+      "id": 432,
+      "state": "future",
+      "name": "Oct Spint 2",
+      "startDate": "2026-10-26T04:30:00.000Z",
+      "endDate": "2026-11-06T14:30:00.000Z",
+      "originBoardId": 267,
+      "goal": ""
+    }
+  ]
+}

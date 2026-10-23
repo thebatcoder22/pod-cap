@@ -8,7 +8,7 @@ test("an allowlisted pod lead lands on their own pod page", async ({ page }) => 
   await expect(page.getByRole("heading", { level: 1, name: "Velocity" })).toBeVisible();
   await expect(page.getByText("Your pod", { exact: true })).toBeVisible();
   for (const name of ["Rahul Saharan", "Manish Bisht", "Saikrishna Kotagiri"]) {
-    await expect(page.getByRole("cell", { name })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Members" }).getByRole("cell", { name })).toBeVisible();
   }
 
   await page.getByRole("link", { name: "Atlas" }).click();

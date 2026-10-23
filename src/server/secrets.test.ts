@@ -14,7 +14,10 @@ describe("secret encryption", () => {
 
   it("rejects a tampered value", () => {
     const sealed = encryptSecret("ATATT3x-token");
-    const tampered = sealed.slice(0, -2) + (sealed.endsWith("A") ? "B" : "A") + sealed.slice(-1);
+    // Flip a ciphertext bit in the bytes: editing base64 text can land on padding bits and change nothing.
+    const bytes = Buffer.from(sealed, "base64");
+    bytes[bytes.length - 1] ^= 1;
+    const tampered = bytes.toString("base64");
     expect(() => decryptSecret(tampered)).toThrow();
   });
 });

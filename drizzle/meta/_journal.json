@@ -29,6 +29,13 @@
       "when": 1792744110596,
       "tag": "0003_velocity_shadab_nanagoud",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792744253124,
+      "tag": "0004_jira_sync",
+      "breakpoints": true
     }
   ]
 }

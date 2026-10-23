@@ -58,7 +58,7 @@ function parseSite(raw: string) {
   return url.origin;
 }
 
-async function loadJiraCredentials(): Promise<JiraCredentials | null> {
+export async function loadJiraCredentials(): Promise<JiraCredentials | null> {
   const [row] = await db.select().from(jiraSettings);
   if (!row) return null;
   try {

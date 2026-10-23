@@ -35,6 +35,8 @@ function fakeJira(fail: { myself?: JiraError["kind"]; project?: JiraError["kind"
         if (fail.project) throw new JiraError(fail.project, "boom");
         return { key, name: "Delightree Product" };
       },
+      listSprints: async () => [],
+      searchIssues: async () => [],
     };
   };
   return { make, used };
