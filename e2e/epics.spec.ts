@@ -37,7 +37,6 @@ test("a lead sizes their pod's epics next to their tickets' skill-days, and othe
   await expect(size).toHaveValue("M");
 
   // Atlas has work in it, so Atlas sees it, owned by Velocity and not editable.
-  await page.context().clearCookies();
   await signInAs(page, "abdullah@delightree.com");
   await expect(page).toHaveURL(/\/pods\/atlas$/);
   await expect(checklists).toContainText(/Velocity.s epic.*M/);

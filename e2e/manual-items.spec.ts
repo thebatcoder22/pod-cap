@@ -66,7 +66,6 @@ test("a lead adds, links, edits and deletes manual items, and they count against
   await expect(fe).toContainText("4.5 of 14 days");
 
   // Another lead sees the items, but cannot change them.
-  await page.context().clearCookies();
   await signInAs(page, "rahul@delightree.com");
   await expect(page).toHaveURL(/\/pods\/velocity$/);
   await page.goto("/pods/roadmap-2");

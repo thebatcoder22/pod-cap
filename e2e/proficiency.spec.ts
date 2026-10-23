@@ -27,7 +27,6 @@ test("a lead sets proficiency for their own people, and other leads see it read 
   await ai.blur();
   await expect(ai).toHaveValue("0");
 
-  await page.context().clearCookies();
   await signInAs(page, "rahul@delightree.com");
   await expect(page).toHaveURL(/\/pods\/velocity$/);
   await page.goto("/pods/roadmap-2");

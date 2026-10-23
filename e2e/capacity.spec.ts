@@ -58,7 +58,6 @@ test("a lead enters leave and sees capacity per person and per skill, with the a
   await expect(sheet.getByRole("row", { name: /Mayank Awasthi/ })).toContainText("5.95 days");
 
   // Another lead sees the sheet read only.
-  await page.context().clearCookies();
   await signInAs(page, "rahul@delightree.com");
   await expect(page).toHaveURL(/\/pods\/velocity$/);
   await page.goto("/pods/roadmap-2");
