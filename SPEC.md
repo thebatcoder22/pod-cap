@@ -242,9 +242,9 @@ Leads sign in with Google, can see every pod, and can only edit their own pod.
 ### Seed data
 
 - Pods: RoadMap 1 (Shikhar Seth), RoadMap 2 (Aman Tyagi), Velocity (Rahul Saharan), Atlas (Abdullah Ghani).
-- Members and main skills: RoadMap 1: Shikhar Seth AI, Hrishikesh Pujari BE, Vaibhav Pal FE, Divyanshu FE, Shahid Khan FE. RoadMap 2: Aman Tyagi BE, Mayank Awasthi FE, Muthaiyan Mani FE, Kalpan Punamiya Data, Akash Singh AI. Velocity: Rahul Saharan BE, Manish Bisht FE, Saikrishna Kotagiri FE. Atlas: Abdullah Ghani BE, Rahul Lanjewar BE, Abhay Sharma FE, Akhilesh Mourya FE.
+- Members and main skills: RoadMap 1: Shikhar Seth AI, Hrishikesh Pujari BE, Vaibhav Pal FE, Divyanshu FE, Shahid Khan FE. RoadMap 2: Aman Tyagi BE, Mayank Awasthi FE, Muthaiyan Mani FE, Kalpan Punamiya Data, Akash Singh AI. Velocity: Rahul Saharan BE, Manish Bisht FE, Saikrishna Kotagiri FE, Shadab Anjum FE, Nanagoud BE. Atlas: Abdullah Ghani BE, Rahul Lanjewar BE, Abhay Sharma FE, Akhilesh Mourya FE.
 - Allowlist: aman@, shikhar@, rahul@, abdullah@delightree.com. Admin: aman@delightree.com.
-- Excluded on purpose: the across-pods people (Nanagoud, Shadab, Shashwat), non-engineering roles, and people who have left (Praveen Singh, Raj Prakash Kante).
+- Excluded on purpose: Shashwat (DevOps, across pods), non-engineering roles, and people who have left (Praveen Singh, Raj Prakash Kante).
 
 ## Testing Decisions
 

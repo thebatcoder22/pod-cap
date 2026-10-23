@@ -38,6 +38,8 @@ const ROSTER: {
     members: [
       ["Manish Bisht", "FE"],
       ["Saikrishna Kotagiri", "FE"],
+      ["Shadab Anjum", "FE"],
+      ["Nanagoud", "BE"],
     ],
   },
   {
