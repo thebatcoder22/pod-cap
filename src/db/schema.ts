@@ -25,16 +25,20 @@ export const pods = pgTable("pods", {
   leadPersonId: integer("lead_person_id").references((): AnyPgColumn => people.id),
 });
 
-export const people = pgTable("people", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").unique(),
-  jiraAccountId: text("jira_account_id").unique(),
-  // Null only for the "No pod yet" list.
-  podId: integer("pod_id").references(() => pods.id),
-  mainSkill: skill("main_skill").notNull(),
-  active: boolean("active").notNull().default(true),
-});
+export const people = pgTable(
+  "people",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    email: text("email").unique(),
+    jiraAccountId: text("jira_account_id").unique(),
+    // A single column, so a person is in one pod at a time. Null once removed.
+    podId: integer("pod_id").references(() => pods.id),
+    mainSkill: skill("main_skill").notNull(),
+    active: boolean("active").notNull().default(true),
+  },
+  (t) => [check("people_active_in_a_pod", sql`not ${t.active} or ${t.podId} is not null`)],
+);
 
 export const allowlist = pgTable("allowlist", {
   // Stored lowercase.
@@ -70,7 +74,8 @@ export const sprints = pgTable("sprints", {
   completeDate: timestamp("complete_date", { withTimezone: true }),
 });
 
-export type JiraUser = { accountId: string; displayName: string };
+// Jira only shares the email when the user's profile allows it.
+export type JiraUser = { accountId: string; displayName: string; emailAddress?: string };
 
 // Plannable DTP tickets. Sub-tasks and epics are not stored here.
 export const tickets = pgTable("tickets", {

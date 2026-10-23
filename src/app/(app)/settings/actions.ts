@@ -1,7 +1,9 @@
 "use server";
 
 import { refresh } from "next/cache";
+import type { Skill } from "@/db/schema";
 import { normalizeEmail } from "@/server/access";
+import { addFromJira, confirmJiraAccount, movePerson, removePerson } from "@/server/people";
 import { ForbiddenError } from "@/server/permissions";
 import { getViewer } from "@/server/session";
 import {
@@ -69,5 +71,45 @@ export async function removeAllowlistAction(_: ActionState, form: FormData) {
   return run(async () => {
     await removeAllowlisted(await getViewer(), email);
     return `${normalizeEmail(email)} can no longer sign in.`;
+  });
+}
+
+// ---- People ----
+
+const intField = (form: FormData, name: string) => Number(text(form, name) || NaN);
+
+export async function confirmJiraAccountAction(_: ActionState, form: FormData) {
+  return run(async () => {
+    const { name, jira } = await confirmJiraAccount(
+      await getViewer(),
+      intField(form, "personId"),
+      text(form, "accountId"),
+    );
+    return `${name} is linked to ${jira} in Jira.`;
+  });
+}
+
+export async function addFromJiraAction(_: ActionState, form: FormData) {
+  return run(async () => {
+    const { name, pod } = await addFromJira(await getViewer(), {
+      accountId: text(form, "accountId"),
+      podId: intField(form, "podId"),
+      mainSkill: text(form, "mainSkill") as Skill,
+    });
+    return `${name} joined ${pod}.`;
+  });
+}
+
+export async function movePersonAction(_: ActionState, form: FormData) {
+  return run(async () => {
+    const { name, pod } = await movePerson(await getViewer(), intField(form, "personId"), intField(form, "podId"));
+    return `${name} moved to ${pod}.`;
+  });
+}
+
+export async function removePersonAction(_: ActionState, form: FormData) {
+  return run(async () => {
+    const { name } = await removePerson(await getViewer(), intField(form, "personId"));
+    return `${name} was removed and no longer counts toward any pod.`;
   });
 }

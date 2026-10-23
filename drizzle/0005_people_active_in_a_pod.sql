@@ -1,0 +1,1 @@
+ALTER TABLE "people" ADD CONSTRAINT "people_active_in_a_pod" CHECK (not "people"."active" or "people"."pod_id" is not null);

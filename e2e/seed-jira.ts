@@ -1,7 +1,7 @@
 import { sprints, syncRuns, tickets } from "../src/db/schema";
 import type { Db } from "../src/db";
 
-/** What a successful sync of DTP leaves behind, trimmed to Velocity's tickets. */
+/** What a successful sync of DTP leaves behind, trimmed to a few tickets. */
 export async function seedSyncedJira(db: Db) {
   await db.insert(sprints).values([
     {
@@ -47,6 +47,19 @@ export async function seedSyncedJira(db: Db) {
       assignee: null,
       devOwners: [{ accountId: "a-shahid", displayName: "Shahid Khan" }],
       readyForProductionDate: "2026-11-06",
+    },
+    {
+      // A new hire who is on a ticket but in no pod yet.
+      key: "DTP-4702",
+      summary: "Rebuild the location picker",
+      type: "Story",
+      status: "To Do",
+      statusCategory: "new",
+      priority: "Medium",
+      pod: "Atlas",
+      sprintIds: [432],
+      assignee: null,
+      devOwners: [{ accountId: "a-priya", displayName: "Priya Nair" }],
     },
   ]);
   const at = new Date("2026-10-23T08:30:00.000Z");

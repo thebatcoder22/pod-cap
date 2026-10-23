@@ -209,7 +209,7 @@ Leads sign in with Google, can see every pod, and can only edit their own pod.
 ### Data model (platform-owned)
 
 - **Pod**: Jira POD value, display name, lead person.
-- **Person**: name, email, Jira account ID, pod (exactly one, nullable only for the "No pod yet" list), main skill, active flag.
+- **Person**: name, email, Jira account ID, pod (exactly one while active, null once removed; "No pod yet" lists Jira users who are no person yet), main skill, active flag.
 - **Proficiency**: person, skill, percentage. The main skill is fixed at 100%.
 - **Leave**: person, sprint, days (half-day steps).
 - **Holiday**: date, name.

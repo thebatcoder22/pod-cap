@@ -2,6 +2,7 @@ import { desc, eq, isNotNull, notInArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { sprints, syncRuns, tickets, type JiraUser } from "@/db/schema";
 import { createJiraClient, JiraError, type JiraIssue, type MakeJiraClient } from "./jira-client";
+import { linkJiraAccounts } from "./people";
 import { ForbiddenError } from "./permissions";
 import { loadJiraCredentials, ValidationError } from "./settings";
 import type { Viewer } from "./viewer";
@@ -98,6 +99,7 @@ export async function runSync(makeClient: MakeJiraClient = createJiraClient): Pr
         await w.delete(tickets);
         const rows = issues.filter(isPlannable).map(toTicket);
         for (let i = 0; i < rows.length; i += 500) await w.insert(tickets).values(rows.slice(i, i + 500));
+        await linkJiraAccounts(w);
       });
       result = { status: "succeeded" };
     } catch (e) {
@@ -164,7 +166,11 @@ function isPlannable(issue: JiraIssue) {
   return !issuetype.subtask && PLANNABLE_TYPES.includes(issuetype.name);
 }
 
-const user = (u: JiraUser): JiraUser => ({ accountId: u.accountId, displayName: u.displayName });
+const user = (u: JiraUser): JiraUser => ({
+  accountId: u.accountId,
+  displayName: u.displayName,
+  ...(u.emailAddress ? { emailAddress: u.emailAddress } : {}),
+});
 
 function toTicket(issue: JiraIssue): typeof tickets.$inferInsert {
   const f = fieldsOf(issue);

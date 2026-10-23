@@ -36,6 +36,13 @@
       "when": 1792744253124,
       "tag": "0004_jira_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792749150545,
+      "tag": "0005_people_active_in_a_pod",
+      "breakpoints": true
     }
   ]
 }
