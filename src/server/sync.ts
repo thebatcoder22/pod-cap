@@ -1,6 +1,16 @@
 import { desc, eq, isNotNull, notInArray, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { SKILLS, sprints, syncRuns, tickets, type Estimates, type JiraUser, type Skill } from "@/db/schema";
+import {
+  epics,
+  SKILLS,
+  sprints,
+  syncRuns,
+  tickets,
+  type Estimates,
+  type JiraUser,
+  type Skill,
+  type StatusCategory,
+} from "@/db/schema";
 import { createJiraClient, JiraError, type JiraField, type JiraIssue, type MakeJiraClient } from "./jira-client";
 import { linkJiraAccounts } from "./people";
 import { ForbiddenError } from "./permissions";
@@ -8,8 +18,10 @@ import { loadJiraCredentials, ValidationError } from "./settings";
 import type { Viewer } from "./viewer";
 
 export const BOARD_ID = 267;
+const EPIC = "Epic";
 const PLANNABLE_TYPES = ["Story", "Improvement", "Tech Story", "Bug", "Prod Bug", "Dev Custom Task"];
-const JQL = `project = DTP AND issuetype in (${PLANNABLE_TYPES.map((t) => `"${t}"`).join(", ")})`;
+// Epics come in the same search: they carry the POD and Ready for Production Date fields too.
+const JQL = `project = DTP AND issuetype in (${[...PLANNABLE_TYPES, EPIC].map((t) => `"${t}"`).join(", ")})`;
 // DTP's custom field ids, verified against the live project (see SPEC.md "Jira mapping").
 const FIELD = {
   pod: "customfield_11457",
@@ -38,7 +50,7 @@ export async function syncNow(viewer: Viewer | null, makeClient?: MakeJiraClient
 }
 
 /**
- * Pulls every sprint on the board and every plannable DTP ticket, replacing the previous copy.
+ * Pulls every sprint on the board and every plannable DTP ticket and epic, replacing the previous copy.
  * Shared by the hourly cron and "Sync now". Returns "skipped" when another sync holds the lock.
  */
 export async function runSync(makeClient: MakeJiraClient = createJiraClient): Promise<SyncResult> {
@@ -110,6 +122,9 @@ export async function runSync(makeClient: MakeJiraClient = createJiraClient): Pr
         await w.delete(tickets);
         const rows = issues.filter(isPlannable).map((i) => toTicket(i, estimateIds));
         for (let i = 0; i < rows.length; i += 500) await w.insert(tickets).values(rows.slice(i, i + 500));
+        await w.delete(epics);
+        const epicRows = issues.filter((i) => fieldsOf(i).issuetype.name === EPIC).map(toEpic);
+        if (epicRows.length) await w.insert(epics).values(epicRows);
         await linkJiraAccounts(w);
       });
       result = { status: "succeeded" };
@@ -160,7 +175,7 @@ type Named = { name: string };
 type IssueFields = {
   summary: string;
   issuetype: Named & { subtask: boolean };
-  status: Named & { statusCategory: { key: "new" | "indeterminate" | "done" } };
+  status: Named & { statusCategory: { key: StatusCategory } };
   priority: Named | null;
   assignee: JiraUser | null;
   parent?: { key: string; fields: { summary: string; issuetype: Named } };
@@ -191,7 +206,7 @@ function toTicket(issue: JiraIssue, estimateIds: Map<Skill, string>): typeof tic
     // Jira number fields are null when empty; 0 is a real estimate.
     if (typeof days === "number" && days >= 0) estimates[skill] = days;
   }
-  const epic = f.parent?.fields.issuetype.name === "Epic" ? f.parent : null;
+  const epic = f.parent?.fields.issuetype.name === EPIC ? f.parent : null;
   return {
     key: issue.key,
     summary: f.summary,
@@ -207,6 +222,18 @@ function toTicket(issue: JiraIssue, estimateIds: Map<Skill, string>): typeof tic
     epicSummary: epic?.fields.summary ?? null,
     readyForProductionDate: f[FIELD.readyForProduction] ?? null,
     estimates,
+  };
+}
+
+function toEpic(issue: JiraIssue): typeof epics.$inferInsert {
+  const f = fieldsOf(issue);
+  return {
+    key: issue.key,
+    summary: f.summary,
+    status: f.status.name,
+    statusCategory: f.status.statusCategory.key,
+    pod: f[FIELD.pod]?.value ?? null,
+    readyForProductionDate: f[FIELD.readyForProduction] ?? null,
   };
 }
 

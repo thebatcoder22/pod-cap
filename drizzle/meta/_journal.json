@@ -71,6 +71,13 @@
       "when": 1792761346612,
       "tag": "0009_manual_items",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792764536951,
+      "tag": "0010_epics",
+      "breakpoints": true
     }
   ]
 }

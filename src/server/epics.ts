@@ -1,0 +1,84 @@
+import { eq, getTableColumns, isNotNull } from "drizzle-orm";
+import { db } from "@/db";
+import { epics, epicSizes, jiraSettings, pods, tickets, TSHIRT_SIZES, type TshirtSize } from "@/db/schema";
+import { ForbiddenError, assertCanEditPod } from "./permissions";
+import { planEpics } from "./planning";
+import { ValidationError } from "./settings";
+import type { Viewer } from "./viewer";
+
+export type EpicList = Awaited<ReturnType<typeof getEpicList>>;
+
+const CATEGORY_ORDER = { indeterminate: 0, new: 1, done: 2 };
+const keyNumber = (key: string) => Number(key.split("-")[1]);
+
+// ponytail: plans every epic on each page view (DTP has ~25); filter by pod in SQL if it shows in page times.
+async function planAll(key?: string) {
+  const [rows, children, podRows, [settings]] = await Promise.all([
+    db
+      .select({ ...getTableColumns(epics), size: epicSizes.size })
+      .from(epics)
+      .leftJoin(epicSizes, eq(epicSizes.epicKey, epics.key))
+      .where(key ? eq(epics.key, key) : undefined),
+    db
+      .select({ epicKey: tickets.epicKey, pod: tickets.pod, estimates: tickets.estimates })
+      .from(tickets)
+      .where(key ? eq(tickets.epicKey, key) : isNotNull(tickets.epicKey)),
+    db.select({ id: pods.id, name: pods.name, slug: pods.slug, jiraPodValue: pods.jiraPodValue }).from(pods),
+    db.select({ site: jiraSettings.site }).from(jiraSettings),
+  ]);
+  return { plans: planEpics(rows, children, podRows), site: settings?.site ?? null };
+}
+
+/**
+ * The epics a pod owns or has tickets in: in progress first, then to do, then done, each by Ready for
+ * Production Date, soonest first.
+ */
+export async function getEpicList(pod: { id: number }) {
+  const { plans, site } = await planAll();
+  return plans
+    .filter((e) => e.owner?.id === pod.id || e.pods.some((p) => p.id === pod.id))
+    .sort(
+      (a, b) =>
+        CATEGORY_ORDER[a.statusCategory] - CATEGORY_ORDER[b.statusCategory] ||
+        (a.readyForProductionDate ?? "9999").localeCompare(b.readyForProductionDate ?? "9999") ||
+        keyNumber(a.key) - keyNumber(b.key),
+    )
+    .map((e) => ({
+      key: e.key,
+      // Null when Jira is not connected, so there is no site to link to.
+      url: site ? `${site}/browse/${e.key}` : null,
+      summary: e.summary,
+      status: e.status,
+      statusCategory: e.statusCategory,
+      readyForProductionDate: e.readyForProductionDate,
+      size: e.size,
+      owner: e.owner && { id: e.owner.id, name: e.owner.name, slug: e.owner.slug },
+      tickets: e.tickets,
+      skills: e.skills,
+      unestimated: e.unestimated,
+    }));
+}
+
+/** A lead sets the T-shirt size of an epic their pod owns. Null clears it. */
+export async function setEpicSize(viewer: Viewer | null, key: string, size: TshirtSize | null) {
+  if (size !== null && !TSHIRT_SIZES.includes(size)) throw new ValidationError("Pick S, M, L or XL.");
+  const {
+    plans: [epic],
+  } = await planAll(key);
+  if (!epic) throw new ValidationError("That epic is no longer in Jira. Sync, then try again.");
+  if (!epic.owner) {
+    throw new ForbiddenError(
+      epic.pods.length > 1
+        ? `${epic.key} has work in more than one pod. Set its POD in Jira to size it.`
+        : `${epic.key} is in no pod. Set its POD in Jira to size it.`,
+    );
+  }
+  assertCanEditPod(viewer, epic.owner.id);
+
+  if (size === null) await db.delete(epicSizes).where(eq(epicSizes.epicKey, epic.key));
+  else
+    await db
+      .insert(epicSizes)
+      .values({ epicKey: epic.key, size })
+      .onConflictDoUpdate({ target: epicSizes.epicKey, set: { size } });
+}

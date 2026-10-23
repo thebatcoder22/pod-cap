@@ -1,4 +1,4 @@
-import { sprints, syncRuns, tickets } from "../src/db/schema";
+import { epics, sprints, syncRuns, tickets } from "../src/db/schema";
 import type { Db } from "../src/db";
 
 /** What a successful sync of DTP leaves behind, trimmed to a few tickets. */
@@ -61,6 +61,9 @@ export async function seedSyncedJira(db: Db) {
       sprintIds: [432],
       assignee: null,
       devOwners: [{ accountId: "a-priya", displayName: "Priya Nair" }],
+      // Velocity's epic, with work in Atlas too.
+      epicKey: "DTP-4610",
+      epicSummary: "Checklists v2",
     },
     // Velocity's backlog: in no sprint, for the pick-up panel.
     {
@@ -73,6 +76,8 @@ export async function seedSyncedJira(db: Db) {
       pod: "Velocity",
       assignee: null,
       devOwners: [],
+      epicKey: "DTP-4700",
+      epicSummary: "Site visit reports",
       estimates: { FE: 2 },
     },
     {
@@ -87,6 +92,18 @@ export async function seedSyncedJira(db: Db) {
       devOwners: [],
       estimates: { BE: 1 },
     },
+  ]);
+  await db.insert(epics).values([
+    {
+      key: "DTP-4610",
+      summary: "Checklists v2",
+      status: "In Progress",
+      statusCategory: "indeterminate",
+      pod: "Velocity",
+      readyForProductionDate: "2026-11-20",
+    },
+    // No POD in Jira: its only ticket is Velocity's, so it is Velocity's.
+    { key: "DTP-4700", summary: "Site visit reports", status: "Open", statusCategory: "new", pod: null },
   ]);
   const at = new Date("2026-10-23T08:30:00.000Z");
   await db.insert(syncRuns).values({ startedAt: at, finishedAt: at, status: "succeeded" });

@@ -639,5 +639,206 @@
       "customfield_11524": null,
       "customfield_11525": null
     }
+  },
+  {
+    "id": "23783",
+    "key": "DTP-4",
+    "fields": {
+      "summary": "AI FBC Workflows - Q2 2026",
+      "customfield_11457": null,
+      "issuetype": {
+        "id": "10000",
+        "name": "Epic",
+        "subtask": false
+      },
+      "customfield_10777": null,
+      "customfield_10946": null,
+      "customfield_10020": null,
+      "assignee": null,
+      "priority": {
+        "name": "Highest",
+        "id": "1"
+      },
+      "status": {
+        "name": "Open",
+        "id": "1",
+        "statusCategory": {
+          "id": 2,
+          "key": "new",
+          "name": "To Do"
+        }
+      },
+      "customfield_11524": null,
+      "customfield_11525": null
+    }
+  },
+  {
+    "id": "68950",
+    "key": "DTP-4427",
+    "fields": {
+      "summary": "AI Reporting - AI Analyst, KPI watchlist and reusable reports",
+      "customfield_11457": {
+        "value": "RoadMap 1",
+        "id": "11231"
+      },
+      "issuetype": {
+        "id": "10000",
+        "name": "Epic",
+        "subtask": false
+      },
+      "customfield_10777": null,
+      "customfield_10946": "2026-11-14",
+      "customfield_10020": null,
+      "assignee": null,
+      "priority": {
+        "name": "Medium",
+        "id": "3"
+      },
+      "status": {
+        "name": "In Progress",
+        "id": "3",
+        "statusCategory": {
+          "id": 4,
+          "key": "indeterminate",
+          "name": "In Progress"
+        }
+      },
+      "customfield_11524": null,
+      "customfield_11525": null
+    }
+  },
+  {
+    "id": "69348",
+    "key": "DTP-4610",
+    "fields": {
+      "summary": "Pre-pone go-live dates and Change task / phase deadlines for a chosen launching location",
+      "customfield_11457": {
+        "value": "RoadMap 1",
+        "id": "11231"
+      },
+      "issuetype": {
+        "id": "10000",
+        "name": "Epic",
+        "subtask": false
+      },
+      "customfield_10777": null,
+      "customfield_10946": null,
+      "customfield_10020": null,
+      "assignee": null,
+      "priority": {
+        "name": "Medium",
+        "id": "3"
+      },
+      "status": {
+        "name": "In Progress",
+        "id": "3",
+        "statusCategory": {
+          "id": 4,
+          "key": "indeterminate",
+          "name": "In Progress"
+        }
+      },
+      "customfield_11524": null,
+      "customfield_11525": null
+    }
+  },
+  {
+    "id": "69439",
+    "key": "DTP-4700",
+    "fields": {
+      "summary": "Site visit reports: comments and flagged-item tasks",
+      "customfield_11457": {
+        "value": "Velocity",
+        "id": "11230"
+      },
+      "issuetype": {
+        "id": "10000",
+        "name": "Epic",
+        "subtask": false
+      },
+      "customfield_10777": null,
+      "customfield_10946": null,
+      "customfield_10020": null,
+      "assignee": null,
+      "priority": {
+        "name": "Medium",
+        "id": "3"
+      },
+      "status": {
+        "name": "Open",
+        "id": "1",
+        "statusCategory": {
+          "id": 2,
+          "key": "new",
+          "name": "To Do"
+        }
+      },
+      "customfield_11524": null,
+      "customfield_11525": null
+    }
+  },
+  {
+    "id": "69560",
+    "key": "DTP-4819",
+    "fields": {
+      "summary": "Assigned to me Views",
+      "customfield_11457": null,
+      "issuetype": {
+        "id": "10000",
+        "name": "Epic",
+        "subtask": false
+      },
+      "customfield_10777": null,
+      "customfield_10946": null,
+      "customfield_10020": null,
+      "assignee": null,
+      "priority": {
+        "name": "High",
+        "id": "2"
+      },
+      "status": {
+        "name": "Open",
+        "id": "1",
+        "statusCategory": {
+          "id": 2,
+          "key": "new",
+          "name": "To Do"
+        }
+      },
+      "customfield_11524": null,
+      "customfield_11525": null
+    }
+  },
+  {
+    "id": "69566",
+    "key": "DTP-4830",
+    "fields": {
+      "summary": "Training revamp",
+      "customfield_11457": null,
+      "issuetype": {
+        "id": "10000",
+        "name": "Epic",
+        "subtask": false
+      },
+      "customfield_10777": null,
+      "customfield_10946": null,
+      "customfield_10020": null,
+      "assignee": null,
+      "priority": {
+        "name": "Medium",
+        "id": "3"
+      },
+      "status": {
+        "name": "Open",
+        "id": "1",
+        "statusCategory": {
+          "id": 2,
+          "key": "new",
+          "name": "To Do"
+        }
+      },
+      "customfield_11524": null,
+      "customfield_11525": null
+    }
   }
 ]

@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { jiraSettings, sprints, tickets, type Estimates, type JiraUser } from "@/db/schema";
+import { jiraSettings, sprints, tickets, type Estimates, type JiraUser, type StatusCategory } from "@/db/schema";
 
 type SprintRow = typeof sprints.$inferSelect;
 
@@ -16,7 +16,7 @@ export type SprintView = {
     summary: string;
     type: string;
     status: string;
-    statusCategory: "new" | "indeterminate" | "done";
+    statusCategory: StatusCategory;
     priority: string | null;
     assignee: JiraUser | null;
     devOwners: JiraUser[];

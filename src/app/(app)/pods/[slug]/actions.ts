@@ -1,8 +1,9 @@
 "use server";
 
 import { refresh } from "next/cache";
-import type { Skill } from "@/db/schema";
+import type { Skill, TshirtSize } from "@/db/schema";
 import { setLeave } from "@/server/capacity";
+import { setEpicSize } from "@/server/epics";
 import { addManualItem, deleteManualItem, updateManualItem, type ManualItemInput } from "@/server/manual-items";
 import { ForbiddenError } from "@/server/permissions";
 import { setProficiency } from "@/server/people";
@@ -55,6 +56,16 @@ export async function setProficiencyAction(_: CellState, form: FormData): Promis
 export async function setLeaveAction(_: CellState, form: FormData): Promise<CellState> {
   return saveCell(async () =>
     setLeave(await getViewer(), num(form, "personId"), num(form, "sprintId"), num(form, "days")),
+  );
+}
+
+export async function setEpicSizeAction(_: CellState, form: FormData): Promise<CellState> {
+  return saveCell(async () =>
+    setEpicSize(
+      await getViewer(),
+      String(form.get("key")),
+      (String(form.get("size") ?? "") || null) as TshirtSize | null,
+    ),
   );
 }
 

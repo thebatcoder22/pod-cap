@@ -115,6 +115,8 @@ export const sprints = pgTable("sprints", {
 // Jira only shares the email when the user's profile allows it.
 export type JiraUser = { accountId: string; displayName: string; emailAddress?: string };
 
+export type StatusCategory = "new" | "indeterminate" | "done";
+
 // Plannable DTP tickets. Sub-tasks and epics are not stored here.
 export const tickets = pgTable("tickets", {
   key: text("key").primaryKey(),
@@ -122,7 +124,7 @@ export const tickets = pgTable("tickets", {
   type: text("type").notNull(),
   status: text("status").notNull(),
   // Jira's status category: new, indeterminate or done.
-  statusCategory: text("status_category").$type<"new" | "indeterminate" | "done">().notNull(),
+  statusCategory: text("status_category").$type<StatusCategory>().notNull(),
   priority: text("priority"),
   // Jira POD value, matched against pods.jira_pod_value.
   pod: text("pod"),
@@ -201,3 +203,24 @@ export const manualItems = pgTable(
     check("manual_items_key_on_placeholders", sql`${t.jiraKey} is null or ${t.kind} = 'placeholder'`),
   ],
 );
+
+// DTP epics, synced with the tickets and replaced on each sync. Their child tickets point here by epic_key.
+export const epics = pgTable("epics", {
+  key: text("key").primaryKey(),
+  summary: text("summary").notNull(),
+  status: text("status").notNull(),
+  statusCategory: text("status_category").$type<StatusCategory>().notNull(),
+  // Jira POD value. Most epics have none; then their tickets decide, see planEpics.
+  pod: text("pod"),
+  readyForProductionDate: date("ready_for_production_date"),
+});
+
+export const TSHIRT_SIZES = ["S", "M", "L", "XL"] as const;
+export type TshirtSize = (typeof TSHIRT_SIZES)[number];
+export const tshirtSize = pgEnum("tshirt_size", TSHIRT_SIZES);
+
+// A lead's first guess at an epic's size. Keyed by Jira key, not a foreign key, so it outlives each sync's replace.
+export const epicSizes = pgTable("epic_sizes", {
+  epicKey: text("epic_key").primaryKey(),
+  size: tshirtSize("size").notNull(),
+});

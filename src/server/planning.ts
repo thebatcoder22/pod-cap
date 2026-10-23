@@ -318,3 +318,43 @@ export function planPickUp<
       })),
   };
 }
+
+export type EpicPlan<E, P> = E & {
+  /** The pod whose lead sizes it; null when no single pod can be told from Jira. */
+  owner: P | null;
+  /** Pods with child tickets in it. */
+  pods: P[];
+  /** Plannable child tickets. */
+  tickets: number;
+  /** Child skill-days per skill: null when no child has an estimate in it, so it never reads as 0. */
+  skills: { skill: Skill; days: number | null; notEstimated: number }[];
+  /** Child tickets with no estimate in any skill. */
+  unestimated: number;
+};
+
+/**
+ * An epic belongs to the pod its POD names. Most epics have no POD: then it belongs to the one pod its tickets
+ * are in, and with tickets in several pods to none, so no lead sizes work another pod shares.
+ */
+export function planEpics<E extends { key: string; pod: string | null }, P extends { jiraPodValue: string }>(
+  epics: E[],
+  tickets: { epicKey: string | null; pod: string | null; estimates: Estimates }[],
+  pods: P[],
+): EpicPlan<E, P>[] {
+  const children = Map.groupBy(tickets, (t) => t.epicKey);
+  return epics.map((e) => {
+    const mine = children.get(e.key) ?? [];
+    const worked = pods.filter((p) => mine.some((t) => t.pod === p.jiraPodValue));
+    const owner = e.pod ? (pods.find((p) => p.jiraPodValue === e.pod) ?? null) : worked.length === 1 ? worked[0] : null;
+    const skills = SKILLS.map((skill) => {
+      const estimated = mine.flatMap((t) => t.estimates[skill] ?? []);
+      return {
+        skill,
+        days: estimated.length ? round(estimated.reduce((sum, d) => sum + d, 0)) : null,
+        notEstimated: mine.length - estimated.length,
+      };
+    });
+    const unestimated = mine.filter((t) => !SKILLS.some((k) => t.estimates[k] !== undefined)).length;
+    return { ...e, owner, pods: worked, tickets: mine.length, skills, unestimated };
+  });
+}
