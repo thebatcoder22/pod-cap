@@ -15,7 +15,7 @@ test("the admin connects Jira without the token ever coming back to the browser"
   await page.getByLabel("Site").fill("delightree.atlassian.net");
   await page.getByLabel("Account email").fill("aman@delightree.com");
   await page.getByLabel("API token").fill("ATATT-e2e-secret");
-  await page.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("region", { name: "Jira connection" }).getByRole("button", { name: "Save" }).click();
 
   await expect(page.getByText("Saved. The new token is in use.")).toBeVisible();
   await expect(page.getByText(/API token saved \d/)).toBeVisible();
@@ -32,7 +32,7 @@ test("the admin gives a new lead access and takes it away", async ({ page, brows
   await expect(page.getByRole("button", { name: "Remove aman@delightree.com" })).toHaveCount(0);
 
   await page.getByLabel("Email address to allow").fill("New.Lead@Delightree.com");
-  await page.getByRole("button", { name: "Add" }).click();
+  await page.getByRole("region", { name: "Who can sign in" }).getByRole("button", { name: "Add" }).click();
   await expect(page.getByText("new.lead@delightree.com can now sign in.")).toBeVisible();
   await expect(page.getByRole("listitem").filter({ hasText: "new.lead@delightree.com" })).toBeVisible();
 

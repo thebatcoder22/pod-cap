@@ -21,7 +21,9 @@ import { getPodPage, type PodPage as PodData } from "@/server/pods";
 import { requireViewer } from "@/server/session";
 import { getSprintView, type SprintView } from "@/server/sprints";
 import { BOARD_ID, getSyncStatus } from "@/server/sync";
-import { ProficiencyInput } from "./proficiency-input";
+import { getCapacitySheet, type CapacitySheet } from "@/server/capacity";
+import { setLeaveAction, setProficiencyAction } from "./actions";
+import { CellInput } from "./cell-input";
 import { SprintPicker, SyncNowButton } from "./sprint-controls";
 
 // Covers the "Sync now" server action on this page.
@@ -54,6 +56,7 @@ async function Pod({ params, searchParams }: PageProps<"/pods/[slug]">) {
     getSyncStatus(),
   ]);
 
+  const capacity = view.sprint && (await getCapacitySheet(page, view.sprint));
   const { pod, members } = page;
   const lead = members.find((m) => m.isLead);
   const isOwn = viewer.pod?.id === pod.id;
@@ -113,7 +116,7 @@ async function Pod({ params, searchParams }: PageProps<"/pods/[slug]">) {
       )}
 
       <div {...rise(2)}>
-        <Sprint podName={pod.name} view={view} />
+        <Sprint podName={pod.name} view={view} capacity={capacity} canEdit={isOwn} />
       </div>
 
       <div {...rise(3)}>
@@ -145,10 +148,20 @@ function StatusIcon({ category, size = 16 }: { category: Category; size?: number
   return <Icon size={size} weight={weight} className={`shrink-0 ${color}`} aria-hidden />;
 }
 
-function Sprint({ podName, view }: { podName: string; view: SprintView }) {
+function Sprint({
+  podName,
+  view,
+  capacity,
+  canEdit,
+}: {
+  podName: string;
+  view: SprintView;
+  capacity: CapacitySheet | null;
+  canEdit: boolean;
+}) {
   const { sprint, tickets } = view;
 
-  if (!sprint) {
+  if (!sprint || !capacity) {
     return (
       <section aria-labelledby="sprint">
         <h2 id="sprint" className="sr-only">
@@ -181,6 +194,8 @@ function Sprint({ podName, view }: { podName: string; view: SprintView }) {
           {STATE_LABEL[sprint.state]}
         </span>
       </div>
+
+      <Capacity sheet={capacity} sprintId={sprint.id} canEdit={canEdit} />
 
       {tickets.length === 0 ? (
         <Empty icon={<TrayIcon size={20} aria-hidden />} title={`No ${podName} tickets in ${sprint.name}.`}>
@@ -472,6 +487,160 @@ function TicketTable({ tickets }: { tickets: Ticket[] }) {
   );
 }
 
+// ---- Capacity ----
+
+const days = (n: number) => plural(n, "day");
+
+function Capacity({ sheet, sprintId, canEdit }: { sheet: CapacitySheet; sprintId: number; canEdit: boolean }) {
+  const max = Math.max(1, ...sheet.skills.map((k) => k.capacity));
+  const holidays = sheet.holidays.length ? ` - ${plural(sheet.holidays.length, "holiday")}` : "";
+  const formula = `(${days(sheet.workingDays)} - leave${holidays}) x ${sheet.focusPercent}%`;
+
+  return (
+    <section aria-label="Capacity" className="grid items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+      <section aria-labelledby="by-skill" className={`${card} p-5`}>
+        <h3 id="by-skill" className={cardTitle}>
+          Capacity by skill
+        </h3>
+        <p className="mt-3 flex items-baseline gap-2">
+          <span className="text-3xl font-semibold tracking-tight tabular-nums">{sheet.total}</span>
+          <span className="text-sm text-ink-muted">plannable days across the pod</span>
+        </p>
+        <ul className="mt-5 space-y-1">
+          {sheet.skills.map((k, i) => {
+            const { gap } = k;
+            return (
+              <li key={k.skill} className={`-mx-2 rounded-lg px-2 py-1.5 ${gap ? "bg-danger-soft" : ""}`}>
+                <div className="grid grid-cols-[2.5rem_minmax(0,1fr)_4.5rem] items-center gap-3 text-sm">
+                  <span className="flex items-center gap-1.5 font-mono text-xs text-ink-muted">
+                    <span className={`size-1.5 rounded-full ${SKILL_TONE[k.skill]}`} aria-hidden />
+                    {k.skill}
+                  </span>
+                  <span className="h-1.5 rounded-full bg-fill" aria-hidden>
+                    <span
+                      className={`grow-x block h-full rounded-full ${SKILL_TONE[k.skill]}`}
+                      style={{ width: `${(k.capacity / max) * 100}%`, "--i": i } as React.CSSProperties}
+                    />
+                  </span>
+                  <span
+                    className={`text-right tabular-nums ${gap ? "font-semibold text-danger" : k.people ? "font-medium" : "text-ink-faint"}`}
+                  >
+                    {k.people ? days(k.capacity) : "No one"}
+                  </span>
+                </div>
+                {gap && (
+                  <p className="mt-1 flex items-center gap-1.5 pl-[3.25rem] text-xs font-medium text-danger">
+                    <WarningCircleIcon size={14} weight="fill" aria-hidden />
+                    No {k.skill} capacity this sprint
+                  </p>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+        <dl className="mt-5 grid grid-cols-3 gap-4 border-t border-line pt-4">
+          {[
+            ["Working days", sheet.workingDays],
+            ["Holidays", sheet.holidays.length],
+            ["Focus factor", `${sheet.focusPercent}%`],
+          ].map(([label, value]) => (
+            <div key={label} className="space-y-1">
+              <dt className="text-xs text-ink-muted">{label}</dt>
+              <dd className={`text-lg font-semibold tabular-nums ${value === 0 ? "text-ink-faint" : ""}`}>{value}</dd>
+            </div>
+          ))}
+        </dl>
+        {sheet.workingDays === 0 && (
+          <p className="mt-3 text-xs text-ink-muted">
+            This sprint has no dates in Jira yet, so it has no working days to plan.
+          </p>
+        )}
+        {sheet.holidays.length > 0 && (
+          <ul className="mt-3 space-y-1 text-xs text-ink-muted">
+            {sheet.holidays.map((h) => (
+              <li key={h.date} className="flex items-center gap-1.5">
+                <CalendarBlankIcon size={14} className="text-ink-faint" aria-hidden />
+                <span className="font-medium text-ink">{day(new Date(h.date))}</span>
+                {h.name}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section aria-labelledby="sheet" className={card}>
+        <div className="flex items-baseline justify-between gap-3 px-4 pt-5 pb-3 sm:px-5">
+          <h3 id="sheet" className={cardTitle}>
+            Capacity sheet
+          </h3>
+          <span className="text-xs text-ink-faint tabular-nums">{formula}</span>
+        </div>
+        {sheet.people.length === 0 ? (
+          <p className="px-5 pb-6 text-sm text-ink-muted">No one is in this pod yet.</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-t border-line text-xs text-ink-faint">
+                <th scope="col" className="py-2 pl-4 text-left font-medium sm:pl-5">
+                  Name
+                </th>
+                <th scope="col" className="w-20 py-2 pr-4.5 text-right font-medium">
+                  Leave
+                </th>
+                <th scope="col" className="w-24 py-2 pr-4 text-right font-medium sm:pr-5">
+                  Capacity
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line border-t border-line">
+              {sheet.people.map((p) => (
+                <tr key={p.id} className="transition-colors hover:bg-fill/50">
+                  <td className="py-2.5 pl-4 sm:pl-5">
+                    <div className="flex items-center gap-3">
+                      <span className="hidden sm:contents">
+                        <Avatar name={p.name} size="md" tone={p.isLead ? "accent" : "neutral"} />
+                      </span>
+                      <span className="flex flex-wrap items-baseline gap-x-2">
+                        <span className="font-medium">{p.name}</span>
+                        <span className="font-mono text-xs text-ink-faint">{p.mainSkill}</span>
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-2.5 pr-3 text-right">
+                    {canEdit ? (
+                      <CellInput
+                        action={setLeaveAction}
+                        fields={{ personId: p.id, sprintId }}
+                        name="days"
+                        value={p.leave}
+                        min={0}
+                        max={sheet.workingDays}
+                        step={0.5}
+                        label={`Leave days for ${p.name}`}
+                        unit="d"
+                        className={`${skillCell} gap-1`}
+                      />
+                    ) : (
+                      <span className={`${skillCell} border-transparent ${p.leave ? "" : "text-ink-faint"}`}>
+                        {p.leave} d
+                      </span>
+                    )}
+                  </td>
+                  <td
+                    className={`py-2.5 pr-4 text-right tabular-nums sm:pr-5 ${p.capacity === 0 ? "font-semibold text-danger" : "font-medium"}`}
+                  >
+                    {days(p.capacity)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+    </section>
+  );
+}
+
 // ---- Team ----
 
 /** One step of the accent per skill, so team shape reads as a single scale, not four brands. */
@@ -593,11 +762,16 @@ function Members({ members, canEdit }: { members: PodData["members"]; canEdit: b
                           <span className="sr-only">, main skill</span>
                         </span>
                       ) : canEdit ? (
-                        <ProficiencyInput
-                          personId={m.id}
-                          name={m.name}
-                          skill={skill}
-                          percent={m.proficiency[skill]}
+                        <CellInput
+                          action={setProficiencyAction}
+                          fields={{ personId: m.id, skill }}
+                          name="percent"
+                          value={m.proficiency[skill]}
+                          min={0}
+                          max={100}
+                          step={1}
+                          label={`${skill} proficiency for ${m.name}`}
+                          unit="%"
                           className={skillCell}
                         />
                       ) : (

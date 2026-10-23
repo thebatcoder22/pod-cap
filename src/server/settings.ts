@@ -1,6 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { allowlist, jiraSettings } from "@/db/schema";
+import { allowlist, holidays, jiraSettings, planningSettings } from "@/db/schema";
 import { normalizeEmail } from "./access";
 import { createJiraClient, JiraError, type JiraCredentials, type MakeJiraClient } from "./jira-client";
 import { assertAdmin } from "./permissions";
@@ -152,4 +152,51 @@ export async function removeAllowlisted(viewer: Viewer | null, rawEmail: string)
     }
     await tx.delete(allowlist).where(eq(allowlist.email, email));
   });
+}
+
+// ---- Capacity planning ----
+
+const DEFAULT_FOCUS_PERCENT = 70;
+
+/** Read by every capacity sheet, so any signed-in lead may read it. */
+export async function getPlanningSettings() {
+  const [[row], days] = await Promise.all([
+    db.select().from(planningSettings),
+    db.select().from(holidays).orderBy(asc(holidays.date)),
+  ]);
+  return { focusPercent: row?.focusPercent ?? DEFAULT_FOCUS_PERCENT, holidays: days };
+}
+
+/** Adds a company holiday, or renames the one already on that date. */
+export async function addHoliday(viewer: Viewer | null, input: { date: string; name: string }) {
+  assertAdmin(viewer);
+  const date = parseDay(input.date);
+  const name = input.name.trim();
+  if (!name) throw new ValidationError("Name the holiday.");
+  await db.insert(holidays).values({ date, name }).onConflictDoUpdate({ target: holidays.date, set: { name } });
+}
+
+export async function setFocusFactor(viewer: Viewer | null, percent: number) {
+  assertAdmin(viewer);
+  if (!Number.isInteger(percent) || percent < 1 || percent > 100)
+    throw new ValidationError("Enter a whole number from 1 to 100.");
+  await db
+    .insert(planningSettings)
+    .values({ focusPercent: percent })
+    .onConflictDoUpdate({ target: planningSettings.id, set: { focusPercent: percent } });
+}
+
+export async function removeHoliday(viewer: Viewer | null, date: string) {
+  assertAdmin(viewer);
+  await db.delete(holidays).where(eq(holidays.date, parseDay(date)));
+}
+
+/** A YYYY-MM-DD date. Round-tripping through Date refuses 2026-02-30 as well. */
+function parseDay(raw: string) {
+  const date = raw.trim();
+  const time = Date.parse(`${date}T00:00:00Z`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(time) || new Date(time).toISOString().slice(0, 10) !== date) {
+    throw new ValidationError("Pick a date.");
+  }
+  return date;
 }

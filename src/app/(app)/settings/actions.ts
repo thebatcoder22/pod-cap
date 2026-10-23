@@ -8,6 +8,9 @@ import { ForbiddenError } from "@/server/permissions";
 import { getViewer } from "@/server/session";
 import {
   addAllowlisted,
+  addHoliday,
+  removeHoliday,
+  setFocusFactor,
   removeAllowlisted,
   saveJiraSettings,
   testJiraConnection,
@@ -111,5 +114,33 @@ export async function removePersonAction(_: ActionState, form: FormData) {
   return run(async () => {
     const { name } = await removePerson(await getViewer(), intField(form, "personId"));
     return `${name} was removed and no longer counts toward any pod.`;
+  });
+}
+
+// ---- Capacity planning ----
+
+export async function setFocusFactorAction(_: ActionState, form: FormData) {
+  const percent = text(form, "percent");
+  return run(
+    async () => {
+      await setFocusFactor(await getViewer(), Number(percent || NaN));
+      return `Capacity now plans ${percent}% of available days.`;
+    },
+    { percent },
+  );
+}
+
+export async function addHolidayAction(_: ActionState, form: FormData) {
+  const fields = { date: text(form, "date"), name: text(form, "name") };
+  return run(async () => {
+    await addHoliday(await getViewer(), fields);
+    return `${fields.name.trim()} is a holiday for every pod.`;
+  }, fields);
+}
+
+export async function removeHolidayAction(_: ActionState, form: FormData) {
+  return run(async () => {
+    await removeHoliday(await getViewer(), text(form, "date"));
+    return "Holiday removed.";
   });
 }

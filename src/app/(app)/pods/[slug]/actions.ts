@@ -2,6 +2,7 @@
 
 import { refresh } from "next/cache";
 import type { Skill } from "@/db/schema";
+import { setLeave } from "@/server/capacity";
 import { ForbiddenError } from "@/server/permissions";
 import { setProficiency } from "@/server/people";
 import { getViewer } from "@/server/session";
@@ -29,20 +30,29 @@ export async function syncNowAction(): Promise<SyncState> {
 }
 
 /** Null once saved: the refreshed value is the confirmation. */
-export type ProficiencyState = { error: string } | null;
+export type CellState = { error: string } | null;
 
-export async function setProficiencyAction(_: ProficiencyState, form: FormData): Promise<ProficiencyState> {
+const num = (form: FormData, name: string) => Number(form.get(name) || NaN);
+
+async function saveCell(work: () => Promise<void>): Promise<CellState> {
   try {
-    await setProficiency(
-      await getViewer(),
-      Number(form.get("personId") || NaN),
-      String(form.get("skill")) as Skill,
-      Number(form.get("percent") || NaN),
-    );
+    await work();
     refresh();
     return null;
   } catch (e) {
     if (e instanceof ValidationError || e instanceof ForbiddenError) return { error: e.message };
     throw e;
   }
+}
+
+export async function setProficiencyAction(_: CellState, form: FormData): Promise<CellState> {
+  return saveCell(async () =>
+    setProficiency(await getViewer(), num(form, "personId"), String(form.get("skill")) as Skill, num(form, "percent")),
+  );
+}
+
+export async function setLeaveAction(_: CellState, form: FormData): Promise<CellState> {
+  return saveCell(async () =>
+    setLeave(await getViewer(), num(form, "personId"), num(form, "sprintId"), num(form, "days")),
+  );
 }

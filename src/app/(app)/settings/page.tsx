@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 import { SKILLS } from "@/db/schema";
-import { dateTime } from "@/lib/format";
+import { dateTime, longDay } from "@/lib/format";
 import { getPeopleAdmin } from "@/server/people";
 import { requireViewer } from "@/server/session";
-import { getJiraSettings, listAllowlist } from "@/server/settings";
-import { Allowlist, ConfirmJira, JiraForm, Members, NoPodYet } from "./forms";
+import { getJiraSettings, getPlanningSettings, listAllowlist } from "@/server/settings";
+import { Allowlist, ConfirmJira, JiraForm, Members, NoPodYet, Planning } from "./forms";
 
 // Small admin-only page: blocks on the session.
 export const instant = false;
@@ -12,10 +12,11 @@ export const instant = false;
 export default async function SettingsPage() {
   const viewer = await requireViewer();
   if (!viewer.isAdmin) notFound();
-  const [jira, rows, people] = await Promise.all([
+  const [jira, rows, people, planning] = await Promise.all([
     getJiraSettings(viewer),
     listAllowlist(viewer),
     getPeopleAdmin(viewer),
+    getPlanningSettings(),
   ]);
   // Rows with nothing to pick from would only repeat "Not linked to Jira yet" from the member list.
   const toConfirm = people.toConfirm.filter((p) => p.candidates.length || people.noPod.length);
@@ -23,6 +24,7 @@ export default async function SettingsPage() {
   const sections = [
     { id: "jira-connection", label: "Jira connection" },
     { id: "access", label: "Who can sign in" },
+    { id: "capacity", label: "Capacity planning" },
     { id: "people", label: "People" },
   ];
 
@@ -77,10 +79,22 @@ export default async function SettingsPage() {
           <Allowlist rows={rows} viewerEmail={viewer.email} />
         </Panel>
 
+        <Panel
+          id="capacity"
+          title="Capacity planning"
+          description="Every pod's capacity is (working days - leave - holidays) x focus factor."
+          i={3}
+        >
+          <Planning
+            focusPercent={planning.focusPercent}
+            holidays={planning.holidays.map((h) => ({ ...h, label: longDay(new Date(h.date)) }))}
+          />
+        </Panel>
+
         <section
           aria-labelledby="people-heading"
           className="rise scroll-mt-10 space-y-5"
-          style={{ "--i": 3 } as React.CSSProperties}
+          style={{ "--i": 4 } as React.CSSProperties}
           id="people"
         >
           <div className="space-y-1">

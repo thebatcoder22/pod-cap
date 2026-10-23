@@ -4,6 +4,7 @@ import {
   check,
   date,
   jsonb,
+  numeric,
   pgEnum,
   pgTable,
   serial,
@@ -77,6 +78,26 @@ export const jiraSettings = pgTable(
   (t) => [check("jira_settings_single_row", sql`${t.id} = 1`)],
 );
 
+// One row, absent until the admin first changes it: see getPlanningSettings.
+export const planningSettings = pgTable(
+  "planning_settings",
+  {
+    id: integer("id").primaryKey().default(1),
+    // The share of available days that is plannable, as a whole percent.
+    focusPercent: integer("focus_percent").notNull(),
+  },
+  (t) => [
+    check("planning_settings_single_row", sql`${t.id} = 1`),
+    check("planning_settings_focus_range", sql`${t.focusPercent} between 1 and 100`),
+  ],
+);
+
+// Company-wide non-working days, maintained by the admin.
+export const holidays = pgTable("holidays", {
+  date: date("date").primaryKey(),
+  name: text("name").notNull(),
+});
+
 // ---- Synced from Jira, replaced on each sync ----
 
 export const sprintState = pgEnum("sprint_state", ["future", "active", "closed"]);
@@ -126,3 +147,24 @@ export const syncRuns = pgTable("sync_runs", {
   status: syncStatus("status").notNull().default("running"),
   error: text("error"),
 });
+
+// ---- Platform-owned, per sprint ----
+
+// Days a person is away in a sprint, in half-day steps. No row means no leave.
+export const leave = pgTable(
+  "leave",
+  {
+    personId: integer("person_id")
+      .notNull()
+      .references(() => people.id),
+    // Goes with the sprint when Jira deletes it.
+    sprintId: integer("sprint_id")
+      .notNull()
+      .references(() => sprints.id, { onDelete: "cascade" }),
+    days: numeric("days", { precision: 3, scale: 1, mode: "number" }).notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.personId, t.sprintId] }),
+    check("leave_half_days", sql`${t.days} > 0 and ${t.days} * 2 = trunc(${t.days} * 2)`),
+  ],
+);

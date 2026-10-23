@@ -7,11 +7,14 @@ import type { PeopleAdmin } from "@/server/people";
 import {
   addAllowlistAction,
   addFromJiraAction,
+  addHolidayAction,
   confirmJiraAccountAction,
   movePersonAction,
   removeAllowlistAction,
+  removeHolidayAction,
   removePersonAction,
   saveJiraAction,
+  setFocusFactorAction,
   testJiraAction,
   type ActionState,
 } from "./actions";
@@ -397,6 +400,111 @@ export function Members({ rows, pods }: { rows: PeopleAdmin["members"]; pods: Pe
           </section>
         );
       })}
+    </>
+  );
+}
+
+export function Planning({
+  focusPercent,
+  holidays,
+}: {
+  focusPercent: number;
+  holidays: { date: string; name: string; label: string }[];
+}) {
+  const [focused, saveFocus, savingFocus] = useActionState(setFocusFactorAction, null);
+  const [added, add, adding] = useActionState(addHolidayAction, null);
+  const [removed, remove, removing] = useActionState(removeHolidayAction, null);
+
+  return (
+    <>
+      <form action={saveFocus} className="flex flex-wrap items-end gap-x-4 gap-y-3 border-b border-line p-5">
+        <label className="space-y-1.5">
+          <span className="block text-sm font-medium">Focus factor</span>
+          <span
+            className={`${input} flex w-28 items-center gap-1 focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-accent`}
+          >
+            <input
+              name="percent"
+              type="number"
+              inputMode="numeric"
+              required
+              min={1}
+              max={100}
+              step={1}
+              defaultValue={focused?.fields?.percent ?? focusPercent}
+              className="w-full [appearance:textfield] bg-transparent tabular-nums outline-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            <span aria-hidden className="text-ink-faint">
+              %
+            </span>
+          </span>
+        </label>
+        <button type="submit" disabled={savingFocus} className={secondary}>
+          {savingFocus ? "Saving…" : "Save"}
+        </button>
+        <p className="basis-full text-xs text-ink-faint">
+          The share of available days that is plannable. The rest is for thinking, monitoring and rituals.
+        </p>
+        <div aria-live="polite" className="basis-full empty:hidden">
+          <Result states={[focused]} />
+        </div>
+      </form>
+
+      <h3 className="flex items-baseline gap-2 border-b border-line bg-fill/50 px-5 py-2 text-xs font-medium">
+        Company holidays
+        <span className="font-normal text-ink-faint tabular-nums">{holidays.length}</span>
+      </h3>
+      {holidays.length === 0 ? (
+        <p className="px-5 py-6 text-center text-sm text-ink-muted">
+          No holidays yet. A holiday takes a day off every person&apos;s capacity.
+        </p>
+      ) : (
+        <ul className={list}>
+          {holidays.map((h) => (
+            <li key={h.date} className="flex min-h-13 items-center gap-4 px-5 py-2 text-sm">
+              <span className="w-32 shrink-0 text-ink-muted tabular-nums">{h.label}</span>
+              <span className="min-w-0 truncate font-medium">{h.name}</span>
+              <form action={remove} className="ml-auto">
+                <input type="hidden" name="date" value={h.date} />
+                <button type="submit" disabled={removing} aria-label={`Remove ${h.name}`} className={ghostDanger}>
+                  Remove
+                </button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <form action={add} className={footer}>
+        <label htmlFor="holiday-date" className="sr-only">
+          Holiday date
+        </label>
+        <input
+          id="holiday-date"
+          name="date"
+          type="date"
+          required
+          defaultValue={added?.fields?.date}
+          className={`${input} max-w-44`}
+        />
+        <label htmlFor="holiday-name" className="sr-only">
+          Holiday name
+        </label>
+        <input
+          id="holiday-name"
+          name="name"
+          required
+          defaultValue={added?.fields?.name}
+          placeholder="Diwali"
+          className={`${input} max-w-xs flex-1`}
+        />
+        <button type="submit" disabled={adding} className={secondary}>
+          {adding ? "Adding…" : "Add holiday"}
+        </button>
+        <div aria-live="polite" className="min-w-0 basis-full empty:hidden">
+          <Result states={[added, removed]} />
+        </div>
+      </form>
     </>
   );
 }

@@ -231,7 +231,7 @@ export async function setProficiency(viewer: Viewer | null, personId: number, sk
     .onConflictDoUpdate({ target: [proficiencies.personId, proficiencies.skill], set: { percent } });
 }
 
-async function activePerson(id: number) {
+export async function activePerson(id: number) {
   if (!Number.isInteger(id)) throw new ValidationError("Pick a person.");
   const [person] = await db
     .select()
