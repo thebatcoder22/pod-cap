@@ -11,7 +11,7 @@ test("an allowlisted pod lead lands on their own pod page", async ({ page }) => 
     await expect(page.getByRole("region", { name: "Members" }).getByRole("cell", { name })).toBeVisible();
   }
 
-  await page.getByRole("link", { name: "Atlas" }).click();
+  await page.getByRole("navigation", { name: "Pods" }).getByRole("link", { name: "Atlas" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Atlas" })).toBeVisible();
   await expect(page.getByText("Read only")).toBeVisible();
 

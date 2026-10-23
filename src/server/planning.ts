@@ -234,3 +234,87 @@ export function planLoad<
     unassigned: round(sum([...planned, ...manual].flatMap((t) => Object.values(t.unassigned)))),
   };
 }
+
+/** Jira's priorities, highest first. A ticket with none, or an unknown one, comes after them all. */
+const PRIORITIES = ["Highest", "High", "Medium", "Low", "Lowest"];
+const rank = (p: string | null) => (p && PRIORITIES.includes(p) ? PRIORITIES.indexOf(p) : PRIORITIES.length);
+
+export type PickUp<P, T> = {
+  /** People with free days, each with the backlog tickets that fit them. */
+  people: (P & {
+    /** Exact matches, then stretch options; each by Jira priority, then smallest cost. */
+    suggestions: (T & {
+      skill: Skill;
+      /** The ticket's skill-days. */
+      days: number;
+      /** What it takes this person in calendar days: skill-days / proficiency. */
+      cost: number;
+      /** Outside their main skill. */
+      stretch: boolean;
+    })[];
+  })[];
+  /** The pod's overloaded skills, and where the missing days could come from. */
+  short: {
+    skill: Skill;
+    over: number;
+    /** People in the pod outside their main skill, with the skill-days of the gap their free days could absorb. */
+    cover: (P & { absorb: number })[];
+    /** Other pods' free main-skill capacity in it, most first. */
+    elsewhere: { pod: string; slug: string; free: number }[];
+  }[];
+};
+
+/**
+ * Suggestions only: the pod lead decides and assigns in Jira. A backlog ticket fits a person when all its
+ * skill-days are in one skill they have proficiency in, costing no more than their free days.
+ */
+export function planPickUp<
+  P extends { mainSkill: Skill; proficiency: Proficiency; free: number },
+  T extends { priority: string | null; estimates: Estimates },
+>(
+  people: P[],
+  backlog: T[],
+  skills: Commitment<unknown>["skills"],
+  others: { pod: string; slug: string; skills: Commitment<unknown>["skills"] }[],
+): PickUp<P, T> {
+  const withRoom = people.filter((p) => p.free > 0);
+  // A skill with no estimate is no work in it: most tickets only ever get FE Days or BE Days.
+  const oneSkill = backlog.flatMap((t) => {
+    const worked = SKILLS.filter((k) => (t.estimates[k] ?? 0) > 0);
+    return worked.length === 1 ? [{ ...t, skill: worked[0], days: t.estimates[worked[0]]! }] : [];
+  });
+
+  return {
+    people: withRoom.map((p) => ({
+      ...p,
+      suggestions: oneSkill
+        .flatMap((t) => {
+          const cost = t.days / (p.proficiency[t.skill] / 100);
+          return p.proficiency[t.skill] > 0 && cost <= p.free
+            ? [{ ...t, cost: round(cost), stretch: t.skill !== p.mainSkill }]
+            : [];
+        })
+        .sort(
+          (a, b) => Number(a.stretch) - Number(b.stretch) || rank(a.priority) - rank(b.priority) || a.cost - b.cost,
+        ),
+    })),
+    short: skills
+      .filter((k) => k.over > 0)
+      .map(({ skill, over }) => ({
+        skill,
+        over,
+        // ponytail: each skill counts a person's whole free days; split them if two skills are short at once.
+        cover: withRoom
+          .filter((p) => p.mainSkill !== skill && p.proficiency[skill] > 0)
+          .map((p) => ({ ...p, absorb: round(Math.min(over, (p.free * p.proficiency[skill]) / 100)) }))
+          .sort((a, b) => b.absorb - a.absorb),
+        elsewhere: others
+          .flatMap(({ pod, slug, skills }) => {
+            const k = skills.find((s) => s.skill === skill)!;
+            const room = round(k.capacity - (k.committed ?? 0));
+            return room > 0 ? [{ pod, slug, free: room }] : [];
+          })
+          .sort((a, b) => b.free - a.free),
+      })),
+  };
+}

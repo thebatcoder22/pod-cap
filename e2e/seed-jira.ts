@@ -62,6 +62,31 @@ export async function seedSyncedJira(db: Db) {
       assignee: null,
       devOwners: [{ accountId: "a-priya", displayName: "Priya Nair" }],
     },
+    // Velocity's backlog: in no sprint, for the pick-up panel.
+    {
+      key: "DTP-4710",
+      summary: "Show overdue checklists on the dashboard",
+      type: "Story",
+      status: "To Do",
+      statusCategory: "new",
+      priority: "High",
+      pod: "Velocity",
+      assignee: null,
+      devOwners: [],
+      estimates: { FE: 2 },
+    },
+    {
+      key: "DTP-4711",
+      summary: "Checklist export times out for large locations",
+      type: "Bug",
+      status: "To Do",
+      statusCategory: "new",
+      priority: "Highest",
+      pod: "Velocity",
+      assignee: null,
+      devOwners: [],
+      estimates: { BE: 1 },
+    },
   ]);
   const at = new Date("2026-10-23T08:30:00.000Z");
   await db.insert(syncRuns).values({ startedAt: at, finishedAt: at, status: "succeeded" });

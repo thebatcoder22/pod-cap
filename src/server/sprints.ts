@@ -54,29 +54,31 @@ export async function getSprintView(jiraPodValue: string, requested?: string): P
     .where(and(eq(tickets.pod, jiraPodValue), sql`${sprint.id} = any(${tickets.sprintIds})`))
     .orderBy(sql`split_part(${tickets.key}, '-', 2)::int`);
 
-  const browse = (key: string) => (settings ? `${settings.site}/browse/${key}` : null);
+  const site = settings?.site ?? null;
+  return { sprints: all, sprint, tickets: rows.map((t) => ticketView(t, site)) };
+}
+
+/** A synced ticket as the pod page shows it. `site` is null when Jira is not connected. */
+export function ticketView(t: typeof tickets.$inferSelect, site: string | null): SprintView["tickets"][number] {
+  const browse = (key: string) => (site ? `${site}/browse/${key}` : null);
   return {
-    sprints: all,
-    sprint,
-    tickets: rows.map((t) => ({
-      key: t.key,
-      url: browse(t.key),
-      summary: t.summary,
-      type: t.type,
-      status: t.status,
-      statusCategory: t.statusCategory,
-      priority: t.priority,
-      assignee: t.assignee,
-      devOwners: t.devOwners,
-      // Jira can list a Dev Owner twice; each counts once.
-      owners: [
-        ...new Map(
-          (t.devOwners.length ? t.devOwners : t.assignee ? [t.assignee] : []).map((u) => [u.accountId, u]),
-        ).values(),
-      ],
-      epic: t.epicKey ? { key: t.epicKey, summary: t.epicSummary ?? t.epicKey, url: browse(t.epicKey) } : null,
-      readyForProductionDate: t.readyForProductionDate,
-      estimates: t.estimates,
-    })),
+    key: t.key,
+    url: browse(t.key),
+    summary: t.summary,
+    type: t.type,
+    status: t.status,
+    statusCategory: t.statusCategory,
+    priority: t.priority,
+    assignee: t.assignee,
+    devOwners: t.devOwners,
+    // Jira can list a Dev Owner twice; each counts once.
+    owners: [
+      ...new Map(
+        (t.devOwners.length ? t.devOwners : t.assignee ? [t.assignee] : []).map((u) => [u.accountId, u]),
+      ).values(),
+    ],
+    epic: t.epicKey ? { key: t.epicKey, summary: t.epicSummary ?? t.epicKey, url: browse(t.epicKey) } : null,
+    readyForProductionDate: t.readyForProductionDate,
+    estimates: t.estimates,
   };
 }
