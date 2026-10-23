@@ -8,14 +8,14 @@ Non-admins cannot see or use the page, and the server refuses their actions.
 
 **Blocked by:** 01 - Sign in with Google, allowlist and seeded pod page.
 
-**Status:** ready-for-agent
+**Status:** done (commit e6566cf, live at https://pod-cap.vercel.app)
 
-- [ ] The admin can save Jira site, email and API token; the token is encrypted at rest with an application key from the environment
-- [ ] The saved token never appears in any page, response or log; the page only shows that a token is set and when
-- [ ] "Test connection" reports success or the exact reason for failure (bad credentials, no access to DTP, unreachable site)
-- [ ] The admin can replace the token, and the old one stops being used
-- [ ] The admin can add and remove allowlisted addresses; addresses are normalised to lowercase
-- [ ] The admin cannot remove their own address or the last admin
-- [ ] A non-admin is refused by the server for every settings action, not just hidden in the UI
-- [ ] Service tests cover encryption round-trip, permission refusals and allowlist edits; the Jira check runs against a fake Jira client
-- [ ] Hosting: the encryption key env var is documented and set on Vercel production
+- [x] The admin can save Jira site, email and API token; the token is encrypted at rest with an application key from the environment
+- [x] The saved token never appears in any page, response or log; the page only shows that a token is set and when
+- [x] "Test connection" reports success or the exact reason for failure (bad credentials, no access to DTP, unreachable site)
+- [x] The admin can replace the token, and the old one stops being used
+- [x] The admin can add and remove allowlisted addresses; addresses are normalised to lowercase
+- [x] The admin cannot remove their own address or the last admin
+- [x] A non-admin is refused by the server for every settings action, not just hidden in the UI
+- [x] Service tests cover encryption round-trip, permission refusals and allowlist edits; the Jira check runs against a fake Jira client
+- [x] Hosting: the encryption key env var is documented and set on Vercel production

@@ -5,12 +5,12 @@ Ticket work is attributed to the people doing it, with flags for work nobody in 
 
 **Blocked by:** 04 - Jira user matching and the "No pod yet" list; 05 - Proficiency editing; 07 - Committed vs capacity per skill.
 
-**Status:** ready-for-agent
+**Status:** done (commit f6f0d46, live at https://pod-cap.vercel.app)
 
-- [ ] A ticket's skill-days for a skill go to its Dev Owners with proficiency above zero in that skill, split evenly
-- [ ] If Dev Owners is empty, the assignee is used
-- [ ] Work with no eligible owner counts against the pod as unassigned work and raises a flag
-- [ ] Calendar days consumed = skill-days / proficiency; free days = capacity - calendar days, and can be negative
-- [ ] Each person shows load in skill-days and calendar days against capacity
-- [ ] Opening a person lists their sprint tickets with status and attributed skill-days
-- [ ] Dev Owners from other pods are shown as cross-pod help on the ticket
+- [x] A ticket's skill-days for a skill go to its Dev Owners with proficiency above zero in that skill, split evenly
+- [x] If Dev Owners is empty, the assignee is used
+- [x] Work with no eligible owner counts against the pod as unassigned work and raises a flag
+- [x] Calendar days consumed = skill-days / proficiency; free days = capacity - calendar days, and can be negative
+- [x] Each person shows load in skill-days and calendar days against capacity
+- [x] Opening a person lists their sprint tickets with status and attributed skill-days
+- [x] Dev Owners from other pods are shown as cross-pod help on the ticket

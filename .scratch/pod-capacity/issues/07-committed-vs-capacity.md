@@ -5,11 +5,11 @@ Missing estimates show as "not estimated", never as zero, and a list shows ticke
 
 **Blocked by:** 06 - Capacity sheet: leave, holidays, focus factor.
 
-**Status:** ready-for-agent
+**Status:** done (commit 7034360, live at https://pod-cap.vercel.app)
 
-- [ ] Estimates are read from the Jira fields FE Days, BE Days, Data Days and AI Days, discovered by field name at sync time
-- [ ] A skill whose field does not exist yet, or is empty on a ticket, shows as "not estimated" and is counted separately
-- [ ] Committed skill-days per skill = sum of estimates of the pod's plannable tickets in the sprint
-- [ ] Each overloaded skill shows the gap in days
-- [ ] A list of the sprint's plannable tickets with no estimates at all, each linking to Jira
-- [ ] Bugs in the sprint count like stories
+- [x] Estimates are read from the Jira fields FE Days, BE Days, Data Days and AI Days, discovered by field name at sync time
+- [x] A skill whose field does not exist yet, or is empty on a ticket, shows as "not estimated" and is counted separately
+- [x] Committed skill-days per skill = sum of estimates of the pod's plannable tickets in the sprint
+- [x] Each overloaded skill shows the gap in days
+- [x] A list of the sprint's plannable tickets with no estimates at all, each linking to Jira
+- [x] Bugs in the sprint count like stories
