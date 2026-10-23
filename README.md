@@ -2,6 +2,33 @@
 
 Capacity, load and pick-up planning for Delightree pod leads, on top of Jira.
 See `SPEC.md` for the full spec.
+Live at https://pod-cap.vercel.app for allowlisted pod leads.
+
+Jira stays the source of truth for tickets, sprints, owners and estimates, and the platform never writes to it.
+It owns only what Jira does not know: pods and people, proficiency per skill, leave, holidays, manual items, epic sizes and sprint history.
+
+## What a pod lead sees
+
+Each pod page, for any sprint on DTP board 267:
+
+- **Capacity sheet**: each person's plannable days, (working days - leave - holidays) x focus factor, and the pod's capacity per skill (FE, BE, Data, AI).
+- **Committed vs capacity**: the sprint's FE, BE, Data and AI Days from Jira plus manual items, against capacity, with overloaded skills and unestimated tickets called out.
+- **Who is working on what**: each person's load in skill-days and calendar days, attributed to Dev Owners (else the assignee), with cross-pod help and unassigned work flagged.
+- **Pick-up panel**: backlog tickets that fit people with free days, exact matches before labeled stretch options, and where an overloaded skill's days could come from.
+- **Manual items**: support, interviews and placeholders for work not ticketed yet, counted like tickets.
+- **Epics**: T-shirt size next to the skill-days estimated on their tickets, and the Ready for Production Date.
+- **Trends**: capacity and committed per skill frozen when each sprint starts, and completed when it closes.
+
+Every lead sees every pod; leads edit only their own, enforced on the server.
+The admin manages the Jira connection, focus factor, holidays, allowlist, pod membership and snapshots in Settings and on the Trends pages.
+
+## Code map
+
+- `src/server/planning.ts`: the planning engine, every capacity rule as pure functions with no I/O.
+- `src/server/sync.ts` and `jira-client.ts`: the Jira sync, the only code that talks to Jira.
+- `src/server/*.ts`: services that load data, call the planning engine and check permissions.
+- `src/app/`: Next.js App Router pages and server actions.
+- `tests/`: a fake Jira client serving trimmed real DTP responses, used by the service tests.
 
 ## Local development
 
@@ -24,7 +51,7 @@ That path is never enabled on Vercel.
 pnpm typecheck
 pnpm lint
 pnpm test       # service tests against podcap_test
-pnpm test:e2e   # Playwright sign-in test against a production build on podcap_e2e
+pnpm test:e2e   # Playwright specs against a production build on podcap_e2e
 ```
 
 ## Schema changes
@@ -48,3 +75,8 @@ Edit `src/db/schema.ts`, then run `pnpm db:generate` and commit the new file in 
 
 Preview deployments also run migrations against their own `DATABASE_URL`.
 Point previews at a Neon branch, not the production database.
+
+## Agent skills
+
+`.agents/skills/` holds the Neon skills for coding agents, installed from `neondatabase/agent-skills` and pinned in `skills-lock.json`.
+`.claude/skills/` links to them, so Claude Code picks them up too.
