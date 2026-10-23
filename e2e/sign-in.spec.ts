@@ -1,11 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
-
-async function signInAs(page: Page, email: string) {
-  await page.goto("/");
-  await expect(page).toHaveURL(/\/sign-in$/);
-  await page.getByLabel("Test sign-in email").fill(email);
-  await page.getByRole("button", { name: "Test sign-in" }).click();
-}
+import { expect, test } from "@playwright/test";
+import { signInAs } from "./sign-in-as";
 
 test("an allowlisted pod lead lands on their own pod page", async ({ page }) => {
   await signInAs(page, "rahul@delightree.com");

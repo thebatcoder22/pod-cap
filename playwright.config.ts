@@ -12,6 +12,11 @@ export default defineConfig({
     url: `http://localhost:${PORT}/sign-in`,
     timeout: 180_000,
     reuseExistingServer: !process.env.CI,
-    env: { DATABASE_URL: E2E_DATABASE_URL, E2E_TEST_LOGIN: "1", AUTH_TRUST_HOST: "true" },
+    env: {
+      DATABASE_URL: E2E_DATABASE_URL,
+      E2E_TEST_LOGIN: "1",
+      AUTH_TRUST_HOST: "true",
+      ENCRYPTION_KEY: "ZTJlLW9ubHkta2V5LWUyZS1vbmx5LWtleS0zMmJ5dGU=",
+    },
   },
 });

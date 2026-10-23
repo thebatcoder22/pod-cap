@@ -1,4 +1,15 @@
-import { boolean, pgEnum, pgTable, serial, text, integer, type AnyPgColumn } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import {
+  boolean,
+  check,
+  pgEnum,
+  pgTable,
+  serial,
+  text,
+  integer,
+  timestamp,
+  type AnyPgColumn,
+} from "drizzle-orm/pg-core";
 
 export const SKILLS = ["FE", "BE", "Data", "AI"] as const;
 export type Skill = (typeof SKILLS)[number];
@@ -28,3 +39,17 @@ export const allowlist = pgTable("allowlist", {
   email: text("email").primaryKey(),
   isAdmin: boolean("is_admin").notNull().default(false),
 });
+
+// One row: the platform's Jira connection.
+export const jiraSettings = pgTable(
+  "jira_settings",
+  {
+    id: integer("id").primaryKey().default(1),
+    site: text("site").notNull(),
+    email: text("email").notNull(),
+    // AES-256-GCM, see src/server/secrets.ts. Never leaves the server.
+    tokenCiphertext: text("token_ciphertext").notNull(),
+    tokenUpdatedAt: timestamp("token_updated_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [check("jira_settings_single_row", sql`${t.id} = 1`)],
+);
