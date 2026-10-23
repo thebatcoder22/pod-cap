@@ -20,7 +20,7 @@ test("a lead sees their pod's tickets for the upcoming sprint and can switch spr
   await expect(picker).toHaveValue("432");
   await expect(page.getByText("26 Oct to 6 Nov")).toBeVisible();
 
-  const key = page.getByRole("link", { name: "DTP-4625" });
+  const key = page.getByRole("row", { name: /DTP-4625/ }).getByRole("link", { name: "DTP-4625" });
   await expect(key).toHaveAttribute("href", "https://delightree.atlassian.net/browse/DTP-4625");
   await expect(page.getByRole("row", { name: /DTP-4625/ })).toContainText("Rahul Saharan");
   await expect(page.getByRole("row", { name: /DTP-4395/ })).toContainText("Shahid Khan");

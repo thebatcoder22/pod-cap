@@ -1,9 +1,9 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { leave, sprints } from "@/db/schema";
-import { activePerson } from "./people";
+import { activePerson, linkedPeopleOutside } from "./people";
 import { assertCanEditPod } from "./permissions";
-import { planCapacity, planCommitment, workingDays } from "./planning";
+import { planCapacity, planCommitment, planLoad, workingDays } from "./planning";
 import type { PodPage } from "./pods";
 import { getPlanningSettings, ValidationError } from "./settings";
 import type { SprintView } from "./sprints";
@@ -15,11 +15,11 @@ export type CapacitySheet = Awaited<ReturnType<typeof getCapacitySheet>>;
 
 /**
  * Each member's capacity in a sprint and the pod's capacity per skill, with what they are computed from,
- * set against the skill-days committed in the pod's tickets for the sprint.
+ * set against the skill-days committed in the pod's tickets for the sprint, and who those skill-days fall to.
  */
 export async function getCapacitySheet(page: PodPage, sprint: Sprint, tickets: SprintView["tickets"]) {
   const ids = page.members.map((m) => m.id);
-  const [settings, rows] = await Promise.all([
+  const [settings, rows, others] = await Promise.all([
     getPlanningSettings(),
     ids.length
       ? db
@@ -27,15 +27,21 @@ export async function getCapacitySheet(page: PodPage, sprint: Sprint, tickets: S
           .from(leave)
           .where(and(eq(leave.sprintId, sprint.id), inArray(leave.personId, ids)))
       : [],
+    linkedPeopleOutside(page.pod.id),
   ]);
   const plan = planCapacity({
     sprint,
-    people: page.members.map(({ id, name, mainSkill, isLead }) => ({ id, name, mainSkill, isLead })),
+    people: page.members,
     leave: new Map(rows.map((r) => [r.personId, r.days])),
     holidays: settings.holidays,
     focusFactor: settings.focusPercent / 100,
   });
-  return { ...plan, focusPercent: settings.focusPercent, commitment: planCommitment(tickets, plan.skills) };
+  return {
+    ...plan,
+    focusPercent: settings.focusPercent,
+    commitment: planCommitment(tickets, plan.skills),
+    load: planLoad(tickets, plan.people, new Map(others.map((p) => [p.jiraAccountId, p]))),
+  };
 }
 
 /** A lead enters one of their own people's leave for a sprint, in half days. Zero clears it. */

@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, isNull, ne } from "drizzle-orm";
 import { db, type Db } from "@/db";
 import { people, pods, proficiencies, SKILLS, tickets, type JiraUser, type Skill } from "@/db/schema";
 import { assertAdmin, assertCanEditPod } from "./permissions";
@@ -212,6 +212,16 @@ export async function withProficiency<P extends { id: number; mainSkill: Skill }
     proficiency[p.mainSkill] = 100;
     return { ...p, proficiency };
   });
+}
+
+/** Active people outside a pod who have a Jira account, with their pod's name and proficiency. */
+export async function linkedPeopleOutside(podId: number) {
+  const rows = await db
+    .select({ id: people.id, mainSkill: people.mainSkill, jiraAccountId: people.jiraAccountId, pod: pods.name })
+    .from(people)
+    .innerJoin(pods, eq(pods.id, people.podId))
+    .where(and(eq(people.active, true), ne(pods.id, podId), isNotNull(people.jiraAccountId)));
+  return withProficiency(rows.map((r) => ({ ...r, jiraAccountId: r.jiraAccountId! })));
 }
 
 /** A lead sets how well one of their own people does a skill outside their main one. */

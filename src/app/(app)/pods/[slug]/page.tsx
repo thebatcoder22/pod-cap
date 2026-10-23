@@ -6,6 +6,7 @@ import {
   CaretDoubleDownIcon,
   CaretDoubleUpIcon,
   CaretDownIcon,
+  CaretRightIcon,
   CaretUpIcon,
   CheckCircleIcon,
   CircleDashedIcon,
@@ -38,6 +39,7 @@ export default function PodPage({ params, searchParams }: PageProps<"/pods/[slug
 }
 
 type Ticket = SprintView["tickets"][number];
+type LoadTicket = CapacitySheet["load"]["tickets"][number];
 type Category = Ticket["statusCategory"];
 
 const card = "overflow-hidden rounded-lg border border-line bg-surface shadow-card";
@@ -210,11 +212,11 @@ function Sprint({
         </Empty>
       ) : (
         <>
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+            <Workload load={capacity.load} />
             <Progress tickets={tickets} />
-            <PeopleLoad tickets={tickets} />
           </div>
-          <TicketTable tickets={tickets} />
+          <TicketTable tickets={capacity.load.tickets} />
         </>
       )}
     </section>
@@ -288,55 +290,6 @@ function Progress({ tickets }: { tickets: Ticket[] }) {
   );
 }
 
-/** How many of the sprint's tickets each person owns. A ticket with two owners counts for both. */
-function PeopleLoad({ tickets }: { tickets: Ticket[] }) {
-  const byOwner = new Map<string, { id: string; name: string; n: number }>();
-  for (const t of tickets) {
-    for (const o of t.owners) {
-      byOwner.set(o.accountId, { id: o.accountId, name: o.displayName, n: (byOwner.get(o.accountId)?.n ?? 0) + 1 });
-    }
-  }
-  const rows = [...byOwner.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
-  const unassigned = tickets.filter((t) => !t.owners.length).length;
-  const max = Math.max(1, ...rows.map((r) => r.n), unassigned);
-  const shown = rows.slice(0, 6);
-
-  return (
-    <div className={`${card} p-5`}>
-      <div className="flex items-baseline justify-between gap-3">
-        <h3 className={cardTitle}>Tickets per person</h3>
-        <span className="text-xs text-ink-faint">Dev Owners, else assignee</span>
-      </div>
-      <ul className="mt-4 space-y-2.5">
-        {shown.map((r, i) => (
-          <Bar key={r.id} label={r.name} n={r.n} max={max} i={i} />
-        ))}
-        {unassigned > 0 && <Bar label="Unassigned" n={unassigned} max={max} i={shown.length} muted />}
-      </ul>
-      {rows.length > shown.length && (
-        <p className="mt-3 text-xs text-ink-faint">
-          and {plural(rows.length - shown.length, "more person", "more people")}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function Bar({ label, n, max, i, muted }: { label: string; n: number; max: number; i: number; muted?: boolean }) {
-  return (
-    <li className="grid grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)_1.5rem] items-center gap-3 text-sm">
-      <span className={`truncate ${muted ? "text-ink-faint" : "text-ink-muted"}`}>{label}</span>
-      <span className="h-1.5" aria-hidden>
-        <span
-          className={`grow-x block h-full rounded-full ${muted ? "bg-line-strong" : "bg-accent/80"}`}
-          style={{ width: `${(n / max) * 100}%`, "--i": i } as React.CSSProperties}
-        />
-      </span>
-      <span className="text-right font-medium tabular-nums">{n}</span>
-    </li>
-  );
-}
-
 // Jira's own priority glyphs, so the scale reads the same as in Jira.
 const PRIORITY: Record<string, { Icon: typeof EqualsIcon; color: string }> = {
   Highest: { Icon: CaretDoubleUpIcon, color: "text-danger" },
@@ -373,7 +326,7 @@ function Owners({ owners }: { owners: Ticket["owners"] }) {
   );
 }
 
-function TicketTable({ tickets }: { tickets: Ticket[] }) {
+function TicketTable({ tickets }: { tickets: LoadTicket[] }) {
   // Phones drop the status, priority and owners columns and show them under the summary instead.
   const wide = "hidden md:table-cell";
   return (
@@ -460,7 +413,9 @@ function TicketTable({ tickets }: { tickets: Ticket[] }) {
                       {t.readyForProductionDate && (
                         <span>Ready for prod {day(new Date(t.readyForProductionDate))}</span>
                       )}
-                      <Estimates estimates={t.estimates} />
+                      <SkillDays days={t.estimates} empty="Not estimated" />
+                      <CrossPod owners={t.crossPod} />
+                      <NoOwner ticket={t} />
                     </p>
                     <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs md:hidden">
                       <span className="flex items-center gap-1.5 text-ink-muted">
@@ -748,20 +703,7 @@ function Unestimated({ tickets }: { tickets: Commitment["unestimated"] }) {
         <ul className="divide-y divide-line border-t border-line">
           {tickets.map((t) => (
             <li key={t.key} className="flex items-baseline gap-3 px-4 py-2.5 text-sm sm:px-5">
-              <a
-                href={t.url ?? undefined}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex shrink-0 items-center gap-1 font-mono text-xs text-ink-muted hover:text-accent"
-              >
-                {t.key}
-                {t.url && (
-                  <>
-                    <ArrowSquareOutIcon size={12} aria-hidden />
-                    <span className="sr-only">(opens Jira)</span>
-                  </>
-                )}
-              </a>
+              <TicketKey ticket={t} />
               <span className="min-w-0 truncate" title={t.summary}>
                 {t.summary}
               </span>
@@ -774,16 +716,192 @@ function Unestimated({ tickets }: { tickets: Commitment["unestimated"] }) {
   );
 }
 
-function Estimates({ estimates }: { estimates: Ticket["estimates"] }) {
-  const set = SKILLS.filter((k) => estimates[k] !== undefined);
-  if (!set.length) return <span>Not estimated</span>;
+// ---- Who is working on what ----
+
+type PersonLoad = CapacitySheet["load"]["people"][number];
+
+/** A list of skill-days as chips, "FE 1.5d". */
+function SkillDays({ days, empty }: { days: Ticket["estimates"]; empty: string }) {
+  const set = SKILLS.filter((k) => days[k] !== undefined);
+  if (!set.length) return <span className="text-ink-faint">{empty}</span>;
   return (
     <span className="flex items-center gap-1.5">
       {set.map((k) => (
-        <span key={k} className="rounded-md bg-fill px-1.5 py-px font-mono text-ink-muted tabular-nums">
-          {k} {estimates[k]}d
+        <span key={k} className="rounded-md bg-fill px-1.5 py-px font-mono text-xs text-ink-muted tabular-nums">
+          {k} {days[k]}d
         </span>
       ))}
+    </span>
+  );
+}
+
+function TicketKey({ ticket }: { ticket: { key: string; url: string | null } }) {
+  return (
+    <a
+      href={ticket.url ?? undefined}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex shrink-0 items-center gap-1 font-mono text-xs text-ink-muted hover:text-accent"
+    >
+      {ticket.key}
+      {ticket.url && (
+        <>
+          <ArrowSquareOutIcon size={12} aria-hidden />
+          <span className="sr-only">(opens Jira)</span>
+        </>
+      )}
+    </a>
+  );
+}
+
+/** Each person's calendar days against capacity. Opening a person lists their tickets. */
+function Workload({ load }: { load: CapacitySheet["load"] }) {
+  const max = Math.max(1, ...load.people.flatMap((p) => [p.capacity, p.calendarDays]));
+  const flagged = load.tickets.filter((t) => Object.keys(t.unassigned).length);
+
+  return (
+    <section aria-labelledby="load" className={card}>
+      <div className="flex items-baseline justify-between gap-3 px-4 pt-5 pb-3 sm:px-5">
+        <h3 id="load" className={cardTitle}>
+          Who is working on what
+        </h3>
+        <span className="text-xs text-ink-faint">Calendar days of capacity</span>
+      </div>
+      <ul className="divide-y divide-line border-t border-line">
+        {load.people.map((p, i) => (
+          <PersonRow key={p.id} person={p} max={max} i={i} />
+        ))}
+      </ul>
+      {flagged.length > 0 && (
+        <section aria-labelledby="unassigned" className="border-t border-line bg-danger-soft/60 px-4 py-4 sm:px-5">
+          <h4 id="unassigned" className="flex items-center gap-1.5 text-sm font-medium text-danger">
+            <WarningCircleIcon size={16} weight="fill" aria-hidden />
+            Unassigned work, {plural(load.unassigned, "skill-day")}
+          </h4>
+          <p className="mt-0.5 text-xs text-ink-muted">Counts against the pod, but no one here can do it.</p>
+          <ul className="mt-3 space-y-2">
+            {flagged.map((t) => (
+              <li key={t.key} className="flex items-baseline gap-3 text-sm">
+                <TicketKey ticket={t} />
+                <span className="min-w-0 truncate" title={t.summary}>
+                  {t.summary}
+                </span>
+                <span className="ml-auto flex shrink-0 items-center gap-2 text-xs">
+                  <span className="text-ink-muted">{noOwner(t)}</span>
+                  <SkillDays days={t.unassigned} empty="" />
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </section>
+  );
+}
+
+function PersonRow({ person: p, max, i }: { person: PersonLoad; max: number; i: number }) {
+  const over = p.free < 0;
+  const within = Math.min(p.calendarDays, p.capacity);
+  const width = (n: number) => `${(n / max) * 100}%`;
+
+  return (
+    <li>
+      <details className="group">
+        <summary
+          aria-label={`${p.name}'s load`}
+          className="grid cursor-pointer list-none grid-cols-[1rem_minmax(0,1fr)_auto] sm:grid-cols-[1rem_minmax(0,11rem)_minmax(0,1fr)_7.5rem] items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-fill/50 sm:px-5 [&::-webkit-details-marker]:hidden"
+        >
+          <CaretRightIcon
+            size={12}
+            weight="bold"
+            className="text-ink-faint transition-transform group-open:rotate-90"
+            aria-hidden
+          />
+          <span className="flex min-w-0 items-baseline gap-2">
+            <span className="truncate font-medium">{p.name}</span>
+            <span className="font-mono text-xs text-ink-faint">{p.mainSkill}</span>
+          </span>
+          {/* The track is capacity; past it, calendar days run on in red. */}
+          <span className="relative hidden h-1.5 sm:flex rounded-full bg-fill" aria-hidden>
+            <span
+              className={`grow-x block h-full rounded-l-full ${over ? "" : "rounded-r-full"} bg-accent/80`}
+              style={{ width: width(within), "--i": i } as React.CSSProperties}
+            />
+            {over && (
+              <span
+                className="grow-x block h-full rounded-r-full bg-danger"
+                style={{ width: width(-p.free), "--i": i } as React.CSSProperties}
+              />
+            )}
+            <span className="absolute -top-1 h-3.5 w-px bg-line-strong" style={{ left: width(p.capacity) }} />
+          </span>
+          <span className="text-right tabular-nums">
+            <span className={over ? "font-semibold text-danger" : "font-medium"}>{p.calendarDays}</span>
+            <span className="text-ink-muted"> of {days(p.capacity)}</span>
+          </span>
+          <span className="col-start-2 -col-end-1 -mt-1.5 flex flex-wrap gap-x-3 text-xs">
+            <span className="text-ink-muted">
+              {plural(p.skillDays, "skill-day")} on {plural(p.tickets.length, "ticket")}
+            </span>
+            {over ? (
+              <span className="flex items-center gap-1 font-medium text-danger">
+                <WarningCircleIcon size={14} weight="fill" aria-hidden />
+                Over by {days(-p.free)}
+              </span>
+            ) : (
+              <span className="text-ink-muted">{days(p.free)} free</span>
+            )}
+          </span>
+        </summary>
+        {p.tickets.length === 0 ? (
+          <p className="px-4 pb-3 pl-11 text-sm text-ink-faint sm:pl-12">No tickets in this sprint.</p>
+        ) : (
+          <ul aria-label={`${p.name}'s tickets`} className="space-y-2 px-4 pb-3.5 pl-11 sm:pr-5 sm:pl-12">
+            {p.tickets.map((t) => (
+              <li key={t.key} className="flex items-baseline gap-3 text-sm">
+                <TicketKey ticket={t} />
+                <span className="min-w-0 truncate" title={t.summary}>
+                  {t.summary}
+                </span>
+                <span className="ml-auto flex shrink-0 items-center gap-3 text-xs">
+                  <span className="flex items-center gap-1.5 text-ink-muted" title={t.status}>
+                    <StatusIcon category={t.statusCategory} size={14} />
+                    <span className="sr-only sm:not-sr-only">{t.status}</span>
+                  </span>
+                  <SkillDays days={t.attributed} empty="No skill-days" />
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </details>
+    </li>
+  );
+}
+
+function CrossPod({ owners }: { owners: LoadTicket["crossPod"] }) {
+  if (!owners.length) return null;
+  return (
+    <span className="rounded-md bg-accent-soft px-1.5 py-px text-accent">
+      Cross-pod help: {owners.map((o) => `${o.displayName} (${o.pod})`).join(", ")}
+    </span>
+  );
+}
+
+/** Why a ticket has unassigned work, or null when it has none. */
+function noOwner(ticket: LoadTicket) {
+  const skills = SKILLS.filter((k) => ticket.unassigned[k] !== undefined);
+  if (!skills.length) return null;
+  return ticket.owners.length ? `No owner can do ${skills.join(", ")}` : "No owner";
+}
+
+function NoOwner({ ticket }: { ticket: LoadTicket }) {
+  const reason = noOwner(ticket);
+  if (!reason) return null;
+  return (
+    <span className="flex items-center gap-1 font-medium text-danger">
+      <WarningCircleIcon size={14} weight="fill" aria-hidden />
+      {reason}
     </span>
   );
 }

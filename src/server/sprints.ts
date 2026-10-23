@@ -68,7 +68,12 @@ export async function getSprintView(jiraPodValue: string, requested?: string): P
       priority: t.priority,
       assignee: t.assignee,
       devOwners: t.devOwners,
-      owners: t.devOwners.length ? t.devOwners : t.assignee ? [t.assignee] : [],
+      // Jira can list a Dev Owner twice; each counts once.
+      owners: [
+        ...new Map(
+          (t.devOwners.length ? t.devOwners : t.assignee ? [t.assignee] : []).map((u) => [u.accountId, u]),
+        ).values(),
+      ],
       epic: t.epicKey ? { key: t.epicKey, summary: t.epicSummary ?? t.epicKey, url: browse(t.epicKey) } : null,
       readyForProductionDate: t.readyForProductionDate,
       estimates: t.estimates,

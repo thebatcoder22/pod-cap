@@ -9,7 +9,14 @@ export async function listPods(): Promise<{ slug: string; name: string }[]> {
 
 export type PodPage = {
   pod: { id: number; slug: string; name: string; jiraPodValue: string };
-  members: { id: number; name: string; mainSkill: Skill; isLead: boolean; proficiency: Proficiency }[];
+  members: {
+    id: number;
+    name: string;
+    mainSkill: Skill;
+    jiraAccountId: string | null;
+    isLead: boolean;
+    proficiency: Proficiency;
+  }[];
 };
 
 export async function getPodPage(slug: string): Promise<PodPage | null> {
@@ -17,7 +24,7 @@ export async function getPodPage(slug: string): Promise<PodPage | null> {
   if (!pod) return null;
 
   const rows = await db
-    .select({ id: people.id, name: people.name, mainSkill: people.mainSkill })
+    .select({ id: people.id, name: people.name, mainSkill: people.mainSkill, jiraAccountId: people.jiraAccountId })
     .from(people)
     .where(and(eq(people.podId, pod.id), eq(people.active, true)))
     .orderBy(desc(sql`${people.id} = ${pod.leadPersonId ?? 0}`), asc(people.name));

@@ -1,5 +1,6 @@
-import { SKILLS, type Estimates, type Skill } from "@/db/schema";
+import { SKILLS, type Estimates, type JiraUser, type Skill } from "@/db/schema";
 import { isoDay } from "@/lib/format";
+import type { Proficiency } from "./people";
 
 // The planning engine: every capacity rule, and no I/O. See SPEC.md "Rules the planning engine encodes".
 
@@ -105,4 +106,92 @@ export function planCommitment<T extends { estimates: Estimates }>(
     };
   });
   return { skills, unestimated: tickets.filter((t) => !SKILLS.some((k) => t.estimates[k] !== undefined)) };
+}
+
+type Owned = { key: string; owners: JiraUser[]; estimates: Estimates };
+
+export type Load<P, T> = {
+  people: (P & {
+    /** Attributed skill-days, all skills together. */
+    skillDays: number;
+    /** What those skill-days take this person: skill-days / proficiency. */
+    calendarDays: number;
+    /** Capacity - calendar days; below zero means overloaded. */
+    free: number;
+    /** The sprint's tickets this person owns, with the skill-days attributed to them. */
+    tickets: (T & { attributed: Estimates })[];
+  })[];
+  tickets: (T & {
+    /** Owners who are in another pod. */
+    crossPod: (JiraUser & { pod: string })[];
+    /** Skill-days none of the owners can do, by skill. They count against the pod but nobody in it. */
+    unassigned: Estimates;
+  })[];
+  /** All unassigned skill-days together. */
+  unassigned: number;
+};
+
+/**
+ * Attribution: a ticket's skill-days for a skill go to its owners (Dev Owners, else the assignee) with
+ * proficiency above zero in it, split evenly. Owners from other pods take their share, as cross-pod help.
+ */
+export function planLoad<
+  P extends { capacity: number; jiraAccountId: string | null; proficiency: Proficiency },
+  T extends Owned,
+>(
+  tickets: T[],
+  people: P[],
+  /** Active people in other pods, by Jira account id. */
+  others: Map<string, { pod: string; proficiency: Proficiency }>,
+): Load<P, T> {
+  const members = new Map(people.flatMap((p) => (p.jiraAccountId ? [[p.jiraAccountId, p]] : [])));
+  const owned = new Map(people.map((p) => [p, [] as (T & { attributed: Estimates })[]]));
+
+  const planned = tickets.map((t) => {
+    const unassigned: Estimates = {};
+    const shares = new Map<P, Estimates>();
+    for (const skill of SKILLS) {
+      const days = t.estimates[skill];
+      if (!days) continue;
+      const able = t.owners.filter((o) => {
+        const known = members.get(o.accountId) ?? others.get(o.accountId);
+        return known && known.proficiency[skill] > 0;
+      });
+      if (!able.length) unassigned[skill] = days;
+      for (const o of able) {
+        const p = members.get(o.accountId);
+        if (p) shares.set(p, { ...shares.get(p), [skill]: days / able.length });
+      }
+    }
+    for (const o of t.owners) {
+      const p = members.get(o.accountId);
+      if (p) owned.get(p)!.push({ ...t, attributed: shares.get(p) ?? {} });
+    }
+    const crossPod = t.owners.flatMap((o) => {
+      const other = others.get(o.accountId);
+      return other ? [{ ...o, pod: other.pod }] : [];
+    });
+    return { ...t, crossPod, unassigned };
+  });
+
+  const sum = (ns: number[]) => ns.reduce((a, b) => a + b, 0);
+  return {
+    people: people.map((p) => {
+      const tickets = owned.get(p)!.map((t) => ({
+        ...t,
+        attributed: Object.fromEntries(Object.entries(t.attributed).map(([k, d]) => [k, round(d)])),
+      }));
+      const attributed = owned.get(p)!.flatMap((t) => Object.entries(t.attributed) as [Skill, number][]);
+      const calendarDays = sum(attributed.map(([skill, d]) => d / (p.proficiency[skill] / 100)));
+      return {
+        ...p,
+        skillDays: round(sum(attributed.map(([, d]) => d))),
+        calendarDays: round(calendarDays),
+        free: round(p.capacity - calendarDays),
+        tickets,
+      };
+    }),
+    tickets: planned,
+    unassigned: round(sum(planned.flatMap((t) => Object.values(t.unassigned)))),
+  };
 }
