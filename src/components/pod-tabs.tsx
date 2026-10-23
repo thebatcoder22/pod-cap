@@ -30,3 +30,25 @@ export function PodTabs({ pods, ownSlug }: { pods: { slug: string; name: string 
     </nav>
   );
 }
+
+/** A header link that shows when its page is open. */
+export function HeaderLink({
+  href,
+  className,
+  children,
+}: {
+  href: string;
+  className: string;
+  children: React.ReactNode;
+}) {
+  const active = usePathname() === href;
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={`${className} ${active ? "bg-accent-soft text-accent hover:bg-accent-soft hover:text-accent" : ""}`}
+    >
+      {children}
+    </Link>
+  );
+}

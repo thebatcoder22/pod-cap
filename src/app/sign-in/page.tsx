@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { GoogleLogoIcon, WarningCircleIcon } from "@phosphor-icons/react/dist/ssr";
 import { e2eLoginEnabled, signIn } from "@/auth";
 import { getViewer } from "@/server/session";
+import { BrandMark } from "@/components/brand";
 
 // Small blocking page: reads the session and the error param.
 export const instant = false;
@@ -12,11 +13,16 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
   if (!error && (await getViewer())) redirect("/");
 
   return (
-    <main className="grid flex-1 place-items-center px-6 py-16">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="space-y-2">
-          <h1 className="text-xl font-semibold tracking-tight">Pod capacity</h1>
-          <p className="text-sm leading-relaxed text-ink-muted">Capacity and load planning for Delightree pods.</p>
+    <main className="grid flex-1 place-items-center px-4 py-16 sm:px-6">
+      <div className="rise w-full max-w-sm space-y-6 rounded-lg border border-line bg-surface p-6 shadow-card sm:p-8">
+        <div className="space-y-4">
+          <BrandMark size="lg" />
+          <div className="space-y-1.5">
+            <h1 className="text-xl font-semibold tracking-tight">Pod capacity</h1>
+            <p className="text-sm leading-relaxed text-ink-muted">
+              See what each Delightree pod can take on this sprint, and who has room for more.
+            </p>
+          </div>
         </div>
 
         {error && <SignInError code={String(error)} />}

@@ -14,6 +14,8 @@
   --accent-soft: #eef2fd;
   --danger: #b42318;
   --danger-soft: #fef3f2;
+  /* Elevation tinted to the zinc ink, never pure black. */
+  --card-shadow: 0 1px 2px rgb(24 24 27 / 0.04), 0 1px 3px rgb(24 24 27 / 0.03);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -30,6 +32,7 @@
     --accent-soft: #1a2240;
     --danger: #f97066;
     --danger-soft: #2a1513;
+    --card-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
   }
 }
 
@@ -46,6 +49,7 @@
   --color-accent-soft: var(--accent-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
+  --shadow-card: var(--card-shadow);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -53,4 +57,19 @@
 body {
   background: var(--bg);
   color: var(--ink);
+}
+
+/* Sections rise in once on load, in order (set --i per section), to show where the page starts. */
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    animation: rise 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--i, 0) * 70ms);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
 }

@@ -29,7 +29,8 @@ export function JiraForm({ settings }: { settings: { site: string; email: string
   const [tested, test, testing] = useActionState(testJiraAction, null);
 
   return (
-    <div className="space-y-5">
+    // gap, not space-y: the hidden result region must not leave a margin behind.
+    <div className="flex flex-col gap-5">
       <p className="flex items-center gap-2 text-sm text-ink-muted">
         <KeyIcon size={16} aria-hidden />
         {settings ? <>API token saved {settings.tokenUpdatedAt}.</> : <>No API token saved yet.</>}
@@ -97,8 +98,8 @@ export function Allowlist({ rows, viewerEmail }: { rows: { email: string; isAdmi
   const admins = rows.filter((r) => r.isAdmin).length;
 
   return (
-    <div className="space-y-4">
-      <ul className="divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
+    <div className="flex flex-col gap-4">
+      <ul className="divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface shadow-card">
         {rows.map((r) => {
           const isYou = r.email === viewerEmail;
           const removable = !isYou && !(r.isAdmin && admins <= 1);
