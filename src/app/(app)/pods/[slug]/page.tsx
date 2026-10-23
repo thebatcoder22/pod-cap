@@ -21,6 +21,7 @@ import { getPodPage, type PodPage as PodData } from "@/server/pods";
 import { requireViewer } from "@/server/session";
 import { getSprintView, type SprintView } from "@/server/sprints";
 import { BOARD_ID, getSyncStatus } from "@/server/sync";
+import { ProficiencyInput } from "./proficiency-input";
 import { SprintPicker, SyncNowButton } from "./sprint-controls";
 
 // Covers the "Sync now" server action on this page.
@@ -116,7 +117,7 @@ async function Pod({ params, searchParams }: PageProps<"/pods/[slug]">) {
       </div>
 
       <div {...rise(3)}>
-        <Team members={members} />
+        <Team members={members} canEdit={isOwn} />
       </div>
     </div>
   );
@@ -481,7 +482,7 @@ const SKILL_TONE: Record<Skill, string> = {
   AI: "bg-accent/20",
 };
 
-function Team({ members }: { members: PodData["members"] }) {
+function Team({ members, canEdit }: { members: PodData["members"]; canEdit: boolean }) {
   const bySkill = SKILLS.map((skill) => ({ skill, people: members.filter((m) => m.mainSkill === skill) }));
 
   return (
@@ -525,53 +526,94 @@ function Team({ members }: { members: PodData["members"] }) {
           </ul>
         </section>
 
-        <Members members={members} />
+        <Members members={members} canEdit={canEdit} />
       </div>
     </section>
   );
 }
 
-function Members({ members }: { members: PodData["members"] }) {
+/** The box every proficiency value sits in, editable or not, so the column lines up. */
+const skillCell = "inline-flex h-7 items-center justify-end rounded-md border px-1.5 tabular-nums";
+
+function Members({ members, canEdit }: { members: PodData["members"]; canEdit: boolean }) {
   return (
     <section aria-labelledby="members" className={card}>
-      <div className="flex items-baseline justify-between px-5 pt-5 pb-3">
+      <div className="flex items-baseline justify-between gap-3 px-4 pt-5 pb-3 sm:px-5">
         <h3 id="members" className={cardTitle}>
           Members
         </h3>
-        <span className="text-xs text-ink-faint">{plural(members.length, "person", "people")}</span>
+        <span className="text-xs text-ink-faint">
+          {canEdit ? "Proficiency per skill, main skill fixed at 100%" : "Proficiency per skill"}
+        </span>
       </div>
       {members.length === 0 ? (
         <p className="px-5 pb-6 text-sm text-ink-muted">No one is in this pod yet.</p>
       ) : (
-        <table className="w-full text-sm">
-          <thead className="sr-only">
-            <tr>
-              <th scope="col">Name</th>
-              <th scope="col">Main skill</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-line border-t border-line">
-            {members.map((m) => (
-              <tr key={m.id} className="transition-colors hover:bg-fill/50">
-                <td className="py-2.5 pl-5">
-                  <div className="flex items-center gap-3">
-                    <Avatar name={m.name} size="md" tone={m.isLead ? "accent" : "neutral"} />
-                    <span className="flex flex-wrap items-baseline gap-x-2">
-                      <span className="font-medium">{m.name}</span>
-                      {m.isLead && <span className="text-xs text-ink-faint">Lead</span>}
-                    </span>
-                  </div>
-                </td>
-                <td className="w-24 py-2.5 pr-5 text-right">
-                  <span className="inline-flex items-center gap-1.5 rounded-md bg-fill px-1.5 py-0.5 font-mono text-xs text-ink-muted">
-                    <span className={`size-1.5 rounded-full ${SKILL_TONE[m.mainSkill]}`} aria-hidden />
-                    {m.mainSkill}
-                  </span>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-t border-line text-xs text-ink-faint">
+                <th scope="col" className="py-2 pl-4 text-left font-medium sm:pl-5">
+                  Name
+                </th>
+                {SKILLS.map((skill) => (
+                  <th
+                    key={skill}
+                    scope="col"
+                    className="w-16 py-2 pr-3.5 text-right font-mono font-medium last:pr-4.5 sm:pr-4.5 sm:last:pr-6.5"
+                  >
+                    {skill}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-line border-t border-line">
+              {members.map((m) => (
+                <tr key={m.id} className="transition-colors hover:bg-fill/50">
+                  <td className="py-2.5 pl-4 sm:pl-5">
+                    <div className="flex items-center gap-3">
+                      <span className="hidden sm:contents">
+                        <Avatar name={m.name} size="md" tone={m.isLead ? "accent" : "neutral"} />
+                      </span>
+                      <span className="flex flex-wrap items-baseline gap-x-2">
+                        <span className="font-medium">{m.name}</span>
+                        {m.isLead && <span className="text-xs text-ink-faint">Lead</span>}
+                      </span>
+                    </div>
+                  </td>
+                  {SKILLS.map((skill) => (
+                    <td key={skill} className="py-2.5 pr-2 text-right last:pr-4 sm:pr-3 sm:last:pr-5">
+                      {skill === m.mainSkill ? (
+                        <span
+                          title="Main skill"
+                          className={`${skillCell} gap-1.5 border-transparent bg-fill font-medium`}
+                        >
+                          <span className={`hidden size-1.5 rounded-full sm:block ${SKILL_TONE[skill]}`} aria-hidden />
+                          100%
+                          <span className="sr-only">, main skill</span>
+                        </span>
+                      ) : canEdit ? (
+                        <ProficiencyInput
+                          personId={m.id}
+                          name={m.name}
+                          skill={skill}
+                          percent={m.proficiency[skill]}
+                          className={skillCell}
+                        />
+                      ) : (
+                        <span
+                          className={`${skillCell} border-transparent ${m.proficiency[skill] ? "" : "text-ink-faint"}`}
+                        >
+                          {m.proficiency[skill]}%
+                        </span>
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

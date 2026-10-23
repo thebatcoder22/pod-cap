@@ -10,6 +10,7 @@ import {
   text,
   integer,
   timestamp,
+  primaryKey,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
@@ -38,6 +39,22 @@ export const people = pgTable(
     active: boolean("active").notNull().default(true),
   },
   (t) => [check("people_active_in_a_pod", sql`not ${t.active} or ${t.podId} is not null`)],
+);
+
+// Skills outside a person's main skill. No row means 0%; the main skill is always 100% and never stored.
+export const proficiencies = pgTable(
+  "proficiencies",
+  {
+    personId: integer("person_id")
+      .notNull()
+      .references(() => people.id),
+    skill: skill("skill").notNull(),
+    percent: integer("percent").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.personId, t.skill] }),
+    check("proficiencies_percent_range", sql`${t.percent} between 0 and 100`),
+  ],
 );
 
 export const allowlist = pgTable("allowlist", {

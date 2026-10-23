@@ -1,7 +1,7 @@
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { db, type Db } from "@/db";
-import { people, pods, SKILLS, tickets, type JiraUser, type Skill } from "@/db/schema";
-import { assertAdmin } from "./permissions";
+import { people, pods, proficiencies, SKILLS, tickets, type JiraUser, type Skill } from "@/db/schema";
+import { assertAdmin, assertCanEditPod } from "./permissions";
 import { ValidationError } from "./settings";
 import type { Viewer } from "./viewer";
 
@@ -186,6 +186,49 @@ export async function removePerson(viewer: Viewer | null, personId: number) {
   const person = await notALead(await activePerson(personId), "removed");
   await db.update(people).set({ active: false, podId: null }).where(eq(people.id, person.id));
   return { name: person.name };
+}
+
+/** Percent per skill: 100 in the main skill, 0 in any skill nobody has set. */
+export type Proficiency = Record<Skill, number>;
+
+/** The one place the proficiency rule lives, so every reader agrees. */
+export async function withProficiency<P extends { id: number; mainSkill: Skill }>(
+  persons: P[],
+): Promise<(P & { proficiency: Proficiency })[]> {
+  const saved = persons.length
+    ? await db
+        .select()
+        .from(proficiencies)
+        .where(
+          inArray(
+            proficiencies.personId,
+            persons.map((p) => p.id),
+          ),
+        )
+    : [];
+  return persons.map((p) => {
+    const proficiency = Object.fromEntries(SKILLS.map((s) => [s, 0])) as Proficiency;
+    for (const row of saved) if (row.personId === p.id) proficiency[row.skill] = row.percent;
+    proficiency[p.mainSkill] = 100;
+    return { ...p, proficiency };
+  });
+}
+
+/** A lead sets how well one of their own people does a skill outside their main one. */
+export async function setProficiency(viewer: Viewer | null, personId: number, skill: Skill, percent: number) {
+  const person = await activePerson(personId);
+  // Active people are always in a pod (people_active_in_a_pod).
+  assertCanEditPod(viewer, person.podId!);
+  if (!SKILLS.includes(skill)) throw new ValidationError("Pick a skill.");
+  if (skill === person.mainSkill)
+    throw new ValidationError(`${skill} is ${person.name}'s main skill, so it stays 100%.`);
+  if (!Number.isInteger(percent) || percent < 0 || percent > 100)
+    throw new ValidationError("Enter a whole number from 0 to 100.");
+
+  await db
+    .insert(proficiencies)
+    .values({ personId: person.id, skill, percent })
+    .onConflictDoUpdate({ target: [proficiencies.personId, proficiencies.skill], set: { percent } });
 }
 
 async function activePerson(id: number) {
