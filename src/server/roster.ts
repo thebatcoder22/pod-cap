@@ -45,7 +45,7 @@ const ROSTER: {
     slug: "atlas",
     lead: { name: "Abdullah Ghani", email: "abdullah@delightree.com", skill: "BE" },
     members: [
-      ["Rahul Ritesh Lanjewar", "BE"],
+      ["Rahul Lanjewar", "BE"],
       ["Abhay Sharma", "FE"],
       ["Akhilesh Mourya", "FE"],
     ],
