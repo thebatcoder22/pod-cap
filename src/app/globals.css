@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+/* Zinc neutrals, one cobalt accent. Radius scale: 8px for everything interactive and every container. */
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --ink: #18181b;
+  --ink-muted: #52525b;
+  --ink-faint: #71717a;
+  --line: #e4e4e7;
+  --line-strong: #d4d4d8;
+  --accent: #2b4fc7;
+  --accent-ink: #ffffff;
+  --accent-soft: #eef2fd;
+  --danger: #b42318;
+  --danger-soft: #fef3f2;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0c0c0e;
+    --surface: #151518;
+    --ink: #f4f4f5;
+    --ink-muted: #a1a1aa;
+    --ink-faint: #8b8b94;
+    --line: #27272a;
+    --line-strong: #3f3f46;
+    --accent: #6f8ff0;
+    --accent-ink: #0c0c0e;
+    --accent-soft: #1a2240;
+    --danger: #f97066;
+    --danger-soft: #2a1513;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
