@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { CheckCircleIcon, KeyIcon, WarningCircleIcon } from "@phosphor-icons/react";
+import { Avatar } from "@/components/brand";
 import type { PeopleAdmin } from "@/server/people";
 import {
   addAllowlistAction,
@@ -15,16 +16,19 @@ import {
   type ActionState,
 } from "./actions";
 
-const input =
-  "w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-sm placeholder:text-ink-faint focus:outline-2 focus:outline-accent";
+const focus = "focus:outline-2 focus:outline-offset-1 focus:outline-accent";
+const input = `h-9 w-full rounded-lg border border-line-strong bg-surface px-3 text-sm shadow-card placeholder:text-ink-faint ${focus}`;
 const primary =
-  "rounded-lg bg-accent px-3.5 py-2 text-sm font-medium text-accent-ink transition hover:opacity-90 active:scale-[0.98] disabled:opacity-50";
-const select =
-  "rounded-lg border border-line-strong bg-surface px-2.5 py-1.5 text-sm focus:outline-2 focus:outline-accent";
-const list = "divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface shadow-card";
+  "h-9 rounded-lg bg-accent px-3.5 text-sm font-medium text-accent-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.16)] transition hover:opacity-90 active:scale-[0.98] disabled:opacity-50";
+const select = `h-9 rounded-lg border border-line-strong bg-surface pr-8 pl-2.5 text-sm shadow-card transition hover:bg-fill ${focus}`;
+const list = "divide-y divide-line";
 const row = "flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3 text-sm";
 const secondary =
-  "rounded-lg border border-line-strong px-3.5 py-2 text-sm font-medium transition hover:bg-line/60 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100";
+  "h-9 rounded-lg border border-line-strong bg-surface px-3.5 text-sm font-medium shadow-card transition hover:bg-fill active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100";
+const ghostDanger =
+  "h-9 rounded-lg px-2.5 text-sm text-ink-muted transition hover:bg-danger-soft hover:text-danger disabled:opacity-50";
+/** The action bar at the bottom of a settings panel. */
+const footer = "flex flex-wrap items-center gap-3 border-t border-line bg-fill/50 px-5 py-3";
 
 /** Shows the most recent of the form's action results, so an older one never lingers as if current. */
 function Result({ states }: { states: ActionState[] }) {
@@ -32,8 +36,8 @@ function Result({ states }: { states: ActionState[] }) {
   if (!state) return null;
   const Icon = state.ok ? CheckCircleIcon : WarningCircleIcon;
   return (
-    <p className={`flex items-start gap-2 text-sm ${state.ok ? "text-accent" : "text-danger"}`}>
-      <Icon size={16} className="mt-0.5 shrink-0" aria-hidden />
+    <p className={`flex items-start gap-2 text-sm ${state.ok ? "text-success" : "text-danger"}`}>
+      <Icon size={16} weight="fill" className="mt-0.5 shrink-0" aria-hidden />
       {state.message}
     </p>
   );
@@ -44,52 +48,55 @@ export function JiraForm({ settings }: { settings: { site: string; email: string
   const [tested, test, testing] = useActionState(testJiraAction, null);
 
   return (
-    // gap, not space-y: the hidden result region must not leave a margin behind.
-    <div className="flex flex-col gap-5">
-      <p className="flex items-center gap-2 text-sm text-ink-muted">
-        <KeyIcon size={16} aria-hidden />
-        {settings ? <>API token saved {settings.tokenUpdatedAt}.</> : <>No API token saved yet.</>}
-      </p>
-
-      <form id="jira" action={save} className="grid gap-4 sm:grid-cols-2">
-        <label className="space-y-1.5">
-          <span className="block text-sm font-medium">Site</span>
-          <input
-            name="site"
-            required
-            defaultValue={saved?.fields?.site ?? settings?.site.replace("https://", "")}
-            placeholder="delightree.atlassian.net"
-            className={input}
-          />
-        </label>
-        <label className="space-y-1.5">
-          <span className="block text-sm font-medium">Account email</span>
-          <input
-            name="email"
-            type="email"
-            required
-            defaultValue={saved?.fields?.email ?? settings?.email}
-            placeholder="you@delightree.com"
-            className={input}
-          />
-        </label>
-        <label className="space-y-1.5 sm:col-span-2">
-          <span className="block text-sm font-medium">API token</span>
-          <input
-            name="token"
-            type="password"
-            autoComplete="new-password"
-            required={!settings}
-            placeholder={settings ? "Leave blank to keep the saved token" : "Paste an Atlassian API token"}
-            className={input}
-          />
-          <span className="block text-xs text-ink-faint">
-            Stored encrypted and never shown again. Paste a new token here to replace it.
+    <>
+      <div className="space-y-5 p-5">
+        <p className="flex items-center gap-2 text-sm text-ink-muted">
+          <span className="grid size-6 place-items-center rounded-md bg-fill">
+            <KeyIcon size={14} aria-hidden />
           </span>
-        </label>
-      </form>
+          {settings ? <>API token saved {settings.tokenUpdatedAt}.</> : <>No API token saved yet.</>}
+        </p>
 
-      <div className="flex flex-wrap items-center gap-2">
+        <form id="jira" action={save} className="grid gap-4 sm:grid-cols-2">
+          <label className="space-y-1.5">
+            <span className="block text-sm font-medium">Site</span>
+            <input
+              name="site"
+              required
+              defaultValue={saved?.fields?.site ?? settings?.site.replace("https://", "")}
+              placeholder="delightree.atlassian.net"
+              className={input}
+            />
+          </label>
+          <label className="space-y-1.5">
+            <span className="block text-sm font-medium">Account email</span>
+            <input
+              name="email"
+              type="email"
+              required
+              defaultValue={saved?.fields?.email ?? settings?.email}
+              placeholder="you@delightree.com"
+              className={input}
+            />
+          </label>
+          <label className="space-y-1.5 sm:col-span-2">
+            <span className="block text-sm font-medium">API token</span>
+            <input
+              name="token"
+              type="password"
+              autoComplete="new-password"
+              required={!settings}
+              placeholder={settings ? "Leave blank to keep the saved token" : "Paste an Atlassian API token"}
+              className={input}
+            />
+            <span className="block text-xs text-ink-faint">
+              Stored encrypted and never shown again. Paste a new token here to replace it.
+            </span>
+          </label>
+        </form>
+      </div>
+
+      <div className={footer}>
         <button form="jira" type="submit" disabled={saving} className={primary}>
           {saving ? "Saving…" : "Save"}
         </button>
@@ -98,12 +105,11 @@ export function JiraForm({ settings }: { settings: { site: string; email: string
             {testing ? "Testing…" : "Test connection"}
           </button>
         </form>
+        <div aria-live="polite" className="min-w-0 basis-full empty:hidden sm:ml-2 sm:basis-auto sm:flex-1">
+          <Result states={[saved, tested]} />
+        </div>
       </div>
-
-      <div aria-live="polite" className="empty:hidden">
-        <Result states={[saved, tested]} />
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -113,27 +119,23 @@ export function Allowlist({ rows, viewerEmail }: { rows: { email: string; isAdmi
   const admins = rows.filter((r) => r.isAdmin).length;
 
   return (
-    <div className="flex flex-col gap-4">
-      <ul className="divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface shadow-card">
+    <>
+      <ul className={list}>
         {rows.map((r) => {
           const isYou = r.email === viewerEmail;
           const removable = !isYou && !(r.isAdmin && admins <= 1);
           return (
-            <li key={r.email} className="flex min-h-12 items-center gap-3 px-5 py-2 text-sm">
+            <li key={r.email} className="flex min-h-13 items-center gap-3 px-5 py-2 text-sm">
+              <Avatar name={r.email} size="sm" />
               <span className="min-w-0 truncate">{r.email}</span>
               {r.isAdmin && (
-                <span className="rounded-lg bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">Admin</span>
+                <span className="rounded-md bg-accent-soft px-1.5 py-0.5 text-xs font-medium text-accent">Admin</span>
               )}
               {isYou && <span className="text-xs text-ink-faint">You</span>}
               {removable && (
                 <form action={remove} className="ml-auto">
                   <input type="hidden" name="email" value={r.email} />
-                  <button
-                    type="submit"
-                    disabled={removing}
-                    aria-label={`Remove ${r.email}`}
-                    className="rounded-lg px-2.5 py-1 text-sm text-ink-muted transition hover:bg-danger-soft hover:text-danger disabled:opacity-50"
-                  >
+                  <button type="submit" disabled={removing} aria-label={`Remove ${r.email}`} className={ghostDanger}>
                     Remove
                   </button>
                 </form>
@@ -143,7 +145,7 @@ export function Allowlist({ rows, viewerEmail }: { rows: { email: string; isAdmi
         })}
       </ul>
 
-      <form action={add} className="flex gap-2">
+      <form action={add} className={footer}>
         <label htmlFor="allowlist-email" className="sr-only">
           Email address to allow
         </label>
@@ -154,17 +156,16 @@ export function Allowlist({ rows, viewerEmail }: { rows: { email: string; isAdmi
           required
           defaultValue={added?.fields?.email}
           placeholder="name@delightree.com"
-          className={`${input} max-w-xs`}
+          className={`${input} max-w-xs flex-1`}
         />
         <button type="submit" disabled={adding} className={secondary}>
           {adding ? "Adding…" : "Add"}
         </button>
+        <div aria-live="polite" className="min-w-0 basis-full empty:hidden sm:ml-2 sm:basis-auto sm:flex-1">
+          <Result states={[removed, added]} />
+        </div>
       </form>
-
-      <div aria-live="polite" className="empty:hidden">
-        <Result states={[removed, added]} />
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -172,7 +173,7 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? o
 
 function Live({ states }: { states: ActionState[] }) {
   return (
-    <div aria-live="polite" className="empty:hidden">
+    <div aria-live="polite" className="border-b border-line bg-fill/50 px-5 py-2.5 empty:hidden">
       <Result states={states} />
     </div>
   );
@@ -181,12 +182,13 @@ function Live({ states }: { states: ActionState[] }) {
 export function ConfirmJira({ rows, others }: { rows: PeopleAdmin["toConfirm"]; others: PeopleAdmin["noPod"] }) {
   const [state, confirm, confirming] = useActionState(confirmJiraAccountAction, null);
   return (
-    <div className="flex flex-col gap-3">
+    <>
       <Live states={[state]} />
       <ul className={list}>
         {rows.map((p) => (
           <li key={p.id} className={row}>
-            <div className="min-w-0 flex-[1_1_12rem]">
+            <Avatar name={p.name} size="md" />
+            <div className="min-w-0 flex-[1_1_10rem]">
               <p className="font-medium">{p.name}</p>
               <p className="text-xs text-ink-faint">
                 {p.pod} ·{" "}
@@ -239,7 +241,7 @@ export function ConfirmJira({ rows, others }: { rows: PeopleAdmin["toConfirm"]; 
           </li>
         ))}
       </ul>
-    </div>
+    </>
   );
 }
 
@@ -254,17 +256,18 @@ export function NoPodYet({
 }) {
   const [state, add, adding] = useActionState(addFromJiraAction, null);
   return (
-    <div className="flex flex-col gap-3">
+    <>
       <Live states={[state]} />
       {rows.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-line-strong px-5 py-6 text-center text-sm text-ink-muted">
+        <p className="px-5 py-8 text-center text-sm text-ink-muted">
           No one waiting. Jira users on DTP tickets who are in no pod show up here after a sync.
         </p>
       ) : (
         <ul className={list}>
           {rows.map((u) => (
             <li key={u.accountId} className={row}>
-              <div className="min-w-0 flex-[1_1_12rem]">
+              <Avatar name={u.displayName} size="md" />
+              <div className="min-w-0 flex-[1_1_10rem]">
                 <p className="font-medium">{u.displayName}</p>
                 <p className="text-xs text-ink-faint">On {plural(u.tickets, "DTP ticket")}</p>
               </div>
@@ -308,7 +311,7 @@ export function NoPodYet({
           ))}
         </ul>
       )}
-    </div>
+    </>
   );
 }
 
@@ -316,28 +319,27 @@ export function Members({ rows, pods }: { rows: PeopleAdmin["members"]; pods: Pe
   const [moved, move, moving] = useActionState(movePersonAction, null);
   const [removed, remove, removing] = useActionState(removePersonAction, null);
   return (
-    <div className="flex flex-col gap-3">
+    <>
       <Live states={[moved, removed]} />
       {pods.map((pod) => {
         const members = rows.filter((m) => m.pod.id === pod.id);
         return (
-          <section key={pod.id} aria-label={pod.name} className="space-y-2">
-            <h4 className="flex items-baseline gap-2 text-sm font-medium">
+          <section key={pod.id} aria-label={pod.name} className="border-b border-line last:border-b-0">
+            <h4 className="flex items-baseline gap-2 border-b border-line bg-fill/50 px-5 py-2 text-xs font-medium">
               {pod.name}
-              <span className="text-xs font-normal text-ink-faint">{plural(members.length, "person", "people")}</span>
+              <span className="font-normal text-ink-faint">{plural(members.length, "person", "people")}</span>
             </h4>
             {members.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-line-strong px-5 py-4 text-sm text-ink-muted">
-                No one in {pod.name} yet.
-              </p>
+              <p className="px-5 py-4 text-sm text-ink-muted">No one in {pod.name} yet.</p>
             ) : (
               <ul className={list}>
                 {members.map((m) => (
                   <li key={m.id} className={row}>
-                    <div className="min-w-0 flex-[1_1_12rem]">
+                    <Avatar name={m.name} size="md" tone={m.isLead ? "accent" : "neutral"} />
+                    <div className="min-w-0 flex-[1_1_10rem]">
                       <p className="flex flex-wrap items-center gap-2">
                         <span className="font-medium">{m.name}</span>
-                        <span className="rounded-lg border border-line px-1.5 py-px font-mono text-xs">
+                        <span className="rounded-md bg-fill px-1.5 py-px font-mono text-xs text-ink-muted">
                           {m.mainSkill}
                         </span>
                         {m.isLead && <span className="text-xs text-ink-faint">Lead</span>}
@@ -381,7 +383,7 @@ export function Members({ rows, pods }: { rows: PeopleAdmin["members"]; pods: Pe
                             type="submit"
                             disabled={removing}
                             aria-label={`Remove ${m.name}`}
-                            className="rounded-lg px-2.5 py-1.5 text-sm text-ink-muted transition hover:bg-danger-soft hover:text-danger disabled:opacity-50"
+                            className={ghostDanger}
                           >
                             Remove
                           </button>
@@ -395,6 +397,6 @@ export function Members({ rows, pods }: { rows: PeopleAdmin["members"]; pods: Pe
           </section>
         );
       })}
-    </div>
+    </>
   );
 }

@@ -15,7 +15,7 @@ export function SyncNowButton() {
       <button
         type="submit"
         disabled={syncing}
-        className="flex items-center gap-1.5 rounded-lg border border-line-strong px-3 py-1.5 text-sm font-medium transition hover:bg-line/60 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
+        className="flex h-8 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-3 text-sm font-medium shadow-card transition hover:bg-fill active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
       >
         <ArrowsClockwiseIcon size={16} aria-hidden className={syncing ? "animate-spin" : ""} />
         {syncing ? "Syncing…" : "Sync now"}
@@ -37,7 +37,7 @@ export function SprintPicker({ sprints, selected }: { sprints: Option[]; selecte
   const [pending, startTransition] = useTransition();
 
   return (
-    <div className="flex items-center gap-2 text-sm">
+    <div className="flex items-center gap-2.5 text-sm">
       <label htmlFor="sprint-picker" className="text-ink-muted">
         Sprint
       </label>
@@ -49,7 +49,7 @@ export function SprintPicker({ sprints, selected }: { sprints: Option[]; selecte
           const sprint = e.target.value;
           startTransition(() => router.push(`${pathname}?sprint=${sprint}`, { scroll: false }));
         }}
-        className={`rounded-lg border border-line-strong bg-surface px-2.5 py-1.5 text-sm font-medium focus:outline-2 focus:outline-accent ${pending ? "opacity-60" : ""}`}
+        className={`h-8 rounded-lg border border-line-strong bg-surface pr-8 pl-2.5 text-sm font-medium shadow-card transition hover:bg-fill focus:outline-2 focus:outline-offset-1 focus:outline-accent ${pending ? "opacity-60" : ""}`}
       >
         {GROUPS.map(([state, label]) => {
           const options = sprints.filter((s) => s.state === state);
