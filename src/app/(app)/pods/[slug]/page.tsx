@@ -9,6 +9,7 @@ import {
   CaretDownIcon,
   CaretRightIcon,
   CaretUpIcon,
+  ChartLineUpIcon,
   CheckCircleIcon,
   CircleDashedIcon,
   CircleHalfIcon,
@@ -96,6 +97,13 @@ async function Pod({ params, searchParams }: PageProps<"/pods/[slug]">) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          <Link
+            href={`/pods/${pod.slug}/trends`}
+            className="flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-ink-muted transition hover:bg-fill hover:text-ink"
+          >
+            <ChartLineUpIcon size={16} aria-hidden />
+            Trends
+          </Link>
           <p className="text-sm text-ink-faint">
             {sync.running
               ? "Syncing with Jira now…"

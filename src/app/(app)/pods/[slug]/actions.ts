@@ -1,7 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
-import type { Skill, TshirtSize } from "@/db/schema";
+import type { Skill, SnapshotKind, TshirtSize } from "@/db/schema";
 import { setLeave } from "@/server/capacity";
 import { setEpicSize } from "@/server/epics";
 import { addManualItem, deleteManualItem, updateManualItem, type ManualItemInput } from "@/server/manual-items";
@@ -9,6 +9,7 @@ import { ForbiddenError } from "@/server/permissions";
 import { setProficiency } from "@/server/people";
 import { getViewer } from "@/server/session";
 import { ValidationError } from "@/server/settings";
+import { takeSnapshot } from "@/server/snapshots";
 import { syncNow } from "@/server/sync";
 
 export type SyncState = { ok: boolean; message: string; at: number } | null;
@@ -111,4 +112,18 @@ export async function updateManualItemAction(_: ItemState, form: FormData): Prom
 
 export async function deleteManualItemAction(_: ItemState, form: FormData): Promise<ItemState> {
   return saveItem(form, async () => deleteManualItem(await getViewer(), num(form, "id")));
+}
+
+export async function takeSnapshotAction(_: SyncState, form: FormData): Promise<SyncState> {
+  const kind = String(form.get("kind")) as SnapshotKind;
+  try {
+    await takeSnapshot(await getViewer(), num(form, "podId"), num(form, "sprintId"), kind);
+    refresh();
+    return { ok: true, message: kind === "start" ? "Start snapshot taken." : "Close snapshot taken.", at: Date.now() };
+  } catch (e) {
+    if (e instanceof ValidationError || e instanceof ForbiddenError) {
+      return { ok: false, message: e.message, at: Date.now() };
+    }
+    throw e;
+  }
 }

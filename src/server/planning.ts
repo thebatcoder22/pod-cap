@@ -1,4 +1,4 @@
-import { SKILLS, type Estimates, type JiraUser, type Skill } from "@/db/schema";
+import { SKILLS, type Estimates, type JiraUser, type Skill, type SnapshotKind } from "@/db/schema";
 import { isoDay } from "@/lib/format";
 import type { Proficiency } from "./people";
 
@@ -47,6 +47,12 @@ function weekdays(start: string, end: string) {
 
 /** Rounds away float noise, so 9.5 x 0.7 shows as 6.65. */
 const round = (n: number) => Math.round(n * 100) / 100;
+
+/** The sum of what is there; null when nothing is, so a missing number never reads as 0. */
+const sumKnown = (ns: (number | null | undefined)[]) => {
+  const known = ns.filter((n) => n !== null && n !== undefined);
+  return known.length ? round(known.reduce((sum, d) => sum + d, 0)) : null;
+};
 
 /** The sprint's weekdays, first and last day included. A sprint without dates has none. */
 function sprintDays({ startDate, endDate }: PlanningInput<never>["sprint"]) {
@@ -112,7 +118,7 @@ export function planCommitment<T extends { estimates: Estimates }>(
   const skills = capacity.map(({ skill, capacity }) => {
     const estimated = tickets.flatMap((t) => t.estimates[skill] ?? []);
     const days = [...estimated, ...items.flatMap((i) => (i.skill === skill ? i.days : []))];
-    const committed = days.length ? round(days.reduce((sum, d) => sum + d, 0)) : null;
+    const committed = sumKnown(days);
     return {
       skill,
       capacity,
@@ -122,6 +128,55 @@ export function planCommitment<T extends { estimates: Estimates }>(
     };
   });
   return { skills, unestimated: tickets.filter((t) => !SKILLS.some((k) => t.estimates[k] !== undefined)) };
+}
+
+/**
+ * What a snapshot freezes per skill: capacity and committed skill-days, and at close the skill-days of tickets
+ * Done in Jira. Completed is null when no Done ticket has an estimate in the skill, so it never reads as 0.
+ */
+export function planSnapshot(
+  kind: SnapshotKind,
+  skills: Commitment<unknown>["skills"],
+  tickets: { statusCategory: string; estimates: Estimates }[],
+) {
+  return skills.map(({ skill, capacity, committed }) => {
+    const done = tickets.map((t) => (t.statusCategory === "done" ? t.estimates[skill] : undefined));
+    return { skill, capacity, committed, completed: kind === "close" ? sumKnown(done) : null };
+  });
+}
+
+type SnapshotRow = { skill: Skill; capacity: number | null; committed: number | null; completed: number | null };
+
+/**
+ * A sprint's trend: capacity and committed as frozen at the start, completed as recorded at the close, per skill
+ * and in total. Missing numbers stay null. Over and done share are only there when both their numbers are.
+ */
+export function planTrend(start: SnapshotRow[], close: SnapshotRow[]) {
+  const rows = SKILLS.map((skill) => {
+    const s = start.find((r) => r.skill === skill);
+    return {
+      skill,
+      capacity: s?.capacity ?? null,
+      committed: s?.committed ?? null,
+      completed: close.find((r) => r.skill === skill)?.completed ?? null,
+    };
+  });
+  const withRatios = (r: Omit<SnapshotRow, "skill">) => ({
+    ...r,
+    /** Committed beyond capacity; null when within it or unknown. */
+    over:
+      r.capacity !== null && r.committed !== null && r.committed > r.capacity ? round(r.committed - r.capacity) : null,
+    /** Completed as a whole percent of committed. */
+    donePercent: r.completed !== null && r.committed ? Math.round((r.completed / r.committed) * 100) : null,
+  });
+  return {
+    skills: rows.map((r) => ({ skill: r.skill, ...withRatios(r) })),
+    total: withRatios({
+      capacity: sumKnown(rows.map((r) => r.capacity)),
+      committed: sumKnown(rows.map((r) => r.committed)),
+      completed: sumKnown(rows.map((r) => r.completed)),
+    }),
+  };
 }
 
 type Owned = { key: string; owners: JiraUser[]; estimates: Estimates };
@@ -350,7 +405,7 @@ export function planEpics<E extends { key: string; pod: string | null }, P exten
       const estimated = mine.flatMap((t) => t.estimates[skill] ?? []);
       return {
         skill,
-        days: estimated.length ? round(estimated.reduce((sum, d) => sum + d, 0)) : null,
+        days: sumKnown(estimated),
         notEstimated: mine.length - estimated.length,
       };
     });

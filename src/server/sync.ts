@@ -9,12 +9,14 @@ import {
   type Estimates,
   type JiraUser,
   type Skill,
+  type SnapshotKind,
   type StatusCategory,
 } from "@/db/schema";
 import { createJiraClient, JiraError, type JiraField, type JiraIssue, type MakeJiraClient } from "./jira-client";
 import { linkJiraAccounts } from "./people";
 import { ForbiddenError } from "./permissions";
 import { loadJiraCredentials, ValidationError } from "./settings";
+import { snapshotAllPods } from "./snapshots";
 import type { Viewer } from "./viewer";
 
 export const BOARD_ID = 267;
@@ -51,15 +53,33 @@ export async function syncNow(viewer: Viewer | null, makeClient?: MakeJiraClient
 
 /**
  * Pulls every sprint on the board and every plannable DTP ticket and epic, replacing the previous copy.
- * Shared by the hourly cron and "Sync now". Returns "skipped" when another sync holds the lock.
+ * Shared by the daily cron and "Sync now". Returns "skipped" when another sync holds the lock.
+ * A sprint seen going from future to active gets a start snapshot for every pod, and one seen closing a close one.
  */
 export async function runSync(makeClient: MakeJiraClient = createJiraClient): Promise<SyncResult> {
+  const { result, runId, changes } = await pullAndDiff(makeClient);
+  // Snapshots read the synced data, so they wait until it is committed. The next sync sees no change to retry
+  // a failed one, so it is reported, and the admin takes it on the pod's Trends page.
+  const missed: string[] = [];
+  for (const { sprint, kind } of changes) {
+    const failed = await snapshotAllPods(sprint.id, kind);
+    if (failed.length) missed.push(`the ${kind} snapshot of ${sprint.name} for ${failed.join(", ")}`);
+  }
+  if (!missed.length) return result;
+  const error = `Synced, but ${missed.join(" and ")} failed. The admin can take it on the pod's Trends page.`;
+  await db.update(syncRuns).set({ status: "failed", error }).where(eq(syncRuns.id, runId!));
+  return { status: "failed", error };
+}
+
+type SprintChange = { sprint: { id: number; name: string }; kind: SnapshotKind };
+
+async function pullAndDiff(makeClient: MakeJiraClient) {
   // A transaction-scoped lock is released however the run ends, and works through Neon's pooler.
   return db.transaction(async (tx) => {
     const { rows } = await tx.execute<{ locked: boolean }>(
       sql`select pg_try_advisory_xact_lock(hashtext('jira-sync')) as locked`,
     );
-    if (!rows[0].locked) return { status: "skipped" } as const;
+    if (!rows[0].locked) return { result: { status: "skipped" } as SyncResult, runId: null, changes: [] };
 
     // Holding the lock means any run still marked running was cut off (e.g. by a function timeout).
     await tx
@@ -70,6 +90,7 @@ export async function runSync(makeClient: MakeJiraClient = createJiraClient): Pr
     const [run] = await db.insert(syncRuns).values({}).returning({ id: syncRuns.id });
 
     let result: SyncResult;
+    let changes: SprintChange[] = [];
     try {
       const creds = await loadJiraCredentials();
       if (!creds) throw new ValidationError("Jira is not connected yet. The admin can connect it in Settings.");
@@ -83,6 +104,18 @@ export async function runSync(makeClient: MakeJiraClient = createJiraClient): Pr
       // Jira's pages can overlap when data changes mid-sync; keep one copy of each.
       const boardSprints = [...new Map(pagedSprints.map((s) => [s.id, s])).values()];
       const issues = [...new Map(pagedIssues.map((i) => [i.key, i])).values()];
+
+      // The first sync has nothing to compare against, so it snapshots nothing. After that, a sprint created and
+      // started between two syncs still gets its start snapshot.
+      const before = new Map(
+        (await tx.select({ id: sprints.id, state: sprints.state }).from(sprints)).map((s) => [s.id, s.state]),
+      );
+      changes = boardSprints.flatMap((s): SprintChange[] => {
+        const was = before.get(s.id);
+        if ((was === "future" || (!was && before.size)) && s.state === "active") return [{ sprint: s, kind: "start" }];
+        if (was && was !== "closed" && s.state === "closed") return [{ sprint: s, kind: "close" }];
+        return [];
+      });
 
       // A savepoint, so a failed write leaves the previous sync's data in place.
       await tx.transaction(async (w) => {
@@ -118,7 +151,7 @@ export async function runSync(makeClient: MakeJiraClient = createJiraClient): Pr
             : undefined,
         );
 
-        // ponytail: full replace of ~3k rows each hour; switch to upserts if other tables start referencing tickets.
+        // ponytail: full replace of ~3k rows on each sync; switch to upserts if other tables start referencing tickets.
         await w.delete(tickets);
         const rows = issues.filter(isPlannable).map((i) => toTicket(i, estimateIds));
         for (let i = 0; i < rows.length; i += 500) await w.insert(tickets).values(rows.slice(i, i + 500));
@@ -130,6 +163,7 @@ export async function runSync(makeClient: MakeJiraClient = createJiraClient): Pr
       result = { status: "succeeded" };
     } catch (e) {
       result = { status: "failed", error: describe(e) };
+      changes = [];
     }
 
     await tx
@@ -140,7 +174,7 @@ export async function runSync(makeClient: MakeJiraClient = createJiraClient): Pr
         error: result.status === "failed" ? result.error : null,
       })
       .where(eq(syncRuns.id, run.id));
-    return result;
+    return { result, runId: run.id, changes };
   });
 }
 

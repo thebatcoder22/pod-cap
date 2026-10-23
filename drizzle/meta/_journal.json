@@ -78,6 +78,13 @@
       "when": 1792764536951,
       "tag": "0010_epics",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792775084029,
+      "tag": "0011_snapshots",
+      "breakpoints": true
     }
   ]
 }

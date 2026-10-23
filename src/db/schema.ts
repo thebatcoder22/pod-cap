@@ -224,3 +224,32 @@ export const epicSizes = pgTable("epic_sizes", {
   epicKey: text("epic_key").primaryKey(),
   size: tshirtSize("size").notNull(),
 });
+
+export const SNAPSHOT_KINDS = ["start", "close"] as const;
+export type SnapshotKind = (typeof SNAPSHOT_KINDS)[number];
+export const snapshotKind = pgEnum("snapshot_kind", SNAPSHOT_KINDS);
+
+// A pod's capacity and commitment frozen when a sprint starts, and what got done when it closes.
+// Taken by the sync on each state change, or by the admin; a retake overwrites.
+// History outlives the sprint: no foreign key to sprints, and the sprint's name and dates are kept here.
+export const snapshots = pgTable(
+  "snapshots",
+  {
+    podId: integer("pod_id")
+      .notNull()
+      .references(() => pods.id),
+    sprintId: integer("sprint_id").notNull(),
+    sprintName: text("sprint_name").notNull(),
+    sprintStartDate: timestamp("sprint_start_date", { withTimezone: true }),
+    sprintEndDate: timestamp("sprint_end_date", { withTimezone: true }),
+    kind: snapshotKind("kind").notNull(),
+    skill: skill("skill").notNull(),
+    capacity: numeric("capacity", { precision: 6, scale: 2, mode: "number" }).notNull(),
+    // Null when nothing in the skill was estimated, so it never reads as 0.
+    committed: numeric("committed", { precision: 6, scale: 2, mode: "number" }),
+    // Close snapshots only: the estimates of the sprint's tickets in status category Done.
+    completed: numeric("completed", { precision: 6, scale: 2, mode: "number" }),
+    takenAt: timestamp("taken_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.podId, t.sprintId, t.kind, t.skill] })],
+);
