@@ -3,6 +3,7 @@
 import { refresh } from "next/cache";
 import type { Skill } from "@/db/schema";
 import { setLeave } from "@/server/capacity";
+import { addManualItem, deleteManualItem, updateManualItem, type ManualItemInput } from "@/server/manual-items";
 import { ForbiddenError } from "@/server/permissions";
 import { setProficiency } from "@/server/people";
 import { getViewer } from "@/server/session";
@@ -55,4 +56,48 @@ export async function setLeaveAction(_: CellState, form: FormData): Promise<Cell
   return saveCell(async () =>
     setLeave(await getViewer(), num(form, "personId"), num(form, "sprintId"), num(form, "days")),
   );
+}
+
+/** Echoes what was typed when the save is refused, so nothing is lost. `at` remounts the form on each result. */
+export type ItemState = { ok: boolean; error?: string; fields?: Record<string, string>; at: number } | null;
+
+const itemInput = (form: FormData): ManualItemInput => ({
+  kind: String(form.get("kind")) as ManualItemInput["kind"],
+  title: String(form.get("title") ?? ""),
+  personId: form.get("personId") ? num(form, "personId") : null,
+  skill: String(form.get("skill")) as Skill,
+  days: num(form, "days"),
+  jiraKey: String(form.get("jiraKey") ?? "") || null,
+});
+
+async function saveItem(form: FormData, work: () => Promise<unknown>): Promise<ItemState> {
+  try {
+    await work();
+    refresh();
+    return { ok: true, at: Date.now() };
+  } catch (e) {
+    if (e instanceof ValidationError || e instanceof ForbiddenError) {
+      const fields = Object.fromEntries([...form].map(([k, v]) => [k, String(v)]));
+      return { ok: false, error: e.message, fields, at: Date.now() };
+    }
+    throw e;
+  }
+}
+
+export async function addManualItemAction(_: ItemState, form: FormData): Promise<ItemState> {
+  return saveItem(form, async () =>
+    addManualItem(await getViewer(), {
+      ...itemInput(form),
+      podId: num(form, "podId"),
+      sprintId: num(form, "sprintId"),
+    }),
+  );
+}
+
+export async function updateManualItemAction(_: ItemState, form: FormData): Promise<ItemState> {
+  return saveItem(form, async () => updateManualItem(await getViewer(), num(form, "id"), itemInput(form)));
+}
+
+export async function deleteManualItemAction(_: ItemState, form: FormData): Promise<ItemState> {
+  return saveItem(form, async () => deleteManualItem(await getViewer(), num(form, "id")));
 }

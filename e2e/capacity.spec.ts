@@ -1,5 +1,15 @@
 import { expect, test, type Page } from "@playwright/test";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { leave } from "../src/db/schema";
+import { E2E_DATABASE_URL } from "../playwright.config";
 import { signInAs } from "./sign-in-as";
+
+// The specs share one database, so the leave entered here goes with the test.
+test.afterEach(async () => {
+  const db = drizzle(E2E_DATABASE_URL);
+  await db.delete(leave);
+  await db.$client.end();
+});
 
 /** Waits for the save itself: the typed value shows at once, and reloading early would race it. */
 async function save(page: Page, field: ReturnType<Page["getByLabel"]>, value: string) {

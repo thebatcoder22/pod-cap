@@ -223,9 +223,10 @@ Leads sign in with Google, can see every pod, and can only edit their own pod.
 
 - Person capacity = (working days in sprint - leave days - holidays in sprint) x focus factor. Working days are weekdays inside the sprint's dates.
 - Pod capacity for a skill = the sum of capacity of members whose main skill is that skill. Stretch capacity is reported separately and never folded into the main number.
-- Committed skill-days for a pod = the sum of estimates of plannable tickets in the sprint with that POD value, plus manual items in that pod and sprint. A placeholder linked to a Jira ticket stops counting once the ticket is synced.
+- Committed skill-days for a pod = the sum of estimates of plannable tickets in the sprint with that POD value, plus manual items in that pod and sprint. A placeholder linked to a Jira ticket stops counting once the ticket is synced into the sprint for a pod; a ticket with no POD value takes nothing over.
 - A missing estimate for a skill is "not estimated", which is distinct from zero and is counted and surfaced.
 - Attribution: a ticket's skill-days for a skill go to its Dev Owners whose proficiency in that skill is above zero, split evenly. If Dev Owners is empty, the assignee is used. If no candidate exists, the days become unassigned pod work and raise a flag.
+- A manual item's days go to its person. An item with no person counts against the pod without a flag, since the lead chose to reserve it there; an item whose person has left the pod, or has 0% in its skill, is unassigned work and raises a flag.
 - Calendar days consumed by a person for attributed work = skill-days / proficiency in that skill.
 - Free days = capacity - calendar days consumed. It can be negative, which means overloaded.
 - An exact match is a backlog plannable ticket in the same pod, not in any active or future sprint, whose estimate is only in the person's main skill and fits their free days.

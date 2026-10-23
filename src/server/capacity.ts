@@ -1,9 +1,10 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { leave, sprints } from "@/db/schema";
+import { listManualItems } from "./manual-items";
 import { activePerson, linkedPeopleOutside } from "./people";
 import { assertCanEditPod } from "./permissions";
-import { planCapacity, planCommitment, planLoad, workingDays } from "./planning";
+import { planCapacity, planCommitment, planLoad, planManualItems, workingDays } from "./planning";
 import type { PodPage } from "./pods";
 import { getPlanningSettings, ValidationError } from "./settings";
 import type { SprintView } from "./sprints";
@@ -15,11 +16,12 @@ export type CapacitySheet = Awaited<ReturnType<typeof getCapacitySheet>>;
 
 /**
  * Each member's capacity in a sprint and the pod's capacity per skill, with what they are computed from,
- * set against the skill-days committed in the pod's tickets for the sprint, and who those skill-days fall to.
+ * set against the skill-days committed in the pod's tickets and manual items for the sprint, and who those
+ * skill-days fall to.
  */
 export async function getCapacitySheet(page: PodPage, sprint: Sprint, tickets: SprintView["tickets"]) {
   const ids = page.members.map((m) => m.id);
-  const [settings, rows, others] = await Promise.all([
+  const [settings, rows, others, items] = await Promise.all([
     getPlanningSettings(),
     ids.length
       ? db
@@ -28,7 +30,10 @@ export async function getCapacitySheet(page: PodPage, sprint: Sprint, tickets: S
           .where(and(eq(leave.sprintId, sprint.id), inArray(leave.personId, ids)))
       : [],
     linkedPeopleOutside(page.pod.id),
+    listManualItems(page.pod.id, sprint.id),
   ]);
+  const manual = planManualItems(items);
+  const counting = manual.filter((i) => i.counts);
   const plan = planCapacity({
     sprint,
     people: page.members,
@@ -39,8 +44,9 @@ export async function getCapacitySheet(page: PodPage, sprint: Sprint, tickets: S
   return {
     ...plan,
     focusPercent: settings.focusPercent,
-    commitment: planCommitment(tickets, plan.skills),
-    load: planLoad(tickets, plan.people, new Map(others.map((p) => [p.jiraAccountId, p]))),
+    items: manual,
+    commitment: planCommitment(tickets, counting, plan.skills),
+    load: planLoad(tickets, counting, plan.people, new Map(others.map((p) => [p.jiraAccountId, p]))),
   };
 }
 

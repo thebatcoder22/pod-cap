@@ -64,6 +64,13 @@
       "when": 1792755316694,
       "tag": "0008_estimates",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792761346612,
+      "tag": "0009_manual_items",
+      "breakpoints": true
     }
   ]
 }

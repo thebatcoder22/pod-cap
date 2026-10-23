@@ -89,19 +89,35 @@ export type Commitment<T> = {
   unestimated: T[];
 };
 
-/** Committed skill-days per skill = the sum of the sprint's ticket estimates, set against capacity. */
+/**
+ * A placeholder stops counting once its ticket is in the sprint for a pod: the ticket's own estimate takes over,
+ * wherever its POD puts it, so the work is never counted twice.
+ */
+export function planManualItems<M extends { ticketPod: string | null }>(items: M[]) {
+  return items.map((i) => ({ ...i, counts: i.ticketPod === null }));
+}
+
+/** A manual item that counts: non-Jira work, or a placeholder whose ticket is not in a pod's sprint yet. */
+type ManualItem = { personId: number | null; skill: Skill; days: number };
+
+/**
+ * Committed skill-days per skill = the sum of the sprint's ticket estimates and manual items, set against
+ * capacity.
+ */
 export function planCommitment<T extends { estimates: Estimates }>(
   tickets: T[],
+  items: ManualItem[],
   capacity: Capacity<unknown>["skills"],
 ): Commitment<T> {
   const skills = capacity.map(({ skill, capacity }) => {
-    const days = tickets.flatMap((t) => t.estimates[skill] ?? []);
+    const estimated = tickets.flatMap((t) => t.estimates[skill] ?? []);
+    const days = [...estimated, ...items.flatMap((i) => (i.skill === skill ? i.days : []))];
     const committed = days.length ? round(days.reduce((sum, d) => sum + d, 0)) : null;
     return {
       skill,
       capacity,
       committed,
-      notEstimated: tickets.length - days.length,
+      notEstimated: tickets.length - estimated.length,
       over: round(Math.max(0, (committed ?? 0) - capacity)),
     };
   });
@@ -110,7 +126,7 @@ export function planCommitment<T extends { estimates: Estimates }>(
 
 type Owned = { key: string; owners: JiraUser[]; estimates: Estimates };
 
-export type Load<P, T> = {
+export type Load<P, T, M> = {
   people: (P & {
     /** Attributed skill-days, all skills together. */
     skillDays: number;
@@ -120,6 +136,8 @@ export type Load<P, T> = {
     free: number;
     /** The sprint's tickets this person owns, with the skill-days attributed to them. */
     tickets: (T & { attributed: Estimates })[];
+    /** Their manual items. */
+    items: M[];
   })[];
   tickets: (T & {
     /** Owners who are in another pod. */
@@ -127,6 +145,8 @@ export type Load<P, T> = {
     /** Skill-days none of the owners can do, by skill. They count against the pod but nobody in it. */
     unassigned: Estimates;
   })[];
+  /** Manual items. One whose person is not in the pod, or cannot do its skill, is unassigned work. */
+  items: (M & { unassigned: Estimates })[];
   /** All unassigned skill-days together. */
   unassigned: number;
 };
@@ -134,16 +154,19 @@ export type Load<P, T> = {
 /**
  * Attribution: a ticket's skill-days for a skill go to its owners (Dev Owners, else the assignee) with
  * proficiency above zero in it, split evenly. Owners from other pods take their share, as cross-pod help.
+ * A manual item goes to its person. One without a person counts against the pod, as the lead chose.
  */
 export function planLoad<
-  P extends { capacity: number; jiraAccountId: string | null; proficiency: Proficiency },
+  P extends { id: number; capacity: number; jiraAccountId: string | null; proficiency: Proficiency },
   T extends Owned,
+  M extends ManualItem,
 >(
   tickets: T[],
+  items: M[],
   people: P[],
   /** Active people in other pods, by Jira account id. */
   others: Map<string, { pod: string; proficiency: Proficiency }>,
-): Load<P, T> {
+): Load<P, T, M> {
   const members = new Map(people.flatMap((p) => (p.jiraAccountId ? [[p.jiraAccountId, p]] : [])));
   const owned = new Map(people.map((p) => [p, [] as (T & { attributed: Estimates })[]]));
 
@@ -174,6 +197,16 @@ export function planLoad<
     return { ...t, crossPod, unassigned };
   });
 
+  const byId = new Map(people.map((p) => [p.id, p]));
+  const doer = (i: M) => {
+    const p = i.personId === null ? undefined : byId.get(i.personId);
+    return p && p.proficiency[i.skill] > 0 ? p : undefined;
+  };
+  const manual = items.map((i) => ({
+    ...i,
+    unassigned: i.personId === null || doer(i) ? {} : { [i.skill]: i.days },
+  }));
+
   const sum = (ns: number[]) => ns.reduce((a, b) => a + b, 0);
   return {
     people: people.map((p) => {
@@ -181,7 +214,11 @@ export function planLoad<
         ...t,
         attributed: Object.fromEntries(Object.entries(t.attributed).map(([k, d]) => [k, round(d)])),
       }));
-      const attributed = owned.get(p)!.flatMap((t) => Object.entries(t.attributed) as [Skill, number][]);
+      const mine = items.filter((i) => doer(i) === p);
+      const attributed = [
+        ...owned.get(p)!.flatMap((t) => Object.entries(t.attributed) as [Skill, number][]),
+        ...mine.map((i) => [i.skill, i.days] as [Skill, number]),
+      ];
       const calendarDays = sum(attributed.map(([skill, d]) => d / (p.proficiency[skill] / 100)));
       return {
         ...p,
@@ -189,9 +226,11 @@ export function planLoad<
         calendarDays: round(calendarDays),
         free: round(p.capacity - calendarDays),
         tickets,
+        items: mine,
       };
     }),
     tickets: planned,
-    unassigned: round(sum(planned.flatMap((t) => Object.values(t.unassigned)))),
+    items: manual,
+    unassigned: round(sum([...planned, ...manual].flatMap((t) => Object.values(t.unassigned)))),
   };
 }

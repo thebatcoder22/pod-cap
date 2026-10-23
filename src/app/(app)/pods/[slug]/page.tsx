@@ -25,6 +25,7 @@ import { BOARD_ID, getSyncStatus } from "@/server/sync";
 import { getCapacitySheet, type CapacitySheet } from "@/server/capacity";
 import { setLeaveAction, setProficiencyAction } from "./actions";
 import { CellInput } from "./cell-input";
+import { ManualItems } from "./manual-items";
 import { SprintPicker, SyncNowButton } from "./sprint-controls";
 
 // Covers the "Sync now" server action on this page.
@@ -118,7 +119,7 @@ async function Pod({ params, searchParams }: PageProps<"/pods/[slug]">) {
       )}
 
       <div {...rise(2)}>
-        <Sprint podName={pod.name} view={view} capacity={capacity} canEdit={isOwn} />
+        <Sprint page={page} view={view} capacity={capacity} canEdit={isOwn} />
       </div>
 
       <div {...rise(3)}>
@@ -151,17 +152,18 @@ function StatusIcon({ category, size = 16 }: { category: Category; size?: number
 }
 
 function Sprint({
-  podName,
+  page,
   view,
   capacity,
   canEdit,
 }: {
-  podName: string;
+  page: PodData;
   view: SprintView;
   capacity: CapacitySheet | null;
   canEdit: boolean;
 }) {
   const { sprint, tickets } = view;
+  const podName = page.pod.name;
 
   if (!sprint || !capacity) {
     return (
@@ -199,11 +201,35 @@ function Sprint({
 
       <Capacity sheet={capacity} sprintId={sprint.id} canEdit={canEdit} />
 
-      {tickets.length > 0 && (
-        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-          <Committed commitment={capacity.commitment} />
-          <Unestimated tickets={capacity.commitment.unestimated} />
-        </div>
+      {tickets.length > 0 ? (
+        <>
+          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+            <Committed commitment={capacity.commitment} />
+            <Unestimated tickets={capacity.commitment.unestimated} />
+          </div>
+          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+            <Workload load={capacity.load} />
+            <Progress tickets={tickets} />
+          </div>
+        </>
+      ) : (
+        // Manual items alone, with no tickets to estimate or track.
+        capacity.items.length > 0 && (
+          <div className="grid items-start gap-4 lg:grid-cols-2">
+            <Committed commitment={capacity.commitment} />
+            <Workload load={capacity.load} />
+          </div>
+        )
+      )}
+
+      {(canEdit || capacity.items.length > 0) && (
+        <ManualItems
+          items={capacity.items}
+          people={page.members.map(({ id, name }) => ({ id, name }))}
+          podId={page.pod.id}
+          sprintId={sprint.id}
+          canEdit={canEdit}
+        />
       )}
 
       {tickets.length === 0 ? (
@@ -211,13 +237,7 @@ function Sprint({
           Tickets show here when their POD field is {podName} and they are in this sprint.
         </Empty>
       ) : (
-        <>
-          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-            <Workload load={capacity.load} />
-            <Progress tickets={tickets} />
-          </div>
-          <TicketTable tickets={capacity.load.tickets} />
-        </>
+        <TicketTable tickets={capacity.load.tickets} />
       )}
     </section>
   );
@@ -758,6 +778,7 @@ function TicketKey({ ticket }: { ticket: { key: string; url: string | null } }) 
 function Workload({ load }: { load: CapacitySheet["load"] }) {
   const max = Math.max(1, ...load.people.flatMap((p) => [p.capacity, p.calendarDays]));
   const flagged = load.tickets.filter((t) => Object.keys(t.unassigned).length);
+  const flaggedItems = load.items.filter((i) => Object.keys(i.unassigned).length);
 
   return (
     <section aria-labelledby="load" className={card}>
@@ -772,7 +793,7 @@ function Workload({ load }: { load: CapacitySheet["load"] }) {
           <PersonRow key={p.id} person={p} max={max} i={i} />
         ))}
       </ul>
-      {flagged.length > 0 && (
+      {flagged.length + flaggedItems.length > 0 && (
         <section aria-labelledby="unassigned" className="border-t border-line bg-danger-soft/60 px-4 py-4 sm:px-5">
           <h4 id="unassigned" className="flex items-center gap-1.5 text-sm font-medium text-danger">
             <WarningCircleIcon size={16} weight="fill" aria-hidden />
@@ -791,6 +812,14 @@ function Workload({ load }: { load: CapacitySheet["load"] }) {
                   <SkillDays days={t.unassigned} empty="" />
                 </span>
               </li>
+            ))}
+            {flaggedItems.map((i) => (
+              <ManualLine key={`item-${i.id}`} item={i}>
+                <span className="text-ink-muted">
+                  {i.person ? `${i.person} cannot take it here` : "No one can do it"}
+                </span>
+                <SkillDays days={i.unassigned} empty="" />
+              </ManualLine>
             ))}
           </ul>
         </section>
@@ -841,7 +870,13 @@ function PersonRow({ person: p, max, i }: { person: PersonLoad; max: number; i: 
           </span>
           <span className="col-start-2 -col-end-1 -mt-1.5 flex flex-wrap gap-x-3 text-xs">
             <span className="text-ink-muted">
-              {plural(p.skillDays, "skill-day")} on {plural(p.tickets.length, "ticket")}
+              {plural(p.skillDays, "skill-day")} on{" "}
+              {[
+                (p.tickets.length > 0 || !p.items.length) && plural(p.tickets.length, "ticket"),
+                p.items.length > 0 && plural(p.items.length, "manual item"),
+              ]
+                .filter(Boolean)
+                .join(" and ")}
             </span>
             {over ? (
               <span className="flex items-center gap-1 font-medium text-danger">
@@ -853,7 +888,7 @@ function PersonRow({ person: p, max, i }: { person: PersonLoad; max: number; i: 
             )}
           </span>
         </summary>
-        {p.tickets.length === 0 ? (
+        {p.tickets.length + p.items.length === 0 ? (
           <p className="px-4 pb-3 pl-11 text-sm text-ink-faint sm:pl-12">No tickets in this sprint.</p>
         ) : (
           <ul aria-label={`${p.name}'s tickets`} className="space-y-2 px-4 pb-3.5 pl-11 sm:pr-5 sm:pl-12">
@@ -872,9 +907,27 @@ function PersonRow({ person: p, max, i }: { person: PersonLoad; max: number; i: 
                 </span>
               </li>
             ))}
+            {p.items.map((i) => (
+              <ManualLine key={`item-${i.id}`} item={i}>
+                <SkillDays days={{ [i.skill]: i.days }} empty="" />
+              </ManualLine>
+            ))}
           </ul>
         )}
       </details>
+    </li>
+  );
+}
+
+/** A manual item in a list of tickets, where its title stands in for the ticket key and summary. */
+function ManualLine({ item, children }: { item: { title: string }; children: React.ReactNode }) {
+  return (
+    <li className="flex items-baseline gap-3 text-sm">
+      <span className="shrink-0 text-xs text-ink-faint">Manual</span>
+      <span className="min-w-0 truncate" title={item.title}>
+        {item.title}
+      </span>
+      <span className="ml-auto flex shrink-0 items-center gap-2 text-xs">{children}</span>
     </li>
   );
 }

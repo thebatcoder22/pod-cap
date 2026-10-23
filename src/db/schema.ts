@@ -172,3 +172,32 @@ export const leave = pgTable(
     check("leave_half_days", sql`${t.days} > 0 and ${t.days} * 2 = trunc(${t.days} * 2)`),
   ],
 );
+
+export const manualItemKind = pgEnum("manual_item_kind", ["work", "placeholder"]);
+
+// Work Jira does not hold (support, interviews) and placeholders for work not ticketed yet.
+// No status, comments or sub-items: the platform is not a Jira clone.
+export const manualItems = pgTable(
+  "manual_items",
+  {
+    id: serial("id").primaryKey(),
+    podId: integer("pod_id")
+      .notNull()
+      .references(() => pods.id),
+    sprintId: integer("sprint_id")
+      .notNull()
+      .references(() => sprints.id, { onDelete: "cascade" }),
+    // Optional: a placeholder can reserve the pod's capacity before anyone is picked.
+    personId: integer("person_id").references(() => people.id),
+    kind: manualItemKind("kind").notNull(),
+    title: text("title").notNull(),
+    skill: skill("skill").notNull(),
+    days: numeric("days", { precision: 4, scale: 1, mode: "number" }).notNull(),
+    // A placeholder's ticket, once it exists. It stops counting when that ticket is synced into the sprint.
+    jiraKey: text("jira_key"),
+  },
+  (t) => [
+    check("manual_items_half_days", sql`${t.days} > 0 and ${t.days} * 2 = trunc(${t.days} * 2)`),
+    check("manual_items_key_on_placeholders", sql`${t.jiraKey} is null or ${t.kind} = 'placeholder'`),
+  ],
+);
