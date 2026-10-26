@@ -31,5 +31,14 @@ export async function getPodPage(slug: string): Promise<PodPage | null> {
 
   const members = (await withProficiency(rows)).map((m) => ({ ...m, isLead: m.id === pod.leadPersonId }));
 
-  return { pod: { id: pod.id, slug: pod.slug, name: pod.name, jiraPodOptionId: pod.jiraPodOptionId, jiraPodValue: pod.jiraPodValue }, members };
+  return {
+    pod: {
+      id: pod.id,
+      slug: pod.slug,
+      name: pod.name,
+      jiraPodOptionId: pod.jiraPodOptionId,
+      jiraPodValue: pod.jiraPodValue,
+    },
+    members,
+  };
 }
