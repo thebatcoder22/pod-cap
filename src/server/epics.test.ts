@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { resetDb } from "../../tests/db";
 import { fakeJira } from "../../tests/fake-jira";
-import { getEpicList, setEpicSize } from "./epics";
+import { getEpicList, getPendingInJira, setEpicSize } from "./epics";
 import { ForbiddenError } from "./permissions";
 import { getPodPage } from "./pods";
 import { saveJiraSettings, ValidationError } from "./settings";
@@ -143,6 +143,24 @@ describe("epics", () => {
     jira.issue("DTP-4830").fields.status = { name: "Done", statusCategory: { key: "done" } };
     await runSync(jira.make);
     expect((await epic("roadmap-2", "DTP-4830")).missing).toEqual([]);
+  });
+
+  it("gathers every pod's pending epics for the PM page, the viewer's pod first", async () => {
+    reparent("DTP-4687", "DTP-4830");
+    await runSync(jira.make);
+    const roadmap2 = (await getPodPage("roadmap-2"))!.pod;
+    const pending = await getPendingInJira(roadmap2.id);
+
+    expect(pending[0].pod).toEqual({ id: roadmap2.id, name: "RoadMap 2", slug: "roadmap-2" });
+    // Shared by two pods, so it is on both lists.
+    for (const slug of ["roadmap-1", "roadmap-2"]) {
+      expect(pending.find((p) => p.pod.slug === slug)!.epics.map((e) => e.key)).toContain("DTP-4830");
+    }
+    // Only epics with something to set, and only pods that have some.
+    expect(pending.every((p) => p.epics.length && p.epics.every((e) => e.missing.length))).toBe(true);
+    // RoadMap 1 sees its own pod first.
+    const roadmap1 = (await getPodPage("roadmap-1"))!.pod;
+    expect((await getPendingInJira(roadmap1.id))[0].pod.slug).toBe("roadmap-1");
   });
 
   it("lets a lead size their own pod's epics, and keeps the size across syncs", async () => {

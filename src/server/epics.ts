@@ -37,7 +37,22 @@ export type JiraGap = "POD" | "Ready for Production Date";
  * Production Date, soonest first.
  */
 export async function getEpicList(pod: { id: number }) {
-  const { plans, site } = await planAll();
+  return epicList(await planAll(), pod);
+}
+
+/** Each pod's open epics with something still to fill in on Jira, the viewer's pod first. Pods with none are left out. */
+export async function getPendingInJira(viewerPodId: number | null) {
+  const [planned, podRows] = await Promise.all([
+    planAll(),
+    db.select({ id: pods.id, name: pods.name, slug: pods.slug }).from(pods).orderBy(pods.id),
+  ]);
+  return podRows
+    .toSorted((a, b) => Number(b.id === viewerPodId) - Number(a.id === viewerPodId))
+    .map((pod) => ({ pod, epics: epicList(planned, pod).filter((e) => e.missing.length) }))
+    .filter((p) => p.epics.length);
+}
+
+function epicList({ plans, site }: Awaited<ReturnType<typeof planAll>>, pod: { id: number }) {
   return plans
     .filter((e) => e.owner?.id === pod.id || e.pods.some((p) => p.id === pod.id))
     .sort(

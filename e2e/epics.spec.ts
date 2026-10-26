@@ -62,3 +62,17 @@ test("a lead sees what the PM still has to fill in on their epics in Jira", asyn
   await expect(page.getByRole("region", { name: "Epics" })).toBeVisible();
   await expect(pending).toHaveCount(0);
 });
+
+test("the sidebar opens every pod's pending Jira epics", async ({ page }) => {
+  await signInAs(page, "abdullah@delightree.com");
+  await page.getByRole("link", { name: "Pending in Jira" }).first().click();
+  await expect(page).toHaveURL(/\/pending$/);
+  await expect(page.getByRole("heading", { name: "Pending in Jira", level: 1 })).toBeVisible();
+
+  // Atlas has nothing pending, so only Velocity's list shows.
+  const velocity = page.getByRole("region", { name: "Velocity" });
+  await expect(velocity.getByRole("listitem", { name: "Site visit reports" })).toContainText(
+    /Set its POD.*1 ticket in Velocity.*Set its Ready for Production Date/,
+  );
+  await expect(page.getByRole("region", { name: /Atlas/ })).toHaveCount(0);
+});

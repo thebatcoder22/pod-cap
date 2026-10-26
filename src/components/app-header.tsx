@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GearSixIcon, SignOutIcon } from "@phosphor-icons/react/dist/ssr";
+import { GearSixIcon, ListChecksIcon, SignOutIcon } from "@phosphor-icons/react/dist/ssr";
 import { Avatar, BrandMark } from "./brand";
 import { signOut } from "@/auth";
 import { listPods } from "@/server/pods";
@@ -65,6 +65,16 @@ export async function AppShell() {
         <p className="mt-8 mb-1.5 px-2 text-xs font-medium text-ink-faint">Pods</p>
         <PodNav pods={pods} ownSlug={own} />
 
+        <p className="mt-8 mb-1.5 px-2 text-xs font-medium text-ink-faint">For PMs</p>
+        <NavLink
+          href="/pending"
+          className="flex h-8 items-center gap-2.5 rounded-lg px-2 text-sm text-ink-muted transition-colors hover:bg-fill hover:text-ink"
+          activeClassName="bg-surface font-medium text-ink shadow-card hover:bg-surface"
+        >
+          <ListChecksIcon size={18} aria-hidden className="mx-px" />
+          Pending in Jira
+        </NavLink>
+
         <div className="mt-auto space-y-3">
           {viewer.isAdmin && (
             <NavLink
@@ -92,6 +102,10 @@ export async function AppShell() {
         <div className="flex h-14 items-center gap-3 px-4">
           <Brand />
           <div className="ml-auto flex items-center gap-1">
+            <NavLink href="/pending" className={iconButton} activeClassName="bg-fill text-ink">
+              <ListChecksIcon size={18} aria-hidden />
+              <span className="sr-only">Pending in Jira</span>
+            </NavLink>
             {viewer.isAdmin && (
               <NavLink href="/settings" className={iconButton} activeClassName="bg-fill text-ink">
                 <GearSixIcon size={18} aria-hidden />
