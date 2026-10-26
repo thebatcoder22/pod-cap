@@ -16,7 +16,7 @@
     "format:check": "prettier --check .",
     "deploy:dev": "scripts/deploy.sh dev",
     "deploy:prod": "scripts/deploy.sh prod",
-    "prepare": "git config core.hooksPath .githooks"
+    "prepare": "git rev-parse --git-dir >/dev/null 2>&1 && git config core.hooksPath .githooks || true"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
