@@ -23,7 +23,7 @@ echo "Deploying $branch at $(git rev-parse --short "$branch")"
 if [ "$1" = prod ]; then
   vercel deploy "$dir" --prod --yes --scope "$scope"
 else
-  # JSON, because the CLI prints a bare URL to a terminal but JSON when it detects an agent.
-  url=$(vercel deploy "$dir" --yes --json --scope "$scope" | node -e 'process.stdout.write(JSON.parse(require("fs").readFileSync(0, "utf8")).url)')
+  # JSON, because the CLI prints a bare URL to a terminal; for an agent the JSON nests it under `deployment`.
+  url=$(vercel deploy "$dir" --yes --json --scope "$scope" | node -e 'const d = JSON.parse(require("fs").readFileSync(0, "utf8")); process.stdout.write((d.deployment ?? d).url)')
   vercel alias set "$url" pod-cap-dev.vercel.app --scope "$scope"
 fi
