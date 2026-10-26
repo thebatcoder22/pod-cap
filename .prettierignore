@@ -2,3 +2,4 @@ drizzle/meta
 pnpm-lock.yaml
 .next
 *.md
+.claude/worktrees/
