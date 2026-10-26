@@ -139,10 +139,14 @@ async function Pod({ params, searchParams }: PageProps<"/pods/[slug]">) {
       </div>
 
       <div {...rise(3)}>
-        <Epics epics={epics} pod={pod} canEdit={isOwn} />
+        <PendingInJira epics={epics} />
       </div>
 
       <div {...rise(4)}>
+        <Epics epics={epics} pod={pod} canEdit={isOwn} />
+      </div>
+
+      <div {...rise(5)}>
         <Team members={members} canEdit={isOwn} />
       </div>
     </div>
@@ -1141,6 +1145,65 @@ function OverloadedSkills({ short, sprintId }: { short: PickUpPanel["short"]; sp
           ))}
         </ul>
       )}
+    </section>
+  );
+}
+
+// ---- Pending in Jira ----
+
+/** Where an epic's tickets are, most first: "7 tickets in RoadMap 2, 1 in RoadMap 1". */
+function ticketPods(pods: EpicList[number]["pods"]) {
+  if (!pods.length) return "None of its tickets is in a pod yet";
+  return pods
+    .toSorted((a, b) => b.tickets - a.tickets)
+    .map((p, i) => `${i ? p.tickets : plural(p.tickets, "ticket")} in ${p.name}`)
+    .join(", ");
+}
+
+/** What only Jira can fill in on the pod's epics, for the lead to pass on to their PM. Hidden when nothing is. */
+function PendingInJira({ epics }: { epics: EpicList }) {
+  const pending = epics.filter((e) => e.missing.length);
+  if (!pending.length) return null;
+  return (
+    <section aria-labelledby="pending" className="space-y-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2 id="pending" className="text-base font-semibold tracking-tight">
+          Pending in Jira
+        </h2>
+        <p className="text-xs text-ink-faint">For the PM to fill in on each epic</p>
+      </div>
+      <ul className={`${card} divide-y divide-line`}>
+        {pending.map((e) => (
+          <li
+            key={e.key}
+            aria-label={e.summary}
+            className="flex flex-col gap-2 px-4 py-3 text-sm sm:px-5 md:flex-row md:items-baseline md:gap-6"
+          >
+            <p className="flex min-w-0 items-baseline gap-3 md:flex-1">
+              <TicketKey ticket={e} />
+              <span className="truncate leading-5 font-medium" title={e.summary}>
+                {e.summary}
+              </span>
+            </p>
+            <ul className="space-y-1.5 md:w-[28rem] md:shrink-0">
+              {e.missing.map((gap) => (
+                <li key={gap} className="flex items-baseline gap-2 leading-5">
+                  <CircleDashedIcon
+                    size={14}
+                    weight="bold"
+                    className="shrink-0 translate-y-0.5 text-ink-faint"
+                    aria-hidden
+                  />
+                  <span>
+                    Set its {gap}
+                    {gap === "POD" && <span className="block text-xs text-ink-faint">{ticketPods(e.pods)}</span>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

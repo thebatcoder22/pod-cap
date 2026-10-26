@@ -43,3 +43,22 @@ test("a lead sizes their pod's epics next to their tickets' skill-days, and othe
   await expect(epics.getByRole("combobox")).toHaveCount(0);
   await expect(epics.getByRole("row", { name: "Site visit reports" })).toHaveCount(0);
 });
+
+test("a lead sees what the PM still has to fill in on their epics in Jira", async ({ page }) => {
+  await signInAs(page, "rahul@delightree.com");
+  await expect(page).toHaveURL(/\/pods\/velocity$/);
+  const pending = page.getByRole("region", { name: "Pending in Jira" });
+
+  // DTP-4700 has no POD and no date in Jira; DTP-4610 has both.
+  const siteVisits = pending.getByRole("listitem", { name: "Site visit reports" });
+  await expect(siteVisits).toContainText(
+    /DTP-4700.*Set its POD.*1 ticket in Velocity.*Set its Ready for Production Date/,
+  );
+  await expect(pending.getByRole("listitem", { name: "Checklists v2" })).toHaveCount(0);
+
+  // Atlas's only epic is Velocity's to chase, so Atlas has nothing pending.
+  await signInAs(page, "abdullah@delightree.com");
+  await expect(page).toHaveURL(/\/pods\/atlas$/);
+  await expect(page.getByRole("region", { name: "Epics" })).toBeVisible();
+  await expect(pending).toHaveCount(0);
+});

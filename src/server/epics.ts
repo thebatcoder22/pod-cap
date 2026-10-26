@@ -29,6 +29,9 @@ async function planAll(key?: string) {
   return { plans: planEpics(rows, children, podRows), site: settings?.site ?? null };
 }
 
+/** What a PM fills in on a Jira epic for planning to work. */
+export type JiraGap = "POD" | "Ready for Production Date";
+
 /**
  * The epics a pod owns or has tickets in: in progress first, then to do, then done, each by Ready for
  * Production Date, soonest first.
@@ -53,10 +56,29 @@ export async function getEpicList(pod: { id: number }) {
       readyForProductionDate: e.readyForProductionDate,
       size: e.size,
       owner: e.owner && { id: e.owner.id, name: e.owner.name, slug: e.owner.slug },
+      pods: e.pods.map(({ name, slug, tickets }) => ({ name, slug, tickets })),
+      missing: missing(e, pod.id),
       tickets: e.tickets,
       skills: e.skills,
       unestimated: e.unestimated,
     }));
+}
+
+/** Gaps on an open epic this pod owns or shares; a done epic, or another pod's, is not this pod's to chase. */
+function missing(
+  e: {
+    podOptionId: string | null;
+    readyForProductionDate: string | null;
+    statusCategory: string;
+    owner: { id: number } | null;
+  },
+  podId: number,
+): JiraGap[] {
+  if (e.statusCategory === "done" || (e.owner && e.owner.id !== podId)) return [];
+  return [
+    ...(e.podOptionId ? [] : (["POD"] as const)),
+    ...(e.readyForProductionDate ? [] : (["Ready for Production Date"] as const)),
+  ];
 }
 
 /** A lead sets the T-shirt size of an epic their pod owns. Null clears it. */

@@ -377,8 +377,8 @@ export function planPickUp<
 export type EpicPlan<E, P> = E & {
   /** The pod whose lead sizes it; null when no single pod can be told from Jira. */
   owner: P | null;
-  /** Pods with child tickets in it. */
-  pods: P[];
+  /** Pods with child tickets in it, and how many. */
+  pods: (P & { tickets: number })[];
   /** Plannable child tickets. */
   tickets: number;
   /** Child skill-days per skill: null when no child has an estimate in it, so it never reads as 0. */
@@ -399,7 +399,10 @@ export function planEpics<E extends { key: string; podOptionId: string | null },
   const children = Map.groupBy(tickets, (t) => t.epicKey);
   return epics.map((e) => {
     const mine = children.get(e.key) ?? [];
-    const worked = pods.filter((p) => mine.some((t) => t.podOptionId === p.jiraPodOptionId));
+    const worked = pods.flatMap((p) => {
+      const n = mine.filter((t) => t.podOptionId === p.jiraPodOptionId).length;
+      return n ? [{ ...p, tickets: n }] : [];
+    });
     const owner = e.podOptionId
       ? (pods.find((p) => p.jiraPodOptionId === e.podOptionId) ?? null)
       : worked.length === 1

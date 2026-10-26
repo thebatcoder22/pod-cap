@@ -55,6 +55,8 @@ describe("epics", () => {
           { skill: "AI", days: null, notEstimated: 0 },
         ],
         unestimated: 0,
+        pods: [],
+        missing: [],
       },
       // Its POD is RoadMap 1, though its only ticket is Velocity's.
       expect.objectContaining({ key: "DTP-4610", owner: expect.objectContaining({ slug: "roadmap-1" }), tickets: 1 }),
@@ -110,6 +112,37 @@ describe("epics", () => {
     await runSync(jira.make);
     expect(await epic("roadmap-2", "DTP-4830")).toMatchObject({ owner: null, tickets: 2 });
     expect(await epic("roadmap-1", "DTP-4830")).toMatchObject({ owner: null, tickets: 2 });
+  });
+
+  it("lists what the PM still has to fill in on the pod's open epics in Jira", async () => {
+    await runSync(jira.make);
+    // No POD and no Ready for Production Date; its only ticket makes it RoadMap 2's anyway.
+    expect(await epic("roadmap-2", "DTP-4830")).toMatchObject({
+      pods: [{ name: "RoadMap 2", slug: "roadmap-2", tickets: 1 }],
+      missing: ["POD", "Ready for Production Date"],
+    });
+    // Both set in Jira: nothing to chase.
+    expect((await epic("roadmap-1", "DTP-4427")).missing).toEqual([]);
+    // RoadMap 1's epic: Velocity has work in it, but chasing it is RoadMap 1's job.
+    expect((await epic("velocity", "DTP-4610")).missing).toEqual([]);
+
+    // Shared by two pods, both are asked, and see where its tickets are.
+    reparent("DTP-4687", "DTP-4830");
+    await runSync(jira.make);
+    for (const slug of ["roadmap-1", "roadmap-2"]) {
+      expect(await epic(slug, "DTP-4830")).toMatchObject({
+        pods: [
+          { name: "RoadMap 1", tickets: 1 },
+          { name: "RoadMap 2", tickets: 1 },
+        ],
+        missing: ["POD", "Ready for Production Date"],
+      });
+    }
+
+    // A done epic needs nothing more.
+    jira.issue("DTP-4830").fields.status = { name: "Done", statusCategory: { key: "done" } };
+    await runSync(jira.make);
+    expect((await epic("roadmap-2", "DTP-4830")).missing).toEqual([]);
   });
 
   it("lets a lead size their own pod's epics, and keeps the size across syncs", async () => {
