@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { epics, epicSizes, jiraSettings, pods, tickets, TSHIRT_SIZES, type TshirtSize } from "@/db/schema";
 import { ForbiddenError, assertCanEditPod } from "./permissions";
 import { planEpics } from "./planning";
+import { ticketPodOptionId } from "./sprints";
 import { ValidationError } from "./settings";
 import type { Viewer } from "./viewer";
 
@@ -20,7 +21,7 @@ async function planAll(key?: string) {
       .leftJoin(epicSizes, eq(epicSizes.epicKey, epics.key))
       .where(key ? eq(epics.key, key) : undefined),
     db
-      .select({ epicKey: tickets.epicKey, podOptionId: tickets.podOptionId, estimates: tickets.estimates })
+      .select({ epicKey: tickets.epicKey, podOptionId: ticketPodOptionId, estimates: tickets.estimates })
       .from(tickets)
       .where(key ? eq(tickets.epicKey, key) : isNotNull(tickets.epicKey)),
     db.select({ id: pods.id, name: pods.name, slug: pods.slug, jiraPodOptionId: pods.jiraPodOptionId }).from(pods),

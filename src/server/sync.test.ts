@@ -150,6 +150,22 @@ describe("Jira sync", () => {
     expect((await getSprintView(VELOCITY)).sprints.map((s) => s.id)).not.toContain(167);
   });
 
+  it("puts a ticket in its assignee's pod, whatever its POD field says, and on POD alone when nobody's assigned", async () => {
+    const jira = fakeJira();
+    const rahul = jira.issue("DTP-4625").fields.assignee;
+    expect(rahul).toMatchObject({ displayName: "Rahul Saharan" });
+    // Filed with no POD, as bulk-created tickets are; filed under another pod; and unassigned with no POD.
+    jira.issue("DTP-4625").fields.customfield_11457 = null;
+    jira.issue("DTP-4820").fields.assignee = rahul;
+    jira.issue("DTP-4395").fields.assignee = null;
+    jira.issue("DTP-4395").fields.customfield_11457 = null;
+    await runSync(jira.make);
+
+    expect(await keys(VELOCITY, "432")).toEqual(["DTP-4625", "DTP-4820"]);
+    expect(await keys(ROADMAP_1, "432")).toEqual([]);
+    expect(await keys(ATLAS, "432")).toEqual([]);
+  });
+
   it("matches pods on the POD option id, so a renamed option still lands, under its new label", async () => {
     const jira = fakeJira();
     for (const i of jira.issues) {

@@ -29,6 +29,19 @@ export type SprintView = {
   }[];
 };
 
+/**
+ * The Jira POD option id of the pod a ticket counts for: its assignee's pod, else Jira's POD field.
+ * The assignee is always set on work someone took on, while the POD field gets missed, and a person's
+ * work counts against their own pod's capacity whatever pod the ticket was filed under.
+ */
+// Spelled out with aliases: Drizzle drops table names from columns in single-table selects, which would leave
+// the subquery's columns ambiguous.
+export const ticketPodOptionId = sql<string | null>`coalesce(
+  (select ticket_pod.jira_pod_option_id from people ticket_person join pods ticket_pod on ticket_pod.id = ticket_person.pod_id
+   where ticket_person.active and ticket_person.jira_account_id = "tickets"."assignee"->>'accountId'),
+  "tickets"."pod_option_id"
+)`;
+
 const STATE_ORDER = { active: 0, future: 1, closed: 2 };
 const time = (d: Date | null) => d?.getTime() ?? Infinity;
 
@@ -51,7 +64,7 @@ export async function getSprintView(jiraPodOptionId: string, requested?: string)
   const rows = await db
     .select()
     .from(tickets)
-    .where(and(eq(tickets.podOptionId, jiraPodOptionId), sql`${sprint.id} = any(${tickets.sprintIds})`))
+    .where(and(eq(ticketPodOptionId, jiraPodOptionId), sql`${sprint.id} = any(${tickets.sprintIds})`))
     .orderBy(sql`split_part(${tickets.key}, '-', 2)::int`);
 
   const site = settings?.site ?? null;

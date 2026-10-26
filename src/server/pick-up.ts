@@ -4,7 +4,7 @@ import { jiraSettings, sprints, tickets } from "@/db/schema";
 import { getCapacitySheet, type CapacitySheet } from "./capacity";
 import { planPickUp } from "./planning";
 import { getPodPage, listPods, type PodPage } from "./pods";
-import { getSprintView, ticketView } from "./sprints";
+import { getSprintView, ticketPodOptionId, ticketView } from "./sprints";
 
 type Sprint = typeof sprints.$inferSelect;
 
@@ -23,7 +23,7 @@ export async function getPickUp(page: PodPage, sprint: Sprint, sheet: CapacitySh
       .from(tickets)
       .where(
         and(
-          eq(tickets.podOptionId, page.pod.jiraPodOptionId),
+          eq(ticketPodOptionId, page.pod.jiraPodOptionId),
           ne(tickets.statusCategory, "done"),
           sql`not exists (select 1 from ${sprints} where ${sprints.id} = any(${tickets.sprintIds}) and ${sprints.state} <> 'closed')`,
         ),

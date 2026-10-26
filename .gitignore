@@ -48,3 +48,6 @@ next-env.d.ts
 
 # Claude Code worktrees: other branches checked out inside the repo
 .claude/worktrees/
+
+# /brag launch-video output
+brag-output*/

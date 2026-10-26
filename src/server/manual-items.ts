@@ -4,6 +4,7 @@ import { jiraSettings, manualItems, people, pods, SKILLS, sprints, tickets, type
 import { withProficiency } from "./people";
 import { assertCanEditPod } from "./permissions";
 import { ValidationError } from "./settings";
+import { ticketPodOptionId } from "./sprints";
 import type { Viewer } from "./viewer";
 
 export type ManualItemKind = (typeof manualItems.$inferSelect)["kind"];
@@ -34,7 +35,7 @@ export async function listManualItems(podId: number, sprintId: number) {
         jiraKey: manualItems.jiraKey,
         // The pod whose sprint the linked ticket is in. A ticket in no pod is counted nowhere, so it takes nothing over.
         ticketPod: sql<string | null>`(
-          select ${pods.name} from ${tickets} join ${pods} on ${pods.jiraPodOptionId} = ${tickets.podOptionId}
+          select ${pods.name} from ${tickets} join ${pods} on ${pods.jiraPodOptionId} = ${ticketPodOptionId}
           where ${tickets.key} = ${manualItems.jiraKey} and ${manualItems.sprintId} = any(${tickets.sprintIds})
         )`,
       })
