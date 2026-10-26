@@ -82,11 +82,23 @@ describe("who is working on what", () => {
     expect(person(await load(), "Mayank Awasthi")).toMatchObject({ skillDays: 2 });
   });
 
-  it("ignores the assignee when there are Dev Owners", async () => {
-    plan("DTP-163", ["Muthaiyan Mani"], { [FE_DAYS]: 2, assignee: user("Mayank Awasthi") });
+  it("counts the assignee alongside the Dev Owners, once when they are both", async () => {
+    plan("DTP-163", ["Muthaiyan Mani", "Mayank Awasthi"], { [FE_DAYS]: 2, assignee: user("Mayank Awasthi") });
     const l = await load();
-    expect(person(l, "Muthaiyan Mani")).toMatchObject({ skillDays: 2 });
-    expect(person(l, "Mayank Awasthi")).toMatchObject({ skillDays: 0, tickets: [] });
+    expect(person(l, "Muthaiyan Mani")).toMatchObject({ skillDays: 1 });
+    expect(person(l, "Mayank Awasthi")).toMatchObject({ skillDays: 1 });
+    expect(person(l, "Mayank Awasthi").tickets).toHaveLength(1);
+  });
+
+  it("puts a ticket nobody is assigned in its Dev Owner's pod, whatever its POD says", async () => {
+    // DTP-4740: filed under RoadMap 1, with Mayank as its only Dev Owner and nobody assigned.
+    plan("DTP-163", ["Mayank Awasthi"], {
+      [BE_DAYS]: 2.5,
+      customfield_11457: { value: "RoadMap 1-Shikar", id: "11231" },
+    });
+    const l = await load();
+    expect(l.tickets.map((t) => t.key)).toEqual(["DTP-163"]);
+    expect(person(l, "Mayank Awasthi").tickets).toHaveLength(1);
   });
 
   it("counts work nobody can do against the pod as unassigned, and flags it", async () => {

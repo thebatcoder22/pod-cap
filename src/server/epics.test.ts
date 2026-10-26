@@ -60,6 +60,8 @@ describe("epics", () => {
       },
       // Its POD is RoadMap 1, though its only ticket is Velocity's.
       expect.objectContaining({ key: "DTP-4610", owner: expect.objectContaining({ slug: "roadmap-1" }), tickets: 1 }),
+      // Velocity's epic, with a ticket built by Shahid, so RoadMap 1 has work in it.
+      expect.objectContaining({ key: "DTP-4700", owner: expect.objectContaining({ slug: "velocity" }), tickets: 1 }),
       // No POD in Jira: its tickets are all RoadMap 1's, so it is.
       expect.objectContaining({ key: "DTP-4819", owner: expect.objectContaining({ slug: "roadmap-1" }), tickets: 1 }),
     ]);
@@ -68,8 +70,11 @@ describe("epics", () => {
       ["DTP-4610", "roadmap-1"],
       ["DTP-4700", "velocity"],
     ]);
-    // DTP-4 has no POD and its only ticket is in no pod, so it is in no list.
-    expect((await list("roadmap-2")).map((e) => e.key)).toEqual(["DTP-4830"]);
+    // DTP-4 has no POD, but its only ticket's Dev Owners are RoadMap 2's, so it is.
+    expect((await list("roadmap-2")).map((e) => [e.key, e.owner?.slug])).toEqual([
+      ["DTP-4", "roadmap-2"],
+      ["DTP-4830", "roadmap-2"],
+    ]);
   });
 
   it("sums its child tickets' skill-days per skill, keeping missing estimates apart from zero", async () => {

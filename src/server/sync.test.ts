@@ -41,37 +41,41 @@ describe("Jira sync", () => {
       "DTP Jan Sprint",
     ]);
     expect(view.sprint).toMatchObject({ id: 432, name: "Oct Spint 2", state: "future" });
-    expect(view.tickets).toEqual([
-      {
-        key: "DTP-4820",
-        url: `${site}/browse/DTP-4820`,
-        summary: "Assigned to me Views",
-        type: "Story",
-        status: "To Do",
-        statusCategory: "new",
-        priority: "Medium",
-        assignee: null,
-        devOwners: [],
-        owners: [],
-        epic: { key: "DTP-4819", summary: "Assigned to me Views", url: `${site}/browse/DTP-4819` },
-        readyForProductionDate: null,
-        estimates: {},
-      },
-    ]);
+    // DTP-4395 is filed under Velocity, but its Dev Owner Shahid is in RoadMap 1.
+    expect(view.tickets.map((t) => t.key)).toEqual(["DTP-4395", "DTP-4820"]);
+    expect(view.tickets[1]).toEqual({
+      key: "DTP-4820",
+      url: `${site}/browse/DTP-4820`,
+      summary: "Assigned to me Views",
+      type: "Story",
+      status: "To Do",
+      statusCategory: "new",
+      priority: "Medium",
+      assignee: null,
+      devOwners: [],
+      owners: [],
+      epic: { key: "DTP-4819", summary: "Assigned to me Views", url: `${site}/browse/DTP-4819` },
+      readyForProductionDate: null,
+      estimates: {},
+    });
   });
 
   it("maps assignee, Dev Owners, priority and status from Jira's fields", async () => {
     await runSync(fakeJira().make);
-    const { tickets } = await getSprintView(VELOCITY, "432");
-    expect(tickets.map((t) => t.key)).toEqual(["DTP-4395", "DTP-4625"]);
-    // Dev Owners do the work even when someone else is the assignee; the assignee stands in when there are none.
-    expect(tickets[0]).toMatchObject({
+    // The assignee and the Dev Owners all work on it.
+    expect((await getSprintView(ROADMAP_1, "432")).tickets[0]).toMatchObject({
+      key: "DTP-4395",
       assignee: { displayName: "Adhyayan Rathi" },
-      owners: [{ accountId: expect.any(String), displayName: "Shahid Khan" }],
+      owners: [
+        { accountId: expect.any(String), displayName: "Adhyayan Rathi" },
+        { accountId: expect.any(String), displayName: "Shahid Khan" },
+      ],
       status: "In Requirement (With Product)",
       statusCategory: "indeterminate",
     });
-    expect(tickets[1]).toMatchObject({
+    const { tickets } = await getSprintView(VELOCITY, "432");
+    expect(tickets.map((t) => t.key)).toEqual(["DTP-4625"]);
+    expect(tickets[0]).toMatchObject({
       owners: [{ displayName: "Rahul Saharan" }],
       priority: "High",
       status: "In-Dev",
@@ -96,7 +100,7 @@ describe("Jira sync", () => {
     // A sub-task that carries a POD value still never shows.
     jira.issue("DTP-4824").fields.customfield_11457 = { value: "RoadMap 1-Shikar", id: "11231" };
     await runSync(jira.make);
-    expect(await keys(ROADMAP_1, "432")).toEqual(["DTP-4820"]);
+    expect(await keys(ROADMAP_1, "432")).toEqual(["DTP-4395", "DTP-4820"]);
   });
 
   it("defaults to the active sprint and lists it first", async () => {
@@ -158,12 +162,40 @@ describe("Jira sync", () => {
     jira.issue("DTP-4625").fields.customfield_11457 = null;
     jira.issue("DTP-4820").fields.assignee = rahul;
     jira.issue("DTP-4395").fields.assignee = null;
+    jira.issue("DTP-4395").fields.customfield_10777 = null;
     jira.issue("DTP-4395").fields.customfield_11457 = null;
     await runSync(jira.make);
 
     expect(await keys(VELOCITY, "432")).toEqual(["DTP-4625", "DTP-4820"]);
     expect(await keys(ROADMAP_1, "432")).toEqual([]);
     expect(await keys(ATLAS, "432")).toEqual([]);
+  });
+
+  it("puts a ticket whose assignee is in no pod in its first Dev Owner's pod, unless an owner is in its POD", async () => {
+    const jira = fakeJira();
+    const rahul = jira.issue("DTP-4625").fields.assignee;
+    const outsider = { accountId: "a-adhyayan", displayName: "Adhyayan Rathi" };
+    const roadmap1 = { value: "RoadMap 1-Shikar", id: ROADMAP_1 };
+    // DTP-4740's shape: filed under RoadMap 1, nobody assigned, built by a Dev Owner from another pod.
+    Object.assign(jira.issue("DTP-4820").fields, {
+      assignee: null,
+      customfield_10777: [outsider, rahul],
+      customfield_11457: roadmap1,
+    });
+    // Assigned to someone in no pod, e.g. the PM, while a Dev Owner builds it.
+    Object.assign(jira.issue("DTP-4395").fields, {
+      assignee: outsider,
+      customfield_10777: [rahul],
+      customfield_11457: roadmap1,
+    });
+    await runSync(jira.make);
+
+    // Owners in two pods: it stays in its POD, where Vaibhav is, rather than going to Rahul's, who is listed first.
+    jira.issue("DTP-4687").fields.customfield_10020 = jira.issue("DTP-4820").fields.customfield_10020;
+    await runSync(jira.make);
+
+    expect(await keys(VELOCITY, "432")).toEqual(["DTP-4395", "DTP-4625", "DTP-4820"]);
+    expect(await keys(ROADMAP_1, "432")).toEqual(["DTP-4687"]);
   });
 
   it("matches pods on the POD option id, so a renamed option still lands, under its new label", async () => {
@@ -173,7 +205,7 @@ describe("Jira sync", () => {
       if (pod?.id === ROADMAP_1) pod.value = "RoadMap 1-Someone";
     }
     await runSync(jira.make);
-    expect(await keys(ROADMAP_1, "432")).toEqual(["DTP-4820"]);
+    expect(await keys(ROADMAP_1, "432")).toEqual(["DTP-4395", "DTP-4820"]);
     expect((await getPodPage("roadmap-1"))?.pod).toMatchObject({
       name: "RoadMap 1",
       jiraPodValue: "RoadMap 1-Someone",
@@ -202,7 +234,7 @@ describe("Jira sync", () => {
     jira.sprints.push(structuredClone(jira.sprints[0]));
     jira.issues.push(structuredClone(jira.issue("DTP-4820")));
     expect(await runSync(jira.make)).toEqual({ status: "succeeded" });
-    expect(await keys(ROADMAP_1, "432")).toEqual(["DTP-4820"]);
+    expect(await keys(ROADMAP_1, "432")).toEqual(["DTP-4395", "DTP-4820"]);
   });
 });
 
@@ -231,7 +263,7 @@ describe("sync status", () => {
       at: expect.any(Date),
       error: "Jira rejected the saved API token (401). The admin can replace it in Settings.",
     });
-    expect(await keys(ROADMAP_1, "432")).toEqual(["DTP-4820"]);
+    expect(await keys(ROADMAP_1, "432")).toEqual(["DTP-4395", "DTP-4820"]);
 
     jira.fail = null;
     await runSync(jira.make);
@@ -249,7 +281,7 @@ describe("sync status", () => {
     expect(await runSync(jira.make)).toMatchObject({ status: "failed" });
     const view = await getSprintView(ROADMAP_1, "432");
     expect(view.sprint?.name).toBe("Oct Spint 2");
-    expect(view.tickets[0].summary).toBe("Assigned to me Views");
+    expect(view.tickets.find((t) => t.key === "DTP-4820")?.summary).toBe("Assigned to me Views");
   });
 
   it("fails clearly when Jira is not connected", async () => {

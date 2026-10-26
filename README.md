@@ -13,7 +13,7 @@ Each pod page, for any sprint on DTP board 267:
 
 - **Capacity sheet**: each person's plannable days, (working days - leave - holidays) x focus factor, and the pod's capacity per skill (FE, BE, Data, AI).
 - **Committed vs capacity**: the sprint's FE, BE, Data and AI Days from Jira plus manual items, against capacity, with overloaded skills and unestimated tickets called out.
-- **Who is working on what**: each person's load in skill-days and calendar days, attributed to Dev Owners (else the assignee), with cross-pod help and unassigned work flagged.
+- **Who is working on what**: each person's load in skill-days and calendar days, attributed to the assignee and Dev Owners, each ticket counted for the pod its owners are in, with cross-pod help and unassigned work flagged.
 - **Pick-up panel**: backlog tickets that fit people with free days, exact matches before labeled stretch options, and where an overloaded skill's days could come from.
 - **Manual items**: support, interviews and placeholders for work not ticketed yet, counted like tickets.
 - **Epics**: T-shirt size next to the skill-days estimated on their tickets, and the Ready for Production Date.

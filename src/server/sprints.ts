@@ -20,7 +20,7 @@ export type SprintView = {
     priority: string | null;
     assignee: JiraUser | null;
     devOwners: JiraUser[];
-    /** Who does the work: the Dev Owners, else the assignee. */
+    /** Who works on it: the assignee and the Dev Owners. */
     owners: JiraUser[];
     epic: { key: string; summary: string; url: string | null } | null;
     readyForProductionDate: string | null;
@@ -30,15 +30,20 @@ export type SprintView = {
 };
 
 /**
- * The Jira POD option id of the pod a ticket counts for: its assignee's pod, else Jira's POD field.
- * The assignee is always set on work someone took on, while the POD field gets missed, and a person's
- * work counts against their own pod's capacity whatever pod the ticket was filed under.
+ * The Jira POD option id of the pod a ticket counts for: Jira's POD field when one of its owners is in that pod,
+ * else the pod of its first owner in one (the assignee, then the Dev Owners in Jira's order), else the POD field.
+ * Owners are set on work someone took on, while the POD field gets missed or names another pod, and a person's
+ * work counts against their own pod's capacity. A ticket counts in one pod only, so pod totals never count it
+ * twice; owners in other pods show on it as cross-pod help.
  */
 // Spelled out with aliases: Drizzle drops table names from columns in single-table selects, which would leave
-// the subquery's columns ambiguous.
+// the subquery's columns ambiguous. A null assignee becomes [null], which matches nobody.
 export const ticketPodOptionId = sql<string | null>`coalesce(
-  (select ticket_pod.jira_pod_option_id from people ticket_person join pods ticket_pod on ticket_pod.id = ticket_person.pod_id
-   where ticket_person.active and ticket_person.jira_account_id = "tickets"."assignee"->>'accountId'),
+  (select ticket_pod.jira_pod_option_id
+   from jsonb_array_elements(jsonb_build_array("tickets"."assignee") || "tickets"."dev_owners") with ordinality ticket_owner(u, n)
+   join people ticket_person on ticket_person.active and ticket_person.jira_account_id = ticket_owner.u->>'accountId'
+   join pods ticket_pod on ticket_pod.id = ticket_person.pod_id
+   order by ticket_pod.jira_pod_option_id = "tickets"."pod_option_id" desc, ticket_owner.n limit 1),
   "tickets"."pod_option_id"
 )`;
 
@@ -84,12 +89,8 @@ export function ticketView(t: typeof tickets.$inferSelect, site: string | null):
     priority: t.priority,
     assignee: t.assignee,
     devOwners: t.devOwners,
-    // Jira can list a Dev Owner twice; each counts once.
-    owners: [
-      ...new Map(
-        (t.devOwners.length ? t.devOwners : t.assignee ? [t.assignee] : []).map((u) => [u.accountId, u]),
-      ).values(),
-    ],
+    // The assignee is often a Dev Owner too, and Jira can list a Dev Owner twice; each counts once.
+    owners: [...new Map([...(t.assignee ? [t.assignee] : []), ...t.devOwners].map((u) => [u.accountId, u])).values()],
     epic: t.epicKey ? { key: t.epicKey, summary: t.epicSummary ?? t.epicKey, url: browse(t.epicKey) } : null,
     readyForProductionDate: t.readyForProductionDate,
     estimates: t.estimates,

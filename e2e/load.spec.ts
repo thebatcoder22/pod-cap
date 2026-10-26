@@ -6,7 +6,7 @@ import { E2E_DATABASE_URL } from "../playwright.config";
 import { signInAs } from "./sign-in-as";
 
 // What a sync would link. Unlinked after, as the people spec confirms Rahul's account itself.
-const links = { "Rahul Saharan": "a-rahul", "Shahid Khan": "a-shahid" };
+const links = { "Rahul Saharan": "a-rahul", "Shahid Khan": "a-shahid", "Manish Bisht": "a-manish" };
 async function link(on: boolean) {
   const db = drizzle(E2E_DATABASE_URL);
   for (const [name, id] of Object.entries(links)) {
@@ -44,6 +44,6 @@ test("a lead sees each person's load, opens a person, and sees unassigned work a
   await expect(unassigned.getByRole("listitem")).toContainText(/DTP-4625.*No owner can do FE.*FE 6d/);
   await expect(page.getByRole("row", { name: /DTP-4625/ })).toContainText("No owner can do FE");
 
-  // Shahid is in RoadMap 1.
+  // Shahid is in RoadMap 1, and Manish keeps the ticket in Velocity.
   await expect(page.getByRole("row", { name: /DTP-4395/ })).toContainText("Cross-pod help: Shahid Khan (RoadMap 1)");
 });

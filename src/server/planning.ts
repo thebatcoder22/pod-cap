@@ -2,7 +2,7 @@ import { SKILLS, type Estimates, type JiraUser, type Skill, type SnapshotKind } 
 import { isoDay } from "@/lib/format";
 import type { Proficiency } from "./people";
 
-// The planning engine: every capacity rule, and no I/O. See SPEC.md "Rules the planning engine encodes".
+// The planning engine: every capacity rule, and no I/O. See spec/implementation-decisions.md "Rules the planning engine encodes".
 
 export type PlanningInput<P extends { id: number; mainSkill: Skill }> = {
   sprint: { startDate: Date | null; endDate: Date | null };
@@ -207,7 +207,7 @@ export type Load<P, T, M> = {
 };
 
 /**
- * Attribution: a ticket's skill-days for a skill go to its owners (Dev Owners, else the assignee) with
+ * Attribution: a ticket's skill-days for a skill go to its owners (the assignee and the Dev Owners) with
  * proficiency above zero in it, split evenly. Owners from other pods take their share, as cross-pod help.
  * A manual item goes to its person. One without a person counts against the pod, as the lead chose.
  */

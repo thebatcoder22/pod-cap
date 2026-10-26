@@ -25,7 +25,7 @@ const EPIC = "Epic";
 const PLANNABLE_TYPES = ["Story", "Improvement", "Tech Story", "Bug", "Prod Bug", "Dev Custom Task"];
 // Epics come in the same search: they carry the POD and Ready for Production Date fields too.
 const JQL = `project = DTP AND issuetype in (${[...PLANNABLE_TYPES, EPIC].map((t) => `"${t}"`).join(", ")})`;
-// DTP's custom field ids, verified against the live project (see SPEC.md "Jira mapping").
+// DTP's custom field ids, verified against the live project (see spec/implementation-decisions.md "Jira mapping").
 const FIELD = {
   pod: "customfield_11457",
   devOwners: "customfield_10777",

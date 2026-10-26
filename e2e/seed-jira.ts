@@ -50,7 +50,11 @@ export async function seedSyncedJira(db: Db) {
       podOptionId: VELOCITY,
       sprintIds: [432],
       assignee: null,
-      devOwners: [{ accountId: "a-shahid", displayName: "Shahid Khan" }],
+      // Shahid is in RoadMap 1 and Manish in Velocity: it stays in its POD, where one of its owners is.
+      devOwners: [
+        { accountId: "a-shahid", displayName: "Shahid Khan" },
+        { accountId: "a-manish", displayName: "Manish Bisht" },
+      ],
       readyForProductionDate: "2026-11-06",
     },
     {

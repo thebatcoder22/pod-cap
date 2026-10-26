@@ -100,7 +100,13 @@ describe("manual items", () => {
   });
 
   it("keeps counting a placeholder whose ticket is in the sprint but in no pod", async () => {
-    Object.assign(jira.issue("DTP-163").fields, { customfield_10020: [OCT_SPRINT_2], [FE_DAYS]: 5 });
+    // No POD, and nobody on it in a pod.
+    Object.assign(jira.issue("DTP-163").fields, {
+      customfield_10020: [OCT_SPRINT_2],
+      [FE_DAYS]: 5,
+      assignee: null,
+      customfield_10777: null,
+    });
     await runSync(jira.make);
     await item({ kind: "placeholder", jiraKey: "DTP-163", days: 3 });
     const s = await sheet();

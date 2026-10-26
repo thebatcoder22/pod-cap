@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import type { Db } from "@/db";
 import { allowlist, people, pods, type Skill } from "@/db/schema";
 
-// Day-one roster from the Engineering Rhythm deck and Slack roles (see SPEC.md "Seed data").
+// Day-one roster from the Engineering Rhythm deck and Slack roles (see spec/implementation-decisions.md "Seed data").
 const ROSTER: {
   name: string;
   /** The pod's option in Jira's POD field: its id, and its label at seed time. */
