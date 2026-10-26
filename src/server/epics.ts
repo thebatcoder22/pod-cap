@@ -20,10 +20,10 @@ async function planAll(key?: string) {
       .leftJoin(epicSizes, eq(epicSizes.epicKey, epics.key))
       .where(key ? eq(epics.key, key) : undefined),
     db
-      .select({ epicKey: tickets.epicKey, pod: tickets.pod, estimates: tickets.estimates })
+      .select({ epicKey: tickets.epicKey, podOptionId: tickets.podOptionId, estimates: tickets.estimates })
       .from(tickets)
       .where(key ? eq(tickets.epicKey, key) : isNotNull(tickets.epicKey)),
-    db.select({ id: pods.id, name: pods.name, slug: pods.slug, jiraPodValue: pods.jiraPodValue }).from(pods),
+    db.select({ id: pods.id, name: pods.name, slug: pods.slug, jiraPodOptionId: pods.jiraPodOptionId }).from(pods),
     db.select({ site: jiraSettings.site }).from(jiraSettings),
   ]);
   return { plans: planEpics(rows, children, podRows), site: settings?.site ?? null };

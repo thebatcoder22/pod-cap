@@ -57,7 +57,7 @@ const inSprint = (owner: string) => ({ [SPRINT]: [OCT_SPRINT_2], [DEV_OWNERS]: [
 async function pickUp(slug = "roadmap-2") {
   await runSync(jira.make);
   const page = (await getPodPage(slug))!;
-  const view = await getSprintView(page.pod.jiraPodValue, "432");
+  const view = await getSprintView(page.pod.jiraPodOptionId, "432");
   const sheet = await getCapacitySheet(page, view.sprint!, view.tickets);
   return getPickUp(page, view.sprint!, sheet);
 }
@@ -79,7 +79,7 @@ describe("pick-up panel", () => {
     // Not backlog: in a future sprint, done, or another pod's. Not estimated: nothing to fit.
     ticket("DTP-5007", { [FE_DAYS]: 1, [SPRINT]: [OCT_SPRINT_2] });
     ticket("DTP-5008", { [FE_DAYS]: 1, ...status("Done", "done") });
-    ticket("DTP-5009", { [FE_DAYS]: 1, [POD]: { value: "Velocity" } });
+    ticket("DTP-5009", { [FE_DAYS]: 1, [POD]: { value: "Velocity", id: "11230" } });
     ticket("DTP-5010", {});
     // Carried out of a closed sprint, so it is back in the backlog.
     ticket("DTP-5011", { [FE_DAYS]: 1.5, [SPRINT]: [ABC_SPRINT] });
@@ -159,7 +159,7 @@ describe("pick-up panel", () => {
   it("hints at other pods' free main-skill capacity for the skills this pod is short on", async () => {
     ticket("DTP-5001", { [BE_DAYS]: 10, ...inSprint("Aman Tyagi") });
     // Velocity's BE: 14 days, 10 committed.
-    ticket("DTP-5002", { [BE_DAYS]: 10, [POD]: { value: "Velocity" }, [SPRINT]: [OCT_SPRINT_2] });
+    ticket("DTP-5002", { [BE_DAYS]: 10, [POD]: { value: "Velocity", id: "11230" }, [SPRINT]: [OCT_SPRINT_2] });
 
     const p = await pickUp();
     expect(p.short[0].elsewhere).toEqual([

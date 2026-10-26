@@ -23,7 +23,7 @@ export async function getPickUp(page: PodPage, sprint: Sprint, sheet: CapacitySh
       .from(tickets)
       .where(
         and(
-          eq(tickets.pod, page.pod.jiraPodValue),
+          eq(tickets.podOptionId, page.pod.jiraPodOptionId),
           ne(tickets.statusCategory, "done"),
           sql`not exists (select 1 from ${sprints} where ${sprints.id} = any(${tickets.sprintIds}) and ${sprints.state} <> 'closed')`,
         ),
@@ -47,7 +47,7 @@ async function otherPods(slug: string, sprint: Sprint) {
   return Promise.all(
     pods.map(async ({ slug }) => {
       const page = (await getPodPage(slug))!;
-      const view = await getSprintView(page.pod.jiraPodValue, String(sprint.id));
+      const view = await getSprintView(page.pod.jiraPodOptionId, String(sprint.id));
       const sheet = await getCapacitySheet(page, sprint, view.tickets);
       return { pod: page.pod.name, slug, skills: sheet.commitment.skills };
     }),

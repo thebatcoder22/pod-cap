@@ -21,7 +21,10 @@ export const skill = pgEnum("skill", SKILLS);
 
 export const pods = pgTable("pods", {
   id: serial("id").primaryKey(),
-  jiraPodValue: text("jira_pod_value").notNull().unique(),
+  // The id of the pod's option in Jira's POD field. Ids survive the option being renamed; labels do not.
+  jiraPodOptionId: text("jira_pod_option_id").notNull().unique(),
+  // The option's label in Jira, refreshed by each sync. Shown to leads only, never matched on.
+  jiraPodValue: text("jira_pod_value").notNull(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   leadPersonId: integer("lead_person_id").references((): AnyPgColumn => people.id),
@@ -126,8 +129,8 @@ export const tickets = pgTable("tickets", {
   // Jira's status category: new, indeterminate or done.
   statusCategory: text("status_category").$type<StatusCategory>().notNull(),
   priority: text("priority"),
-  // Jira POD value, matched against pods.jira_pod_value.
-  pod: text("pod"),
+  // Jira POD option id, matched against pods.jira_pod_option_id.
+  podOptionId: text("pod_option_id"),
   // Every sprint the ticket has been in; a carried-over ticket keeps its closed sprints.
   sprintIds: integer("sprint_ids")
     .array()
@@ -210,8 +213,8 @@ export const epics = pgTable("epics", {
   summary: text("summary").notNull(),
   status: text("status").notNull(),
   statusCategory: text("status_category").$type<StatusCategory>().notNull(),
-  // Jira POD value. Most epics have none; then their tickets decide, see planEpics.
-  pod: text("pod"),
+  // Jira POD option id. Most epics have none; then their tickets decide, see planEpics.
+  podOptionId: text("pod_option_id"),
   readyForProductionDate: date("ready_for_production_date"),
 });
 

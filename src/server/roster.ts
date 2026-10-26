@@ -4,13 +4,18 @@ import { allowlist, people, pods, type Skill } from "@/db/schema";
 
 // Day-one roster from the Engineering Rhythm deck and Slack roles (see SPEC.md "Seed data").
 const ROSTER: {
+  name: string;
+  /** The pod's option in Jira's POD field: its id, and its label at seed time. */
+  jiraPodOptionId: string;
   jiraPodValue: string;
   slug: string;
   lead: { name: string; email: string; skill: Skill };
   members: [name: string, skill: Skill][];
 }[] = [
   {
-    jiraPodValue: "RoadMap 1",
+    name: "RoadMap 1",
+    jiraPodOptionId: "11231",
+    jiraPodValue: "RoadMap 1-Shikar",
     slug: "roadmap-1",
     lead: { name: "Shikhar Seth", email: "shikhar@delightree.com", skill: "AI" },
     members: [
@@ -21,7 +26,9 @@ const ROSTER: {
     ],
   },
   {
-    jiraPodValue: "RoadMap 2",
+    name: "RoadMap 2",
+    jiraPodOptionId: "11232",
+    jiraPodValue: "RoadMap 2-Aman",
     slug: "roadmap-2",
     lead: { name: "Aman Tyagi", email: "aman@delightree.com", skill: "BE" },
     members: [
@@ -32,6 +39,8 @@ const ROSTER: {
     ],
   },
   {
+    name: "Velocity",
+    jiraPodOptionId: "11230",
     jiraPodValue: "Velocity",
     slug: "velocity",
     lead: { name: "Rahul Saharan", email: "rahul@delightree.com", skill: "BE" },
@@ -43,6 +52,8 @@ const ROSTER: {
     ],
   },
   {
+    name: "Atlas",
+    jiraPodOptionId: "11229",
     jiraPodValue: "Atlas",
     slug: "atlas",
     lead: { name: "Abdullah Ghani", email: "abdullah@delightree.com", skill: "BE" },
@@ -64,7 +75,7 @@ export async function seedRoster(db: Db) {
     for (const p of ROSTER) {
       const [pod] = await tx
         .insert(pods)
-        .values({ jiraPodValue: p.jiraPodValue, name: p.jiraPodValue, slug: p.slug })
+        .values({ jiraPodOptionId: p.jiraPodOptionId, jiraPodValue: p.jiraPodValue, name: p.name, slug: p.slug })
         .returning();
       const [lead] = await tx
         .insert(people)

@@ -2,6 +2,7 @@ import { desc, eq, isNotNull, notInArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   epics,
+  pods,
   SKILLS,
   sprints,
   syncRuns,
@@ -158,6 +159,16 @@ async function pullAndDiff(makeClient: MakeJiraClient) {
         await w.delete(epics);
         const epicRows = issues.filter((i) => fieldsOf(i).issuetype.name === EPIC).map(toEpic);
         if (epicRows.length) await w.insert(epics).values(epicRows);
+        // Pods match on option ids, so a renamed POD option keeps working; this keeps the label leads see current.
+        const podLabels = new Map(
+          issues.flatMap((i) => {
+            const pod = fieldsOf(i)[FIELD.pod];
+            return pod ? [[pod.id, pod.value]] : [];
+          }),
+        );
+        for (const [id, value] of podLabels) {
+          await w.update(pods).set({ jiraPodValue: value }).where(eq(pods.jiraPodOptionId, id));
+        }
         await linkJiraAccounts(w);
       });
       result = { status: "succeeded" };
@@ -213,7 +224,7 @@ type IssueFields = {
   priority: Named | null;
   assignee: JiraUser | null;
   parent?: { key: string; fields: { summary: string; issuetype: Named } };
-  [FIELD.pod]: { value: string } | null;
+  [FIELD.pod]: { id: string; value: string } | null;
   [FIELD.devOwners]: JiraUser[] | null;
   [FIELD.sprint]: { id: number }[] | null;
   [FIELD.readyForProduction]: string | null;
@@ -248,7 +259,7 @@ function toTicket(issue: JiraIssue, estimateIds: Map<Skill, string>): typeof tic
     status: f.status.name,
     statusCategory: f.status.statusCategory.key,
     priority: f.priority?.name ?? null,
-    pod: f[FIELD.pod]?.value ?? null,
+    podOptionId: f[FIELD.pod]?.id ?? null,
     sprintIds: (f[FIELD.sprint] ?? []).map((s) => s.id),
     assignee: f.assignee ? user(f.assignee) : null,
     devOwners: (f[FIELD.devOwners] ?? []).map(user),
@@ -266,7 +277,7 @@ function toEpic(issue: JiraIssue): typeof epics.$inferInsert {
     summary: f.summary,
     status: f.status.name,
     statusCategory: f.status.statusCategory.key,
-    pod: f[FIELD.pod]?.value ?? null,
+    podOptionId: f[FIELD.pod]?.id ?? null,
     readyForProductionDate: f[FIELD.readyForProduction] ?? null,
   };
 }

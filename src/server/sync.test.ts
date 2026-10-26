@@ -6,12 +6,18 @@ import { fakeJira } from "../../tests/fake-jira";
 import dtpSprints from "../../tests/fixtures/dtp-board-267-sprints.json";
 import { JiraError } from "./jira-client";
 import { ForbiddenError } from "./permissions";
+import { getPodPage } from "./pods";
 import { saveJiraSettings } from "./settings";
 import { getSprintView } from "./sprints";
 import { getSyncStatus, runSync, syncNow } from "./sync";
 import { viewerForEmail } from "./viewer";
 
 const site = "https://delightree.atlassian.net";
+// Jira POD option ids.
+const ATLAS = "11229";
+const VELOCITY = "11230";
+const ROADMAP_1 = "11231";
+const ROADMAP_2 = "11232";
 
 const keys = async (pod: string, sprint?: string) => (await getSprintView(pod, sprint)).tickets.map((t) => t.key);
 
@@ -25,7 +31,7 @@ describe("Jira sync", () => {
   it("pulls the board's sprints and shows a pod its plannable tickets, linked to Jira", async () => {
     expect(await runSync(fakeJira().make)).toEqual({ status: "succeeded" });
 
-    const view = await getSprintView("RoadMap 1");
+    const view = await getSprintView(ROADMAP_1);
     expect(view.sprints.map((s) => s.name)).toEqual([
       "Oct Spint 2",
       "ABC sprint",
@@ -56,7 +62,7 @@ describe("Jira sync", () => {
 
   it("maps assignee, Dev Owners, priority and status from Jira's fields", async () => {
     await runSync(fakeJira().make);
-    const { tickets } = await getSprintView("Velocity", "432");
+    const { tickets } = await getSprintView(VELOCITY, "432");
     expect(tickets.map((t) => t.key)).toEqual(["DTP-4395", "DTP-4625"]);
     // Dev Owners do the work even when someone else is the assignee; the assignee stands in when there are none.
     expect(tickets[0]).toMatchObject({
@@ -76,11 +82,11 @@ describe("Jira sync", () => {
   it("reads the Ready for Production Date", async () => {
     const jira = fakeJira();
     const t = jira.issue("DTP-163");
-    t.fields.customfield_11457 = { value: "RoadMap 2", id: "11232" };
+    t.fields.customfield_11457 = { value: "RoadMap 2-Aman", id: "11232" };
     t.fields.customfield_10020 = [dtpSprints.values.find((s) => s.id === 432)];
     await runSync(jira.make);
 
-    const [ticket] = (await getSprintView("RoadMap 2", "432")).tickets;
+    const [ticket] = (await getSprintView(ROADMAP_2, "432")).tickets;
     expect(ticket).toMatchObject({ key: "DTP-163", type: "Improvement", readyForProductionDate: "2026-07-02" });
     expect(ticket.devOwners).toHaveLength(7);
   });
@@ -88,60 +94,74 @@ describe("Jira sync", () => {
   it("ignores sub-tasks", async () => {
     const jira = fakeJira();
     // A sub-task that carries a POD value still never shows.
-    jira.issue("DTP-4824").fields.customfield_11457 = { value: "RoadMap 1", id: "11231" };
+    jira.issue("DTP-4824").fields.customfield_11457 = { value: "RoadMap 1-Shikar", id: "11231" };
     await runSync(jira.make);
-    expect(await keys("RoadMap 1", "432")).toEqual(["DTP-4820"]);
+    expect(await keys(ROADMAP_1, "432")).toEqual(["DTP-4820"]);
   });
 
   it("defaults to the active sprint and lists it first", async () => {
     const jira = fakeJira();
     jira.sprints.find((s) => s.id === 332)!.state = "active";
     await runSync(jira.make);
-    const view = await getSprintView("RoadMap 1");
+    const view = await getSprintView(ROADMAP_1);
     expect(view.sprint?.name).toBe("ABC sprint");
     expect(view.sprints.map((s) => s.state)).toEqual(["active", "future", "closed", "closed", "closed", "closed"]);
   });
 
   it("falls back to the default for an unknown sprint", async () => {
     await runSync(fakeJira().make);
-    expect((await getSprintView("RoadMap 1", "999")).sprint?.id).toBe(432);
-    expect((await getSprintView("RoadMap 1", "nonsense")).sprint?.id).toBe(432);
+    expect((await getSprintView(ROADMAP_1, "999")).sprint?.id).toBe(432);
+    expect((await getSprintView(ROADMAP_1, "nonsense")).sprint?.id).toBe(432);
   });
 
   it("shows a closed sprint's tickets, including ones carried over to a later sprint", async () => {
     const jira = fakeJira();
-    jira.issue("DTP-1313").fields.customfield_11457 = { value: "Atlas", id: "11234" };
+    jira.issue("DTP-1313").fields.customfield_11457 = { value: "Atlas", id: ATLAS };
     await runSync(jira.make);
-    expect(await keys("Atlas", "299")).toEqual(["DTP-1313"]);
-    expect(await keys("Atlas", "332")).toEqual(["DTP-1313"]);
+    expect(await keys(ATLAS, "299")).toEqual(["DTP-1313"]);
+    expect(await keys(ATLAS, "332")).toEqual(["DTP-1313"]);
   });
 
   it("is empty before the first sync", async () => {
-    expect(await getSprintView("RoadMap 1")).toMatchObject({ sprints: [], sprint: null, tickets: [] });
+    expect(await getSprintView(ROADMAP_1)).toMatchObject({ sprints: [], sprint: null, tickets: [] });
   });
 
   it("is idempotent", async () => {
     const jira = fakeJira();
     await runSync(jira.make);
-    const first = await getSprintView("Velocity", "432");
+    const first = await getSprintView(VELOCITY, "432");
     await runSync(jira.make);
-    expect(await getSprintView("Velocity", "432")).toEqual(first);
+    expect(await getSprintView(VELOCITY, "432")).toEqual(first);
   });
 
   it("moves tickets that changed pod or sprint, and drops ones gone from Jira", async () => {
     const jira = fakeJira();
     await runSync(jira.make);
 
-    jira.issue("DTP-4820").fields.customfield_11457 = { value: "RoadMap 2", id: "11232" };
+    jira.issue("DTP-4820").fields.customfield_11457 = { value: "RoadMap 2-Aman", id: "11232" };
     jira.issue("DTP-4625").fields.customfield_10020 = null;
     jira.issues = jira.issues.filter((i) => i.key !== "DTP-4395");
     jira.sprints = jira.sprints.filter((s) => s.id !== 167);
     await runSync(jira.make);
 
-    expect(await keys("RoadMap 1", "432")).toEqual([]);
-    expect(await keys("RoadMap 2", "432")).toEqual(["DTP-4820"]);
-    expect(await keys("Velocity", "432")).toEqual([]);
-    expect((await getSprintView("Velocity")).sprints.map((s) => s.id)).not.toContain(167);
+    expect(await keys(ROADMAP_1, "432")).toEqual([]);
+    expect(await keys(ROADMAP_2, "432")).toEqual(["DTP-4820"]);
+    expect(await keys(VELOCITY, "432")).toEqual([]);
+    expect((await getSprintView(VELOCITY)).sprints.map((s) => s.id)).not.toContain(167);
+  });
+
+  it("matches pods on the POD option id, so a renamed option still lands, under its new label", async () => {
+    const jira = fakeJira();
+    for (const i of jira.issues) {
+      const pod = i.fields.customfield_11457 as { id: string; value: string } | null;
+      if (pod?.id === ROADMAP_1) pod.value = "RoadMap 1-Someone";
+    }
+    await runSync(jira.make);
+    expect(await keys(ROADMAP_1, "432")).toEqual(["DTP-4820"]);
+    expect((await getPodPage("roadmap-1"))?.pod).toMatchObject({
+      name: "RoadMap 1",
+      jiraPodValue: "RoadMap 1-Someone",
+    });
   });
 
   it("never runs two syncs at once", async () => {
@@ -166,7 +186,7 @@ describe("Jira sync", () => {
     jira.sprints.push(structuredClone(jira.sprints[0]));
     jira.issues.push(structuredClone(jira.issue("DTP-4820")));
     expect(await runSync(jira.make)).toEqual({ status: "succeeded" });
-    expect(await keys("RoadMap 1", "432")).toEqual(["DTP-4820"]);
+    expect(await keys(ROADMAP_1, "432")).toEqual(["DTP-4820"]);
   });
 });
 
@@ -195,7 +215,7 @@ describe("sync status", () => {
       at: expect.any(Date),
       error: "Jira rejected the saved API token (401). The admin can replace it in Settings.",
     });
-    expect(await keys("RoadMap 1", "432")).toEqual(["DTP-4820"]);
+    expect(await keys(ROADMAP_1, "432")).toEqual(["DTP-4820"]);
 
     jira.fail = null;
     await runSync(jira.make);
@@ -211,7 +231,7 @@ describe("sync status", () => {
     jira.issue("DTP-4841").fields.summary = null;
 
     expect(await runSync(jira.make)).toMatchObject({ status: "failed" });
-    const view = await getSprintView("RoadMap 1", "432");
+    const view = await getSprintView(ROADMAP_1, "432");
     expect(view.sprint?.name).toBe("Oct Spint 2");
     expect(view.tickets[0].summary).toBe("Assigned to me Views");
   });

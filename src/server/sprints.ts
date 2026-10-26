@@ -33,7 +33,7 @@ const STATE_ORDER = { active: 0, future: 1, closed: 2 };
 const time = (d: Date | null) => d?.getTime() ?? Infinity;
 
 /** A pod's plannable tickets in one sprint. `requested` is the sprint id from the URL, if any. */
-export async function getSprintView(jiraPodValue: string, requested?: string): Promise<SprintView> {
+export async function getSprintView(jiraPodOptionId: string, requested?: string): Promise<SprintView> {
   const [all, [settings]] = await Promise.all([
     db.select().from(sprints),
     db.select({ site: jiraSettings.site }).from(jiraSettings),
@@ -51,7 +51,7 @@ export async function getSprintView(jiraPodValue: string, requested?: string): P
   const rows = await db
     .select()
     .from(tickets)
-    .where(and(eq(tickets.pod, jiraPodValue), sql`${sprint.id} = any(${tickets.sprintIds})`))
+    .where(and(eq(tickets.podOptionId, jiraPodOptionId), sql`${sprint.id} = any(${tickets.sprintIds})`))
     .orderBy(sql`split_part(${tickets.key}, '-', 2)::int`);
 
   const site = settings?.site ?? null;

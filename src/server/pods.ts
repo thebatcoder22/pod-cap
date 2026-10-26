@@ -8,7 +8,7 @@ export async function listPods(): Promise<{ slug: string; name: string }[]> {
 }
 
 export type PodPage = {
-  pod: { id: number; slug: string; name: string; jiraPodValue: string };
+  pod: { id: number; slug: string; name: string; jiraPodOptionId: string; jiraPodValue: string };
   members: {
     id: number;
     name: string;
@@ -31,5 +31,5 @@ export async function getPodPage(slug: string): Promise<PodPage | null> {
 
   const members = (await withProficiency(rows)).map((m) => ({ ...m, isLead: m.id === pod.leadPersonId }));
 
-  return { pod: { id: pod.id, slug: pod.slug, name: pod.name, jiraPodValue: pod.jiraPodValue }, members };
+  return { pod: { id: pod.id, slug: pod.slug, name: pod.name, jiraPodOptionId: pod.jiraPodOptionId, jiraPodValue: pod.jiraPodValue }, members };
 }

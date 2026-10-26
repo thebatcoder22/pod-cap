@@ -199,7 +199,8 @@ Leads sign in with Google, can see every pod, and can only edit their own pod.
 ### Jira mapping (facts verified against the live DTP project)
 
 - Site: delightree.atlassian.net. Project: DTP. Board: 267. All four pods work in DTP only.
-- Pod field: `POD` (customfield_11457), a required single select with values Atlas, Velocity, RoadMap 1, RoadMap 2.
+- Pod field: `POD` (customfield_11457), a required single select with options Atlas (11229), Velocity (11230), RoadMap 1-Shikar (11231), RoadMap 2-Aman (11232) and Support (11265).
+  Pods match tickets and epics on the option id, so renaming an option in Jira changes nothing; each sync refreshes the label shown on the pod page.
 - Estimate fields: `FE Days` (customfield_11525) and `BE Days` (customfield_11524). `Data Days` and `AI Days` do not exist yet and will be added by the Jira admin. Field IDs are discovered by name at sync time, so new fields work without a code change.
 - Owners: `Dev Owners` (customfield_10777, multi user) and the system assignee.
 - Sprint: customfield_10020. Ready for Production Date: customfield_10946.
@@ -208,7 +209,7 @@ Leads sign in with Google, can see every pod, and can only edit their own pod.
 
 ### Data model (platform-owned)
 
-- **Pod**: Jira POD value, display name, lead person.
+- **Pod**: Jira POD option id and its current label, display name, lead person.
 - **Person**: name, email, Jira account ID, pod (exactly one while active, null once removed; "No pod yet" lists Jira users who are no person yet), main skill, active flag.
 - **Proficiency**: person, skill, percentage. The main skill is fixed at 100%.
 - **Leave**: person, sprint, days (half-day steps).

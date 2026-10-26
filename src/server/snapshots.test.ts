@@ -29,7 +29,7 @@ beforeEach(async () => {
 /** Puts a DTP ticket in RoadMap 2's Oct Spint 2 with the given Jira fields. */
 function plan(key: string, fields: Record<string, unknown> = {}) {
   Object.assign(jira.issue(key).fields, {
-    customfield_11457: { value: "RoadMap 2", id: "11232" },
+    customfield_11457: { value: "RoadMap 2-Aman", id: "11232" },
     customfield_10020: [jira.sprints.find((s) => s.id === OCT_SPRINT_2)],
     ...fields,
   });

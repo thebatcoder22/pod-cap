@@ -14,7 +14,7 @@ type Sprint = typeof sprints.$inferSelect;
 /** Freezes one pod's capacity and commitment in a sprint, and at close what got done. Overwrites an earlier one. */
 async function snapshotPod(slug: string, sprint: Sprint, kind: SnapshotKind) {
   const page = (await getPodPage(slug))!;
-  const view = await getSprintView(page.pod.jiraPodValue, String(sprint.id));
+  const view = await getSprintView(page.pod.jiraPodOptionId, String(sprint.id));
   const sheet = await getCapacitySheet(page, sprint, view.tickets);
   const rows = planSnapshot(kind, sheet.commitment.skills, view.tickets).map((k) => ({
     ...k,

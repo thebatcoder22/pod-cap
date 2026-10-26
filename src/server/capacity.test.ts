@@ -29,7 +29,7 @@ beforeEach(async () => {
 
 async function sheet(slug = "roadmap-2", sprint = OCT_SPRINT_2) {
   const page = (await getPodPage(slug))!;
-  const view = await getSprintView(page.pod.jiraPodValue, sprint);
+  const view = await getSprintView(page.pod.jiraPodOptionId, sprint);
   return getCapacitySheet(page, view.sprint!, view.tickets);
 }
 

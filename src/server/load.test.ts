@@ -36,7 +36,7 @@ function user(name: string): JiraUser {
 /** Puts a DTP ticket in RoadMap 2's Oct Spint 2 with the given owners and Jira fields. */
 function plan(key: string, devOwners: string[], fields: Record<string, unknown> = {}) {
   Object.assign(jira.issue(key).fields, {
-    customfield_11457: { value: "RoadMap 2", id: "11232" },
+    customfield_11457: { value: "RoadMap 2-Aman", id: "11232" },
     customfield_10020: [OCT_SPRINT_2],
     assignee: null,
     [DEV_OWNERS]: devOwners.map(user),
@@ -48,7 +48,7 @@ function plan(key: string, devOwners: string[], fields: Record<string, unknown> 
 async function load() {
   await runSync(jira.make);
   const page = (await getPodPage("roadmap-2"))!;
-  const view = await getSprintView(page.pod.jiraPodValue, "432");
+  const view = await getSprintView(page.pod.jiraPodOptionId, "432");
   return (await getCapacitySheet(page, view.sprint!, view.tickets)).load;
 }
 

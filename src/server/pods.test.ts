@@ -11,7 +11,7 @@ beforeEach(resetDb);
 describe("pod page", () => {
   it("shows the pod's members with main skills, lead first", async () => {
     const page = await getPodPage("roadmap-2");
-    expect(page?.pod).toMatchObject({ name: "RoadMap 2", jiraPodValue: "RoadMap 2" });
+    expect(page?.pod).toMatchObject({ name: "RoadMap 2", jiraPodOptionId: "11232", jiraPodValue: "RoadMap 2-Aman" });
     expect(page?.members).toEqual([
       expect.objectContaining({ name: "Aman Tyagi", mainSkill: "BE", isLead: true }),
       expect.objectContaining({ name: "Akash Singh", mainSkill: "AI", isLead: false }),

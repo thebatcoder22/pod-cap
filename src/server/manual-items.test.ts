@@ -29,7 +29,7 @@ beforeEach(async () => {
 // RoadMap 2 in Oct Spint 2, with no leave: 7 days of capacity each.
 async function sheet(slug = "roadmap-2") {
   const page = (await getPodPage(slug))!;
-  const view = await getSprintView(page.pod.jiraPodValue, "432");
+  const view = await getSprintView(page.pod.jiraPodOptionId, "432");
   return getCapacitySheet(page, view.sprint!, view.tickets);
 }
 
@@ -88,7 +88,7 @@ describe("manual items", () => {
 
     // The ticket exists now, in RoadMap 2's sprint, with its own estimate.
     Object.assign(jira.issue("DTP-163").fields, {
-      customfield_11457: { value: "RoadMap 2", id: "11232" },
+      customfield_11457: { value: "RoadMap 2-Aman", id: "11232" },
       customfield_10020: [OCT_SPRINT_2],
       [FE_DAYS]: 5,
     });

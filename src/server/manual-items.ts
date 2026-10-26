@@ -34,7 +34,7 @@ export async function listManualItems(podId: number, sprintId: number) {
         jiraKey: manualItems.jiraKey,
         // The pod whose sprint the linked ticket is in. A ticket in no pod is counted nowhere, so it takes nothing over.
         ticketPod: sql<string | null>`(
-          select ${pods.name} from ${tickets} join ${pods} on ${pods.jiraPodValue} = ${tickets.pod}
+          select ${pods.name} from ${tickets} join ${pods} on ${pods.jiraPodOptionId} = ${tickets.podOptionId}
           where ${tickets.key} = ${manualItems.jiraKey} and ${manualItems.sprintId} = any(${tickets.sprintIds})
         )`,
       })

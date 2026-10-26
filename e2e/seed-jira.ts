@@ -1,6 +1,10 @@
 import { epics, sprints, syncRuns, tickets } from "../src/db/schema";
 import type { Db } from "../src/db";
 
+// Jira POD option ids.
+const ATLAS = "11229";
+const VELOCITY = "11230";
+
 /** What a successful sync of DTP leaves behind, trimmed to a few tickets. */
 export async function seedSyncedJira(db: Db) {
   await db.insert(sprints).values([
@@ -28,7 +32,7 @@ export async function seedSyncedJira(db: Db) {
       status: "In-Dev",
       statusCategory: "indeterminate",
       priority: "High",
-      pod: "Velocity",
+      podOptionId: VELOCITY,
       sprintIds: [432],
       assignee: { accountId: "a-rahul", displayName: "Rahul Saharan" },
       devOwners: [],
@@ -43,7 +47,7 @@ export async function seedSyncedJira(db: Db) {
       status: "To Do",
       statusCategory: "new",
       priority: "Medium",
-      pod: "Velocity",
+      podOptionId: VELOCITY,
       sprintIds: [432],
       assignee: null,
       devOwners: [{ accountId: "a-shahid", displayName: "Shahid Khan" }],
@@ -57,7 +61,7 @@ export async function seedSyncedJira(db: Db) {
       status: "To Do",
       statusCategory: "new",
       priority: "Medium",
-      pod: "Atlas",
+      podOptionId: ATLAS,
       sprintIds: [432],
       assignee: null,
       devOwners: [{ accountId: "a-priya", displayName: "Priya Nair" }],
@@ -73,7 +77,7 @@ export async function seedSyncedJira(db: Db) {
       status: "To Do",
       statusCategory: "new",
       priority: "High",
-      pod: "Velocity",
+      podOptionId: VELOCITY,
       assignee: null,
       devOwners: [],
       epicKey: "DTP-4700",
@@ -87,7 +91,7 @@ export async function seedSyncedJira(db: Db) {
       status: "To Do",
       statusCategory: "new",
       priority: "Highest",
-      pod: "Velocity",
+      podOptionId: VELOCITY,
       assignee: null,
       devOwners: [],
       estimates: { BE: 1 },
@@ -99,11 +103,11 @@ export async function seedSyncedJira(db: Db) {
       summary: "Checklists v2",
       status: "In Progress",
       statusCategory: "indeterminate",
-      pod: "Velocity",
+      podOptionId: VELOCITY,
       readyForProductionDate: "2026-11-20",
     },
     // No POD in Jira: its only ticket is Velocity's, so it is Velocity's.
-    { key: "DTP-4700", summary: "Site visit reports", status: "Open", statusCategory: "new", pod: null },
+    { key: "DTP-4700", summary: "Site visit reports", status: "Open", statusCategory: "new", podOptionId: null },
   ]);
   const at = new Date("2026-10-23T08:30:00.000Z");
   await db.insert(syncRuns).values({ startedAt: at, finishedAt: at, status: "succeeded" });

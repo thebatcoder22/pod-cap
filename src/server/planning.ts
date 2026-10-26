@@ -391,16 +391,20 @@ export type EpicPlan<E, P> = E & {
  * An epic belongs to the pod its POD names. Most epics have no POD: then it belongs to the one pod its tickets
  * are in, and with tickets in several pods to none, so no lead sizes work another pod shares.
  */
-export function planEpics<E extends { key: string; pod: string | null }, P extends { jiraPodValue: string }>(
+export function planEpics<E extends { key: string; podOptionId: string | null }, P extends { jiraPodOptionId: string }>(
   epics: E[],
-  tickets: { epicKey: string | null; pod: string | null; estimates: Estimates }[],
+  tickets: { epicKey: string | null; podOptionId: string | null; estimates: Estimates }[],
   pods: P[],
 ): EpicPlan<E, P>[] {
   const children = Map.groupBy(tickets, (t) => t.epicKey);
   return epics.map((e) => {
     const mine = children.get(e.key) ?? [];
-    const worked = pods.filter((p) => mine.some((t) => t.pod === p.jiraPodValue));
-    const owner = e.pod ? (pods.find((p) => p.jiraPodValue === e.pod) ?? null) : worked.length === 1 ? worked[0] : null;
+    const worked = pods.filter((p) => mine.some((t) => t.podOptionId === p.jiraPodOptionId));
+    const owner = e.podOptionId
+      ? (pods.find((p) => p.jiraPodOptionId === e.podOptionId) ?? null)
+      : worked.length === 1
+        ? worked[0]
+        : null;
     const skills = SKILLS.map((skill) => {
       const estimated = mine.flatMap((t) => t.estimates[skill] ?? []);
       return {

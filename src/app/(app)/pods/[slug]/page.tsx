@@ -60,7 +60,7 @@ async function Pod({ params, searchParams }: PageProps<"/pods/[slug]">) {
   const page = await getPodPage(slug);
   if (!page) notFound();
   const [view, sync, epics] = await Promise.all([
-    getSprintView(page.pod.jiraPodValue, typeof requested === "string" ? requested : undefined),
+    getSprintView(page.pod.jiraPodOptionId, typeof requested === "string" ? requested : undefined),
     getSyncStatus(),
     getEpicList(page.pod),
   ]);
