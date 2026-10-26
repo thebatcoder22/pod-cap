@@ -1,7 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
 export const E2E_DATABASE_URL = process.env.E2E_DATABASE_URL ?? "postgres://localhost:5432/podcap_e2e";
-const PORT = 3100;
+// E2E_PORT runs a second checkout's specs next to the first, each with its own E2E_DATABASE_URL.
+const PORT = Number(process.env.E2E_PORT ?? 3100);
 
 export default defineConfig({
   testDir: "./e2e",

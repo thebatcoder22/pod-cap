@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GearSixIcon, SignOutIcon } from "@phosphor-icons/react/dist/ssr";
+import { CalendarDotsIcon, GearSixIcon, SignOutIcon } from "@phosphor-icons/react/dist/ssr";
 import { Avatar, BrandMark } from "./brand";
 import { signOut } from "@/auth";
 import { listPods } from "@/server/pods";
@@ -62,7 +62,16 @@ export async function AppShell() {
           <Brand />
         </div>
 
-        <p className="mt-8 mb-1.5 px-2 text-xs font-medium text-ink-faint">Pods</p>
+        <NavLink
+          href="/calendar"
+          className="mt-8 flex h-8 items-center gap-2.5 rounded-lg px-2 text-sm text-ink-muted transition-colors hover:bg-fill hover:text-ink"
+          activeClassName="bg-surface font-medium text-ink shadow-card hover:bg-surface"
+        >
+          <CalendarDotsIcon size={18} aria-hidden className="mx-px" />
+          Capacity calendar
+        </NavLink>
+
+        <p className="mt-6 mb-1.5 px-2 text-xs font-medium text-ink-faint">Pods</p>
         <PodNav pods={pods} ownSlug={own} />
 
         <div className="mt-auto space-y-3">
@@ -92,6 +101,10 @@ export async function AppShell() {
         <div className="flex h-14 items-center gap-3 px-4">
           <Brand />
           <div className="ml-auto flex items-center gap-1">
+            <NavLink href="/calendar" className={iconButton} activeClassName="bg-fill text-ink">
+              <CalendarDotsIcon size={18} aria-hidden />
+              <span className="sr-only">Capacity calendar</span>
+            </NavLink>
             {viewer.isAdmin && (
               <NavLink href="/settings" className={iconButton} activeClassName="bg-fill text-ink">
                 <GearSixIcon size={18} aria-hidden />
