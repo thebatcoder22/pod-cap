@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Blocks commits that stage a file over MAX_TOKENS (tokens = bytes / 4).
+# Large files are hard for agents to read and edit in one pass.
+set -euo pipefail
+
+MAX_TOKENS=5000
+
+# Generated, vendored or captured files that nobody authors by hand.
+ignored() {
+  case "$1" in
+    pnpm-lock.yaml | skills-lock.json | next-env.d.ts) return 0 ;;
+    drizzle/* | .agents/* | .claude/skills/* | tests/fixtures/*) return 0 ;;
+  esac
+  return 1
+}
+
+failed=()
+# numstat prints "-" for binary files, which we skip.
+while IFS=$'\t' read -r added _ path; do
+  [[ "$added" == "-" ]] && continue
+  ignored "$path" && continue
+  # Measure the staged blob, not the working tree copy.
+  tokens=$(($(git cat-file -s ":$path") / 4))
+  ((tokens > MAX_TOKENS)) && failed+=("  $path (~$tokens tokens)")
+done < <(git diff --cached --numstat --diff-filter=ACMR --no-renames)
+
+((${#failed[@]} == 0)) && exit 0
+
+cat >&2 <<MSG
+Commit blocked: these staged files exceed $MAX_TOKENS tokens (bytes / 4):
+$(printf '%s\n' "${failed[@]}")
+
+Split each file before committing:
+  1. Find the seams: separate components, hooks, helpers, types, constants,
+     or independent sections that change for different reasons.
+  2. Move each piece into its own file next to the original, named for what
+     it does (e.g. page.tsx -> page.tsx + pod-header.tsx + use-pod-filters.ts).
+     For Markdown, split by top-level heading into a folder with an index.
+  3. Keep the original file as the thin entry point that imports the pieces,
+     so existing imports and routes keep working.
+  4. Do not just minify, shorten names, or delete comments to get under the
+     limit. Do not bypass with --no-verify.
+  5. Re-run typecheck, lint and tests, then stage the new files and commit.
+
+If a file is truly generated or vendored, add it to ignored() in
+.githooks/pre-commit instead.
+MSG
+exit 1

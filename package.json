@@ -15,7 +15,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "deploy:dev": "scripts/deploy.sh dev",
-    "deploy:prod": "scripts/deploy.sh prod"
+    "deploy:prod": "scripts/deploy.sh prod",
+    "prepare": "git config core.hooksPath .githooks"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
