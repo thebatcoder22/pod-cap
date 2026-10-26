@@ -76,6 +76,23 @@ Edit `src/db/schema.ts`, then run `pnpm db:generate` and commit the new file in 
 Preview deployments also run migrations against their own `DATABASE_URL`.
 Point previews at a Neon branch, not the production database.
 
+## Dev and production
+
+Work lands on the `dev` branch first and is checked on https://pod-cap-dev.vercel.app before it reaches production.
+
+```sh
+pnpm deploy:dev     # what is committed on dev, to pod-cap-dev.vercel.app
+pnpm deploy:prod    # what is committed on main, to pod-cap.vercel.app
+```
+
+Ship a change by merging `dev` into `main`, then running `pnpm deploy:prod`.
+Both upload `git archive` of the branch rather than the working folder, so uncommitted work and local files like `.env` never go up.
+
+The dev site is a Vercel preview deployment with Preview environment variables.
+Its `DATABASE_URL` points at the Neon branch `dev`, a copy of production, so nothing done on dev touches production data.
+Reset it to a fresh copy of production from the Neon console.
+Preview deployments sit behind Vercel Authentication, so only members of the Vercel team can open the dev site.
+
 ## Agent skills
 
 `.agents/skills/` holds the Neon skills for coding agents, installed from `neondatabase/agent-skills` and pinned in `skills-lock.json`.
