@@ -18,6 +18,9 @@ Each pod page, for any sprint on DTP board 267:
 - **Manual items**: support, interviews and placeholders for work not ticketed yet, counted like tickets.
 - **Epics**: T-shirt size next to the skill-days estimated on their tickets, and the Ready for Production Date.
 - **Trends**: capacity and committed per skill frozen when each sprint starts, and completed when it closes.
+- **Capacity calendar**: a month of weekdays with each person's booked hours against their plannable hours, per pod, and each pod's on the all-pods calendar.
+  Hours are 8 a day, Monday to Friday, at the focus factor.
+  Tickets have no dates in Jira, so each sprint's work and leave spread evenly over its working days.
 
 Every lead sees every pod; leads edit only their own, enforced on the server.
 The admin manages the Jira connection, focus factor, holidays, allowlist, pod membership and snapshots in Settings and on the Trends pages.

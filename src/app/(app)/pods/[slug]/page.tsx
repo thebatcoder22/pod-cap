@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import {
   ArrowSquareOutIcon,
   CalendarBlankIcon,
+  CalendarDotsIcon,
   CaretDoubleDownIcon,
   CaretDoubleUpIcon,
   CaretDownIcon,
@@ -98,6 +99,13 @@ async function Pod({ params, searchParams }: PageProps<"/pods/[slug]">) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          <Link
+            href={`/pods/${pod.slug}/calendar`}
+            className="flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-ink-muted transition hover:bg-fill hover:text-ink"
+          >
+            <CalendarDotsIcon size={16} aria-hidden />
+            Calendar
+          </Link>
           <Link
             href={`/pods/${pod.slug}/trends`}
             className="flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-ink-muted transition hover:bg-fill hover:text-ink"

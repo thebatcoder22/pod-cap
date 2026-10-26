@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GearSixIcon, ListChecksIcon, SignOutIcon } from "@phosphor-icons/react/dist/ssr";
+import { CalendarDotsIcon, GearSixIcon, ListChecksIcon, SignOutIcon } from "@phosphor-icons/react/dist/ssr";
 import { Avatar, BrandMark } from "./brand";
 import { signOut } from "@/auth";
 import { listPods } from "@/server/pods";
@@ -66,14 +66,24 @@ export async function AppShell() {
         <PodNav pods={pods} ownSlug={own} />
 
         <p className="mt-8 mb-1.5 px-2 text-xs font-medium text-ink-faint">For PMs</p>
-        <NavLink
-          href="/pending"
-          className="flex h-8 items-center gap-2.5 rounded-lg px-2 text-sm text-ink-muted transition-colors hover:bg-fill hover:text-ink"
-          activeClassName="bg-surface font-medium text-ink shadow-card hover:bg-surface"
-        >
-          <ListChecksIcon size={18} aria-hidden className="mx-px" />
-          Pending in Jira
-        </NavLink>
+        <nav aria-label="For PMs" className="space-y-px">
+          <NavLink
+            href="/pending"
+            className="flex h-8 items-center gap-2.5 rounded-lg px-2 text-sm text-ink-muted transition-colors hover:bg-fill hover:text-ink"
+            activeClassName="bg-surface font-medium text-ink shadow-card hover:bg-surface"
+          >
+            <ListChecksIcon size={18} aria-hidden className="mx-px" />
+            Pending in Jira
+          </NavLink>
+          <NavLink
+            href="/calendar"
+            className="flex h-8 items-center gap-2.5 rounded-lg px-2 text-sm text-ink-muted transition-colors hover:bg-fill hover:text-ink"
+            activeClassName="bg-surface font-medium text-ink shadow-card hover:bg-surface"
+          >
+            <CalendarDotsIcon size={18} aria-hidden className="mx-px" />
+            Capacity calendar
+          </NavLink>
+        </nav>
 
         <div className="mt-auto space-y-3">
           {viewer.isAdmin && (
@@ -105,6 +115,10 @@ export async function AppShell() {
             <NavLink href="/pending" className={iconButton} activeClassName="bg-fill text-ink">
               <ListChecksIcon size={18} aria-hidden />
               <span className="sr-only">Pending in Jira</span>
+            </NavLink>
+            <NavLink href="/calendar" className={iconButton} activeClassName="bg-fill text-ink">
+              <CalendarDotsIcon size={18} aria-hidden />
+              <span className="sr-only">Capacity calendar</span>
             </NavLink>
             {viewer.isAdmin && (
               <NavLink href="/settings" className={iconButton} activeClassName="bg-fill text-ink">
