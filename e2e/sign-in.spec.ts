@@ -21,8 +21,16 @@ test("an allowlisted pod lead lands on their own pod page", async ({ page }) => 
   await expect(page).toHaveURL(/\/sign-in$/);
 });
 
-test("a non-allowlisted account sees the access-denied message", async ({ page }) => {
+test("a Delightree account that is not allowlisted views every pod read only", async ({ page }) => {
   await signInAs(page, "mayank@delightree.com");
+
+  await expect(page).toHaveURL(/\/pods\//);
+  await expect(page.getByText("Read only")).toBeVisible();
+  await expect(page.getByText("Your pod", { exact: true })).toHaveCount(0);
+});
+
+test("an account outside Delightree sees the access-denied message", async ({ page }) => {
+  await signInAs(page, "someone@gmail.com");
 
   await expect(page.getByText("You do not have access")).toBeVisible();
   await page.goto("/pods/roadmap-2");

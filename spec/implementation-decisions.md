@@ -4,7 +4,7 @@
 
 - One Next.js application (App Router, TypeScript) serves the UI and the server logic, deployed on Vercel.
 - Postgres on Neon (provisioned through the Vercel Marketplace) holds all platform-owned data.
-- Auth.js with the Google provider handles sign-in; an allowlist table decides who may enter, and the session carries the person's pod and admin flag.
+- Auth.js with the Google provider handles sign-in; any @delightree.com account may enter read only, an allowlist table decides who may edit, and the session carries the person's pod and admin flag.
 - A Vercel Cron job runs the Jira sync hourly and triggers snapshots; "Sync now" calls the same sync service.
 - The UI is built with the `/design-taste-frontend` skill.
 
@@ -69,5 +69,5 @@
 
 - Pods: RoadMap 1 (Shikhar Seth), RoadMap 2 (Aman Tyagi), Velocity (Rahul Saharan), Atlas (Abdullah Ghani).
 - Members and main skills: RoadMap 1: Shikhar Seth AI, Hrishikesh Pujari BE, Vaibhav Pal FE, Divyanshu FE, Shahid Khan FE. RoadMap 2: Aman Tyagi BE, Mayank Awasthi FE, Muthaiyan Mani FE, Kalpan Punamiya Data, Akash Singh AI. Velocity: Rahul Saharan BE, Manish Bisht FE, Saikrishna Kotagiri FE, Shadab Anjum FE, Nanagoud BE. Atlas: Abdullah Ghani BE, Rahul Lanjewar BE, Abhay Sharma FE, Akhilesh Mourya FE.
-- Allowlist: aman@, shikhar@, rahul@, abdullah@delightree.com. Admin: aman@delightree.com.
+- Allowlist (edit rights): aman@, shikhar@, rahul@, abdullah@delightree.com. Admin: aman@delightree.com.
 - Excluded on purpose: Shashwat (DevOps, across pods), non-engineering roles, and people who have left (Praveen Singh, Raj Prakash Kante).

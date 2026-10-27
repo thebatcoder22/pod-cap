@@ -2,7 +2,7 @@
 
 Capacity, load and pick-up planning for Delightree pod leads, on top of Jira.
 See `SPEC.md` for the full spec.
-Live at https://pod-cap.vercel.app for allowlisted pod leads.
+Live at https://pod-cap.vercel.app for everyone at Delightree; allowlisted pod leads can edit.
 
 Jira stays the source of truth for tickets, sprints, owners and estimates, and the platform never writes to it.
 It owns only what Jira does not know: pods and people, proficiency per skill, leave, holidays, manual items, epic sizes and sprint history.
@@ -72,7 +72,7 @@ Edit `src/db/schema.ts`, then run `pnpm db:generate` and commit the new file in 
 4. Set `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` and `ENCRYPTION_KEY` in the Vercel project environment variables.
    `ENCRYPTION_KEY` (`openssl rand -base64 32`) encrypts the Jira API token; keep it stable, or the admin must re-enter the token.
    Also set `CRON_SECRET` (`openssl rand -hex 32`); Vercel Cron sends it to `/api/cron/sync`, which syncs Jira daily at 08:00 IST (see `vercel.json`; the Hobby plan allows only daily crons, so leads press "Sync now" for fresher data).
-5. Deploy, then open Settings as the admin to connect Jira and manage who can sign in.
+5. Deploy, then open Settings as the admin to connect Jira and manage who can edit.
    The build runs `pnpm db:deploy` first (see `vercel.json`), which migrates and seeds the roster.
    Seeding only happens when no pods exist yet, so it is safe on every deploy.
 

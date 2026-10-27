@@ -14,7 +14,11 @@ describe("signed-in viewer", () => {
     expect(await viewerForEmail("abdullah@delightree.com")).toMatchObject({ isAdmin: false, pod: { slug: "atlas" } });
   });
 
-  it("is null for an address that is not allowlisted", async () => {
-    expect(await viewerForEmail("mayank@delightree.com")).toBeNull();
+  it("views read only at a Delightree address that is not allowlisted", async () => {
+    expect(await viewerForEmail("mayank@delightree.com")).toMatchObject({ canEdit: false, isAdmin: false });
+  });
+
+  it("is null outside Delightree", async () => {
+    expect(await viewerForEmail("someone@gmail.com")).toBeNull();
   });
 });

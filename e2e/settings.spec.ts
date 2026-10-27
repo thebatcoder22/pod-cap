@@ -26,24 +26,26 @@ test("the admin connects Jira without the token ever coming back to the browser"
   await expect(page.getByLabel("Site")).toHaveValue("delightree.atlassian.net");
 });
 
-test("the admin gives a new lead access and takes it away", async ({ page, browser }) => {
+test("the admin gives a new lead edit rights and takes them away", async ({ page, browser }) => {
   await signInToPod(page, "aman@delightree.com");
   await page.goto("/settings");
   await expect(page.getByRole("button", { name: "Remove aman@delightree.com" })).toHaveCount(0);
 
   await page.getByLabel("Email address to allow").fill("New.Lead@Delightree.com");
-  await page.getByRole("region", { name: "Who can sign in" }).getByRole("button", { name: "Add" }).click();
-  await expect(page.getByText("new.lead@delightree.com can now sign in.")).toBeVisible();
+  await page.getByRole("region", { name: "Who can edit" }).getByRole("button", { name: "Add" }).click();
+  await expect(page.getByText("new.lead@delightree.com can now edit their pod.")).toBeVisible();
   await expect(page.getByRole("listitem").filter({ hasText: "new.lead@delightree.com" })).toBeVisible();
 
   const lead = await browser.newPage();
   await signInToPod(lead, "new.lead@delightree.com");
 
   await page.getByRole("button", { name: "Remove new.lead@delightree.com" }).click();
-  await expect(page.getByText("new.lead@delightree.com can no longer sign in.")).toBeVisible();
+  await expect(page.getByText("new.lead@delightree.com is now read only.")).toBeVisible();
 
+  // Still signed in: everyone at Delightree can view.
   await lead.reload();
-  await expect(lead).toHaveURL(/\/sign-in\?error=AccessDenied$/);
+  await expect(lead).toHaveURL(/\/pods\//);
+  await expect(lead.getByText("Read only")).toBeVisible();
 });
 
 test("a pod lead who is not admin cannot reach settings", async ({ page }) => {

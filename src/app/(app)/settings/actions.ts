@@ -63,7 +63,7 @@ export async function addAllowlistAction(_: ActionState, form: FormData) {
   return run(
     async () => {
       await addAllowlisted(await getViewer(), email);
-      return `${normalizeEmail(email)} can now sign in.`;
+      return `${normalizeEmail(email)} can now edit their pod.`;
     },
     { email },
   );
@@ -73,7 +73,7 @@ export async function removeAllowlistAction(_: ActionState, form: FormData) {
   const email = text(form, "email");
   return run(async () => {
     await removeAllowlisted(await getViewer(), email);
-    return `${normalizeEmail(email)} can no longer sign in.`;
+    return `${normalizeEmail(email)} is now read only.`;
   });
 }
 

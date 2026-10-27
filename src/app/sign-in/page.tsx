@@ -47,7 +47,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
             Sign in with Google
           </button>
         </form>
-        <p className="mt-4 text-center text-xs text-ink-faint">Open to allowlisted Delightree pod leads.</p>
+        <p className="mt-4 text-center text-xs text-ink-faint">Open to everyone at Delightree.</p>
 
         {e2eLoginEnabled && (
           <form
@@ -97,7 +97,7 @@ function SignInError({ code }: { code: string }) {
         <p className="font-medium text-danger">{denied ? "You do not have access" : "Sign-in failed"}</p>
         <p className="text-ink-muted">
           {denied
-            ? "Pod capacity is open to allowlisted pod leads only. Ask Aman if you need access."
+            ? "Pod capacity is open to @delightree.com Google accounts only. Sign in with your work account."
             : "Something went wrong while signing in. Try again."}
         </p>
       </div>

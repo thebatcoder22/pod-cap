@@ -3,9 +3,9 @@
 ## Access and sign-in
 
 1. As a pod lead, I want to sign in with my Delightree Google account, so that I do not need another password.
-2. As the admin, I want only allowlisted email addresses to be able to sign in, so that the platform is not open to the whole company.
-3. As a person who is not on the allowlist, I want a clear "you do not have access" message after Google sign-in, so that I know access was refused on purpose and not broken.
-4. As the admin, I want to add or remove addresses on the allowlist, so that I can give access to a new pod lead without a code change.
+2. As anyone at Delightree, I want to sign in with my @delightree.com account and see every pod read only, so that nobody has to be added by hand just to look.
+3. As a person outside Delightree, I want a clear "you do not have access" message after Google sign-in, so that I know access was refused on purpose and not broken.
+4. As the admin, I want to add or remove addresses on the allowlist, so that I can give a new pod lead edit rights without a code change.
 5. As a pod lead, I want to stay signed in across browser sessions for a reasonable period, so that I do not log in every time I open the dashboard.
 6. As a pod lead, I want to sign out, so that I can leave a shared machine safely.
 7. As a pod lead, I want to land on my own pod's page after sign-in, so that the most relevant view is one click away.

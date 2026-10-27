@@ -43,7 +43,7 @@ async function Pod({ params, searchParams }: PageProps<"/pods/[slug]">) {
     view.sprint && view.sprint.state !== "closed" && capacity ? await getPickUp(page, view.sprint, capacity) : null;
   const { pod, members } = page;
   const lead = members.find((m) => m.isLead);
-  const isOwn = viewer.pod?.id === pod.id;
+  const canEdit = viewer.canEdit && viewer.pod?.id === pod.id;
 
   return (
     <div className="space-y-8">
@@ -51,8 +51,8 @@ async function Pod({ params, searchParams }: PageProps<"/pods/[slug]">) {
         <div className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-2xl font-semibold tracking-tight">{pod.name}</h1>
-            <span className={`${badge} ${isOwn ? "bg-accent-soft text-accent" : "bg-fill text-ink-muted"}`}>
-              {isOwn ? "Your pod" : "Read only"}
+            <span className={`${badge} ${canEdit ? "bg-accent-soft text-accent" : "bg-fill text-ink-muted"}`}>
+              {canEdit ? "Your pod" : "Read only"}
             </span>
           </div>
           <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-muted">
@@ -114,7 +114,7 @@ async function Pod({ params, searchParams }: PageProps<"/pods/[slug]">) {
       )}
 
       <div {...rise(2)}>
-        <Sprint page={page} view={view} capacity={capacity} pickUp={pickUp} canEdit={isOwn} />
+        <Sprint page={page} view={view} capacity={capacity} pickUp={pickUp} canEdit={canEdit} />
       </div>
 
       <div {...rise(3)}>
@@ -122,11 +122,11 @@ async function Pod({ params, searchParams }: PageProps<"/pods/[slug]">) {
       </div>
 
       <div {...rise(4)}>
-        <Epics epics={epics} pod={pod} canEdit={isOwn} />
+        <Epics epics={epics} pod={pod} canEdit={canEdit} />
       </div>
 
       <div {...rise(5)}>
-        <Team members={members} canEdit={isOwn} />
+        <Team members={members} canEdit={canEdit} />
       </div>
     </div>
   );

@@ -158,10 +158,10 @@ describe("allowlist", () => {
     aman = await viewer("aman@delightree.com");
   });
 
-  it("adds an address in lowercase and lets it sign in", async () => {
+  it("adds an address in lowercase and lets it edit", async () => {
     await addAllowlisted(aman, "  Mayank@Delightree.com ");
     expect(await listAllowlist(aman)).toContainEqual({ email: "mayank@delightree.com", isAdmin: false });
-    expect(await viewerForEmail("mayank@delightree.com")).not.toBeNull();
+    expect(await viewerForEmail("mayank@delightree.com")).toMatchObject({ canEdit: true });
   });
 
   it("treats adding an existing address as done", async () => {
@@ -174,10 +174,10 @@ describe("allowlist", () => {
     await expect(addAllowlisted(aman, "not-an-email")).rejects.toThrow(ValidationError);
   });
 
-  it("removes an address and revokes its access", async () => {
+  it("removes an address and makes it read only", async () => {
     await removeAllowlisted(aman, "Rahul@Delightree.com");
     expect((await listAllowlist(aman)).map((r) => r.email)).not.toContain("rahul@delightree.com");
-    expect(await viewerForEmail("rahul@delightree.com")).toBeNull();
+    expect(await viewerForEmail("rahul@delightree.com")).toMatchObject({ canEdit: false, pod: { slug: "velocity" } });
   });
 
   it("does not let the admin remove their own address", async () => {

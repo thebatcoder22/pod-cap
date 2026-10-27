@@ -23,7 +23,7 @@ export default async function SettingsPage() {
 
   const sections = [
     { id: "jira-connection", label: "Jira connection" },
-    { id: "access", label: "Who can sign in" },
+    { id: "access", label: "Who can edit" },
     { id: "capacity", label: "Capacity planning" },
     { id: "people", label: "People" },
   ];
@@ -72,8 +72,8 @@ export default async function SettingsPage() {
 
         <Panel
           id="access"
-          title="Who can sign in"
-          description="Removing an address signs that person out on their next request."
+          title="Who can edit"
+          description="Everyone at Delightree can sign in and view. These addresses can also edit their own pod. Removing one makes that person read only on their next request."
           i={2}
         >
           <Allowlist rows={rows} viewerEmail={viewer.email} />

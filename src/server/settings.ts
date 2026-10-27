@@ -1,7 +1,7 @@
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { allowlist, holidays, jiraSettings, planningSettings } from "@/db/schema";
-import { normalizeEmail } from "./access";
+import { isDelightreeEmail, normalizeEmail } from "./access";
 import { createJiraClient, JiraError, type JiraCredentials, type MakeJiraClient } from "./jira-client";
 import { assertAdmin } from "./permissions";
 import { decryptSecret, encryptSecret } from "./secrets";
@@ -134,8 +134,7 @@ export async function listAllowlist(viewer: Viewer | null) {
 export async function addAllowlisted(viewer: Viewer | null, rawEmail: string) {
   assertAdmin(viewer);
   const email = normalizeEmail(rawEmail);
-  // Google sign-in only admits the delightree.com workspace.
-  if (!/^[^\s@]+@delightree\.com$/.test(email)) throw new ValidationError("Enter a @delightree.com address.");
+  if (!isDelightreeEmail(email)) throw new ValidationError("Enter a @delightree.com address.");
   await db.insert(allowlist).values({ email }).onConflictDoNothing();
 }
 

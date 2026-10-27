@@ -23,6 +23,11 @@ describe("permissions", () => {
     expect(() => assertCanEditPod(aman, roadmap1)).toThrow(ForbiddenError);
   });
 
+  it("refuses a pod member who is not allowlisted, even in their own pod", async () => {
+    const lead = (await viewerForEmail("rahul@delightree.com"))!;
+    expect(() => assertCanEditPod({ ...lead, canEdit: false }, lead.pod!.id)).toThrow(ForbiddenError);
+  });
+
   it("reserves admin actions for the admin", async () => {
     const aman = await viewerForEmail("aman@delightree.com");
     const shikhar = await viewerForEmail("shikhar@delightree.com");

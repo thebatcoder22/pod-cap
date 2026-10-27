@@ -19,7 +19,7 @@ Jira stays the source of truth for tickets, sprints, owners, pod assignment, and
 The platform owns only what Jira does not know: who is in which pod, each person's proficiency per skill, leave, company holidays, work that never lives in Jira, and sprint-over-sprint history.
 For any sprint, a pod lead sees their pod's capacity per skill against the committed estimates, each person's load, flags for gaps, and a pick-up panel that suggests backlog tickets for people with free days, including clearly labeled stretch options across skills.
 The platform suggests and the pod lead decides; all assignment still happens in Jira.
-Leads sign in with Google, can see every pod, and can only edit their own pod.
+Anyone at Delightree signs in with Google and can see every pod. Allowlisted leads can also edit their own pod.
 
 ## Glossary
 
@@ -56,7 +56,7 @@ In [spec/implementation-decisions.md](spec/implementation-decisions.md): archite
 - **Primary seam: the service layer with a fake Jira client.** Tests run a sync against a fake client that serves recorded DTP responses, then call the same planning and editing functions the UI calls, against a real Postgres test database. They assert on returned view models: capacity by skill, committed skill-days, per-person load, flags, "not estimated" handling, exact and stretch suggestions, cross-pod hints, snapshots, and permission refusals.
 - Fixtures are trimmed copies of real DTP responses (sprints from board 267, issues with POD, FE Days, BE Days, Dev Owners, sub-tasks, epics) so the field mapping is tested against reality.
 - Key scenarios: a full sprint gives 7 days per person; half-day leave plus a holiday is proportional; a ticket with two FE owners splits evenly; a ticket with AI days and no AI owner raises a flag; a missing Data Days field shows as not estimated; a data engineer at 45% FE gets a stretch option costed at skill-days / 0.45; a lead cannot edit another pod's leave; concurrent syncs do not overlap; a sprint going active writes a start snapshot.
-- **One thin browser test** (Playwright) for the sign-in boundary: an allowlisted account reaches its pod page, and a non-allowlisted account sees the access-denied message.
+- **One thin browser test** (Playwright) for the sign-in boundary: an allowlisted account reaches its pod page, a non-allowlisted Delightree account sees pods read only, and an outside account sees the access-denied message.
 - No unit tests for UI components or individual helpers.
 - There is no prior art in this repo; it is a new project.
 

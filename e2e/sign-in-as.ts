@@ -9,6 +9,6 @@ export async function signInAs(page: Page, email: string) {
   await expect(page).toHaveURL(/\/sign-in$/);
   await page.getByLabel("Test sign-in email").fill(email);
   await page.getByRole("button", { name: "Test sign-in" }).click();
-  // Allowlisted leads land on a pod page; others stay on sign-in with the access-denied message.
+  // Delightree accounts land on a pod page; others stay on sign-in with the access-denied message.
   await expect(page).toHaveURL(/\/pods\/|\/sign-in\?error=/);
 }
