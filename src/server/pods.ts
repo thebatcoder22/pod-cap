@@ -3,8 +3,12 @@ import { db } from "@/db";
 import { people, pods, type Skill } from "@/db/schema";
 import { withProficiency, type Proficiency } from "./people";
 
-export async function listPods(): Promise<{ slug: string; name: string }[]> {
-  return db.select({ slug: pods.slug, name: pods.name }).from(pods).orderBy(asc(pods.id));
+export async function listPods(): Promise<{ slug: string; name: string; lead: string | null }[]> {
+  return db
+    .select({ slug: pods.slug, name: pods.name, lead: people.name })
+    .from(pods)
+    .leftJoin(people, eq(people.id, pods.leadPersonId))
+    .orderBy(asc(pods.id));
 }
 
 export type PodPage = {

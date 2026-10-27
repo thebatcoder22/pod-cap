@@ -27,10 +27,10 @@ describe("pod page", () => {
 
   it("lists all four pods in deck order for the pod tabs", async () => {
     expect(await listPods()).toEqual([
-      { slug: "roadmap-1", name: "RoadMap 1" },
-      { slug: "roadmap-2", name: "RoadMap 2" },
-      { slug: "velocity", name: "Velocity" },
-      { slug: "atlas", name: "Atlas" },
+      { slug: "roadmap-1", name: "RoadMap 1", lead: "Shikhar Seth" },
+      { slug: "roadmap-2", name: "RoadMap 2", lead: "Aman Tyagi" },
+      { slug: "velocity", name: "Velocity", lead: "Rahul Saharan" },
+      { slug: "atlas", name: "Atlas", lead: "Abdullah Ghani" },
     ]);
   });
 });

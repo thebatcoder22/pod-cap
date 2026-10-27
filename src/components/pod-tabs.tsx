@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-type Pod = { slug: string; name: string };
+type Pod = { slug: string; name: string; lead: string | null };
+
+/** The lead's first name, so "RoadMap 1" reads as Shikhar's pod. */
+function Lead({ pod }: { pod: Pod }) {
+  if (!pod.lead) return null;
+  return <span className="font-normal text-ink-faint"> - {pod.lead.split(" ")[0]}</span>;
+}
 
 const isActive = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
@@ -33,7 +39,10 @@ export function PodNav({ pods, ownSlug }: { pods: Pod[]; ownSlug: string | null 
               {pod.name[0]}
               {pod.name.match(/\d+$/)?.[0]}
             </span>
-            <span className="truncate">{pod.name}</span>
+            <span className="truncate">
+              {pod.name}
+              <Lead pod={pod} />
+            </span>
             {pod.slug === ownSlug && (
               <span className="ml-auto text-xs font-normal text-ink-faint">
                 <span aria-hidden>You</span>
@@ -65,6 +74,7 @@ export function PodTabs({ pods, ownSlug }: { pods: Pod[]; ownSlug: string | null
             }`}
           >
             {pod.name}
+            <Lead pod={pod} />
             {pod.slug === ownSlug && <span className="sr-only"> (your pod)</span>}
           </Link>
         );
