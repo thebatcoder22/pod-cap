@@ -55,6 +55,15 @@ describe("committed vs capacity", () => {
     expect(skill(c, "BE")).toEqual({ skill: "BE", capacity: 7, committed: 2.5, over: 0 });
   });
 
+  it("counts a sprint's share of a ticket whose Effort spans several sprints", async () => {
+    plan("DTP-163", { [FE_DAYS]: 9, [BE_DAYS]: 3, customfield_10947: { value: "3 Sprints", id: "10919" } });
+    plan("DTP-1313", { [FE_DAYS]: 4, customfield_10947: { value: "1 Sprint", id: "10917" } });
+
+    const c = await commitment();
+    expect(skill(c, "FE")).toMatchObject({ committed: 7 });
+    expect(skill(c, "BE")).toMatchObject({ committed: 1 });
+  });
+
   it("shows the gap in days for an overloaded skill", async () => {
     plan("DTP-163", { [BE_DAYS]: 6 });
     plan("DTP-1313", { [BE_DAYS]: 3.5 });

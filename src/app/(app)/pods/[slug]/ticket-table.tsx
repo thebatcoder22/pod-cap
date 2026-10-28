@@ -91,6 +91,7 @@ export function TicketTable({ tickets }: { tickets: LoadTicket[] }) {
                         <span>Ready for prod {day(new Date(t.readyForProductionDate))}</span>
                       )}
                       <SkillDays days={t.estimates} empty="Not estimated" />
+                      {t.effortSprints > 1 && <span>Per sprint, of {t.effortSprints} sprints</span>}
                       <CrossPod owners={t.crossPod} />
                       <NoOwner ticket={t} />
                     </p>

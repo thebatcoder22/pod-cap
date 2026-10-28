@@ -25,6 +25,7 @@
 - Estimate fields: `FE Days` (customfield_11525) and `BE Days` (customfield_11524). `Data Eng Days` (customfield_11527) and `AI Eng Days` (customfield_11528) were added later. A `DevOps Days` field is read once the Jira admin adds it; until then DevOps work is planned with manual items. Field IDs are discovered by name at sync time, so new fields work without a code change.
 - Owners: `Dev Owners` (customfield_10777, multi user) and the system assignee.
 - Sprint: customfield_10020. Ready for Production Date: customfield_10946.
+- Effort: customfield_10947, a select of "1 Sprint" to "7 Sprints". A ticket's estimates are spread evenly over that many sprints, so each sprint it is in counts its share; empty means 1. On DTP it is mostly set on epics, which are in no sprint, so it has no effect there.
 - Plannable issue types: Story, Improvement, Tech Story, Bug, Prod Bug, Dev Custom Task. Epics are synced for grouping. Sub-tasks are ignored.
 - The platform never writes to Jira.
 

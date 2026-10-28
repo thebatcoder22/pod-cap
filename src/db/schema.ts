@@ -160,6 +160,8 @@ export const tickets = pgTable("tickets", {
   readyForProductionDate: date("ready_for_production_date"),
   // Skill-days per skill. A skill without a key is not estimated, which is not the same as 0.
   estimates: jsonb("estimates").$type<Estimates>().notNull().default({}),
+  // Jira's Effort: how many sprints the estimates are spread over, so each sprint counts its share.
+  effortSprints: integer("effort_sprints").notNull().default(1),
   // Created already done: finished work logged in Jira after the fact, which no sprint's capacity went into.
   loggedDone: boolean("logged_done").notNull().default(false),
 });

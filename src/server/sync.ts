@@ -31,6 +31,8 @@ const FIELD = {
   devOwners: "customfield_10777",
   sprint: "customfield_10020",
   readyForProduction: "customfield_10946",
+  // A select of "1 Sprint" to "7 Sprints".
+  effort: "customfield_10947",
 } as const;
 const FIELDS = [
   "summary",
@@ -251,6 +253,7 @@ type IssueFields = {
   [FIELD.devOwners]: JiraUser[] | null;
   [FIELD.sprint]: { id: number }[] | null;
   [FIELD.readyForProduction]: string | null;
+  [FIELD.effort]?: { value: string } | null;
   created?: string;
   resolutiondate?: string | null;
 };
@@ -292,6 +295,7 @@ function toTicket(issue: JiraIssue, estimateIds: Map<Skill, string>): typeof tic
     epicSummary: epic?.fields.summary ?? null,
     readyForProductionDate: f[FIELD.readyForProduction] ?? null,
     estimates,
+    effortSprints: Math.max(1, parseInt(f[FIELD.effort]?.value ?? "", 10) || 1),
     loggedDone:
       f.status.statusCategory.key === "done" &&
       !!f.created &&

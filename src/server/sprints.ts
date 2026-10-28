@@ -1,6 +1,7 @@
 import { and, eq, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { jiraSettings, pods, sprints, tickets, type Estimates, type JiraUser, type StatusCategory } from "@/db/schema";
+import { round } from "./planning-days";
 
 type SprintRow = typeof sprints.$inferSelect;
 
@@ -24,8 +25,10 @@ export type SprintView = {
     owners: JiraUser[];
     epic: { key: string; summary: string; url: string | null } | null;
     readyForProductionDate: string | null;
-    /** Skill-days per skill; a missing skill is not estimated. */
+    /** This sprint's skill-days per skill: the ticket's estimates over its Effort. A missing skill is not estimated. */
     estimates: Estimates;
+    /** Jira's Effort: the sprints the ticket's estimates are spread over. */
+    effortSprints: number;
   }[];
 };
 
@@ -115,6 +118,7 @@ export function ticketView(t: typeof tickets.$inferSelect, site: string | null):
     owners: [...new Map([...(t.assignee ? [t.assignee] : []), ...t.devOwners].map((u) => [u.accountId, u])).values()],
     epic: t.epicKey ? { key: t.epicKey, summary: t.epicSummary ?? t.epicKey, url: browse(t.epicKey) } : null,
     readyForProductionDate: t.readyForProductionDate,
-    estimates: t.estimates,
+    estimates: Object.fromEntries(Object.entries(t.estimates).map(([k, d]) => [k, round(d / t.effortSprints)])),
+    effortSprints: t.effortSprints,
   };
 }
