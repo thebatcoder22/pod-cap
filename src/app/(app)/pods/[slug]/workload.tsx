@@ -2,7 +2,7 @@ import { CaretRightIcon, WarningCircleIcon } from "@phosphor-icons/react/dist/ss
 import { SKILLS } from "@/db/schema";
 import { TicketKey } from "@/components/jira";
 import type { CapacitySheet } from "@/server/capacity";
-import { type LoadTicket, SkillDays, StatusIcon, card, cardTitle, days, plural } from "./pod-ui";
+import { CapacityBar, type LoadTicket, SkillDays, StatusIcon, card, cardTitle, days, plural } from "./pod-ui";
 
 // ---- Who is working on what ----
 
@@ -64,8 +64,6 @@ export function Workload({ load }: { load: CapacitySheet["load"] }) {
 
 function PersonRow({ person: p, max, i }: { person: PersonLoad; max: number; i: number }) {
   const over = p.free < 0;
-  const within = Math.min(p.calendarDays, p.capacity);
-  const width = (n: number) => `${(n / max) * 100}%`;
 
   return (
     <li>
@@ -84,20 +82,14 @@ function PersonRow({ person: p, max, i }: { person: PersonLoad; max: number; i: 
             <span className="truncate font-medium">{p.name}</span>
             <span className="font-mono text-xs text-ink-faint">{p.mainSkill}</span>
           </span>
-          {/* The track is capacity; past it, calendar days run on in red. */}
-          <span className="relative hidden h-1.5 sm:flex rounded-full bg-fill" aria-hidden>
-            <span
-              className={`grow-x block h-full rounded-l-full ${over ? "" : "rounded-r-full"} bg-accent/80`}
-              style={{ width: width(within), "--i": i } as React.CSSProperties}
-            />
-            {over && (
-              <span
-                className="grow-x block h-full rounded-r-full bg-danger"
-                style={{ width: width(-p.free), "--i": i } as React.CSSProperties}
-              />
-            )}
-            <span className="absolute -top-1 h-3.5 w-px bg-line-strong" style={{ left: width(p.capacity) }} />
-          </span>
+          <CapacityBar
+            used={p.calendarDays}
+            capacity={p.capacity}
+            max={max}
+            tone="bg-accent/80"
+            i={i}
+            className="hidden sm:flex"
+          />
           <span className="text-right tabular-nums">
             <span className={over ? "font-semibold text-danger" : "font-medium"}>{p.calendarDays}</span>
             <span className="text-ink-muted"> of {days(p.capacity)}</span>

@@ -115,3 +115,44 @@ export function Empty({ icon, title, children }: { icon: React.ReactNode; title:
     </div>
   );
 }
+
+/**
+ * Days used against capacity, on a scale shared by every bar in a card so their lengths compare. The track is
+ * the capacity itself and ends there, so a short track is a small capacity; anything past it runs on in red.
+ */
+export function CapacityBar({
+  used,
+  capacity,
+  max,
+  tone,
+  i,
+  className = "flex",
+}: {
+  used: number;
+  capacity: number;
+  max: number;
+  tone: string;
+  i: number;
+  className?: string;
+}) {
+  const share = (n: number) => `${(n / max) * 100}%`;
+  const over = used - capacity;
+  return (
+    <span className={`${className} h-1.5 gap-0.5`} aria-hidden>
+      <span className="h-full rounded-full bg-fill" style={{ width: share(capacity) }}>
+        <span
+          className={`grow-x block h-full rounded-full ${tone}`}
+          style={
+            { width: `${capacity ? (Math.min(used, capacity) / capacity) * 100 : 0}%`, "--i": i } as React.CSSProperties
+          }
+        />
+      </span>
+      {over > 0 && (
+        <span
+          className="grow-x block h-full rounded-full bg-danger"
+          style={{ width: share(over), "--i": i } as React.CSSProperties}
+        />
+      )}
+    </span>
+  );
+}

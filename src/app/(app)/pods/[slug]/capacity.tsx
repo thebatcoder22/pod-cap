@@ -5,7 +5,7 @@ import { day } from "@/lib/format";
 import type { CapacitySheet } from "@/server/capacity";
 import { setLeaveAction } from "./actions";
 import { CellInput } from "./cell-input";
-import { SKILL_TONE, card, cardTitle, days, plural, skillCell } from "./pod-ui";
+import { CapacityBar, SKILL_TONE, card, cardTitle, days, plural, skillCell } from "./pod-ui";
 
 // ---- Committed vs capacity ----
 
@@ -13,7 +13,6 @@ import { SKILL_TONE, card, cardTitle, days, plural, skillCell } from "./pod-ui";
 export function Committed({ sheet }: { sheet: CapacitySheet }) {
   const { commitment } = sheet;
   const max = Math.max(1, ...commitment.skills.flatMap((k) => [k.capacity, k.committed ?? 0]));
-  const width = (n: number) => `${(n / max) * 100}%`;
   const gaps = new Set(sheet.skills.filter((k) => k.gap).map((k) => k.skill));
   const nobody = new Set(sheet.skills.filter((k) => !k.people).map((k) => k.skill));
 
@@ -33,7 +32,6 @@ export function Committed({ sheet }: { sheet: CapacitySheet }) {
         {commitment.skills.map((k, i) => {
           const over = k.over > 0;
           const gap = gaps.has(k.skill);
-          const within = Math.min(k.committed ?? 0, k.capacity);
           return (
             <li
               key={k.skill}
@@ -45,20 +43,7 @@ export function Committed({ sheet }: { sheet: CapacitySheet }) {
                   <span className={`size-1.5 rounded-full ${SKILL_TONE[k.skill]}`} aria-hidden />
                   {k.skill}
                 </span>
-                {/* The track is capacity; past it, committed days run on in red. */}
-                <span className="relative flex h-1.5 rounded-full bg-fill" aria-hidden>
-                  <span
-                    className={`grow-x block h-full rounded-l-full ${over ? "" : "rounded-r-full"} ${SKILL_TONE[k.skill]}`}
-                    style={{ width: width(within), "--i": i } as React.CSSProperties}
-                  />
-                  {over && (
-                    <span
-                      className="grow-x block h-full rounded-r-full bg-danger"
-                      style={{ width: width(k.over), "--i": i } as React.CSSProperties}
-                    />
-                  )}
-                  <span className="absolute -top-1 h-3.5 w-px bg-line-strong" style={{ left: width(k.capacity) }} />
-                </span>
+                <CapacityBar used={k.committed ?? 0} capacity={k.capacity} max={max} tone={SKILL_TONE[k.skill]} i={i} />
                 <span className="text-right tabular-nums">
                   {k.committed === null ? (
                     <span className={gap ? "font-semibold text-danger" : "text-ink-muted"}>
