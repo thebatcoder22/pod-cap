@@ -50,11 +50,7 @@ export function Committed({ sheet }: { sheet: CapacitySheet }) {
                   max={max}
                   tone="bg-accent"
                   i={i}
-                  label={
-                    k.committed === null ? null : (
-                      <span className={over ? "font-semibold text-danger" : "font-medium"}>{k.committed}</span>
-                    )
-                  }
+                  label={k.committed === null ? null : <span className="font-medium">{k.committed}</span>}
                 />
                 <span
                   className={`flex self-stretch items-center justify-end border-l border-line pl-3 tabular-nums ${gap ? "font-semibold text-danger" : "text-ink-muted"}`}

@@ -140,12 +140,15 @@ export function CapacityBar({
 }) {
   const share = (n: number) => `${(n / max) * 100}%`;
   const over = used - capacity;
+  // Over capacity, blue and red meet square and flush, as one bar that turns red at capacity.
+  const joined = over > 0 && capacity > 0;
+  const end = joined ? "rounded-l-full" : "rounded-full";
   return (
     // The margin keeps room for the label, so the widths stay shares of the scale.
-    <span className={`${className} relative h-1.5 gap-0.5 ${label !== undefined ? "mr-10" : ""}`}>
-      <span className="h-full rounded-full bg-fill" style={{ width: share(capacity) }} aria-hidden>
+    <span className={`${className} relative h-1.5 ${label !== undefined ? "mr-10" : ""}`}>
+      <span className={`h-full ${end} bg-fill`} style={{ width: share(capacity) }} aria-hidden>
         <span
-          className={`grow-x block h-full rounded-full ${tone}`}
+          className={`grow-x block h-full ${end} ${tone}`}
           style={
             { width: `${capacity ? (Math.min(used, capacity) / capacity) * 100 : 0}%`, "--i": i } as React.CSSProperties
           }
@@ -153,7 +156,7 @@ export function CapacityBar({
       </span>
       {over > 0 && (
         <span
-          className="grow-x block h-full rounded-full bg-danger"
+          className={`grow-x block h-full ${joined ? "rounded-r-full" : "rounded-full"} bg-danger`}
           style={{ width: share(over), "--i": i } as React.CSSProperties}
           aria-hidden
         />
