@@ -119,7 +119,7 @@ export function Empty({ icon, title, children }: { icon: React.ReactNode; title:
 /**
  * Days used against capacity, on a scale shared by every bar in a card so their lengths compare. The track is
  * the capacity itself and ends there, so a short track is a small capacity; anything past it runs on in red.
- * Labelled, the used days ride above where the fill ends and the capacity follows the end of the bar.
+ * A label rides just past the end of the bar.
  */
 export function CapacityBar({
   used,
@@ -128,8 +128,7 @@ export function CapacityBar({
   tone,
   i,
   className = "flex",
-  usedLabel,
-  endLabel,
+  label,
 }: {
   used: number;
   capacity: number;
@@ -137,17 +136,13 @@ export function CapacityBar({
   tone: string;
   i: number;
   className?: string;
-  /** Null keeps the room for the label, so rows line up with and without it. */
-  usedLabel?: React.ReactNode;
-  endLabel?: React.ReactNode;
+  label?: React.ReactNode;
 }) {
   const share = (n: number) => `${(n / max) * 100}%`;
   const over = used - capacity;
   return (
-    // The margins keep room for the labels, so the widths stay shares of the scale.
-    <span
-      className={`${className} relative h-1.5 gap-0.5 ${endLabel !== undefined ? "mr-16" : ""} ${usedLabel !== undefined ? "mt-5" : ""}`}
-    >
+    // The margin keeps room for the label, so the widths stay shares of the scale.
+    <span className={`${className} relative h-1.5 gap-0.5 ${label !== undefined ? "mr-10" : ""}`}>
       <span className="h-full rounded-full bg-fill" style={{ width: share(capacity) }} aria-hidden>
         <span
           className={`grow-x block h-full rounded-full ${tone}`}
@@ -163,22 +158,12 @@ export function CapacityBar({
           aria-hidden
         />
       )}
-      {usedLabel != null && (
-        // Right-aligned to the end of the fill, but never pushed out past the start of the track.
+      {label != null && (
         <span
-          className="absolute bottom-full mb-1 -translate-x-full text-xs whitespace-nowrap tabular-nums"
-          style={{ left: `max(1.5rem, ${share(used)})` }}
-        >
-          {usedLabel}
-        </span>
-      )}
-      {endLabel !== undefined && (
-        <span
-          className={`absolute top-1/2 -translate-y-1/2 ${used || capacity ? "ml-2" : ""}  text-xs whitespace-nowrap text-ink-muted tabular-nums`}
+          className={`absolute top-1/2 -translate-y-1/2 ${used || capacity ? "ml-2" : ""} text-sm whitespace-nowrap tabular-nums`}
           style={{ left: share(Math.max(used, capacity)) }}
         >
-          {usedLabel != null && <span className="sr-only"> of </span>}
-          {endLabel}
+          {label}
         </span>
       )}
     </span>

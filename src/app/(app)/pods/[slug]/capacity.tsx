@@ -5,6 +5,7 @@ import { day } from "@/lib/format";
 import type { CapacitySheet } from "@/server/capacity";
 import { setLeaveAction } from "./actions";
 import { CellInput } from "./cell-input";
+import { FitList } from "./fit-list";
 import { CapacityBar, SKILL_TONE, card, cardTitle, days, plural, skillCell } from "./pod-ui";
 
 // ---- Committed vs capacity ----
@@ -38,9 +39,8 @@ export function Committed({ sheet }: { sheet: CapacitySheet }) {
               aria-label={`${k.skill} committed vs capacity`}
               className={`-mx-2 rounded-lg px-2 py-1.5 ${over || gap ? "bg-danger-soft" : ""}`}
             >
-              <div className="grid grid-cols-[2.5rem_minmax(0,1fr)] items-end gap-3 text-sm">
-                {/* As tall as the bar, so the skill lines up with it rather than with the label above. */}
-                <span className="flex h-1.5 items-center gap-1.5 font-mono text-xs text-ink-muted">
+              <div className="grid grid-cols-[2.5rem_minmax(0,1fr)_4.5rem] items-center gap-3 text-sm">
+                <span className="flex items-center gap-1.5 font-mono text-xs text-ink-muted">
                   <span className={`size-1.5 rounded-full ${SKILL_TONE[k.skill]}`} aria-hidden />
                   {k.skill}
                 </span>
@@ -50,17 +50,16 @@ export function Committed({ sheet }: { sheet: CapacitySheet }) {
                   max={max}
                   tone={SKILL_TONE[k.skill]}
                   i={i}
-                  usedLabel={
+                  label={
                     k.committed === null ? null : (
-                      <span className={over ? "font-semibold text-danger" : "font-medium text-ink"}>{k.committed}</span>
+                      <span className={over ? "font-semibold text-danger" : "font-medium"}>{k.committed}</span>
                     )
                   }
-                  endLabel={
-                    <span className={gap ? "font-semibold text-danger" : ""}>
-                      {nobody.has(k.skill) ? "No one" : days(k.capacity)}
-                    </span>
-                  }
                 />
+                <span className={`text-right tabular-nums ${gap ? "font-semibold text-danger" : "text-ink-muted"}`}>
+                  {k.committed !== null && <span className="sr-only">{" of "}</span>}
+                  {nobody.has(k.skill) ? "No one" : days(k.capacity)}
+                </span>
               </div>
               <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 pl-[3.25rem] text-xs">
                 {gap && (
@@ -205,7 +204,11 @@ const round = (n: number) => Math.round(n * 100) / 100;
 
 export function Unestimated({ tickets }: { tickets: Commitment["unestimated"] }) {
   return (
-    <section aria-labelledby="unestimated" className={card}>
+    // Beside Committed, the card takes that card's height (size containment) and fits its rows into it, until opened.
+    <section
+      aria-labelledby="unestimated"
+      className={`${card} flex flex-col lg:self-stretch lg:[contain:size] lg:has-data-open:[contain:none]`}
+    >
       <div className="flex items-baseline justify-between gap-3 px-4 pt-5 pb-3 sm:px-5">
         <h3 id="unestimated" className={cardTitle}>
           No estimates
@@ -218,7 +221,7 @@ export function Unestimated({ tickets }: { tickets: Commitment["unestimated"] })
           Every ticket in this sprint has an estimate.
         </p>
       ) : (
-        <ul className="divide-y divide-line border-t border-line">
+        <FitList className="divide-y divide-line border-t border-line">
           {tickets.map((t) => (
             <li key={t.key} className="flex items-baseline gap-3 px-4 py-2.5 text-sm sm:px-5">
               <TicketKey ticket={t} />
@@ -228,7 +231,7 @@ export function Unestimated({ tickets }: { tickets: Commitment["unestimated"] })
               <span className="ml-auto shrink-0 text-xs text-ink-faint">{t.type}</span>
             </li>
           ))}
-        </ul>
+        </FitList>
       )}
     </section>
   );
