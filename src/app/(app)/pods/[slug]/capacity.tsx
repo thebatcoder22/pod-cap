@@ -38,24 +38,29 @@ export function Committed({ sheet }: { sheet: CapacitySheet }) {
               aria-label={`${k.skill} committed vs capacity`}
               className={`-mx-2 rounded-lg px-2 py-1.5 ${over || gap ? "bg-danger-soft" : ""}`}
             >
-              <div className="grid grid-cols-[2.5rem_minmax(0,1fr)_7.5rem] items-center gap-3 text-sm">
-                <span className="flex items-center gap-1.5 font-mono text-xs text-ink-muted">
+              <div className="grid grid-cols-[2.5rem_minmax(0,1fr)] items-end gap-3 text-sm">
+                {/* As tall as the bar, so the skill lines up with it rather than with the label above. */}
+                <span className="flex h-1.5 items-center gap-1.5 font-mono text-xs text-ink-muted">
                   <span className={`size-1.5 rounded-full ${SKILL_TONE[k.skill]}`} aria-hidden />
                   {k.skill}
                 </span>
-                <CapacityBar used={k.committed ?? 0} capacity={k.capacity} max={max} tone={SKILL_TONE[k.skill]} i={i} />
-                <span className="text-right tabular-nums">
-                  {k.committed === null ? (
-                    <span className={gap ? "font-semibold text-danger" : "text-ink-muted"}>
+                <CapacityBar
+                  used={k.committed ?? 0}
+                  capacity={k.capacity}
+                  max={max}
+                  tone={SKILL_TONE[k.skill]}
+                  i={i}
+                  usedLabel={
+                    k.committed === null ? null : (
+                      <span className={over ? "font-semibold text-danger" : "font-medium text-ink"}>{k.committed}</span>
+                    )
+                  }
+                  endLabel={
+                    <span className={gap ? "font-semibold text-danger" : ""}>
                       {nobody.has(k.skill) ? "No one" : days(k.capacity)}
                     </span>
-                  ) : (
-                    <>
-                      <span className={over ? "font-semibold text-danger" : "font-medium"}>{k.committed}</span>
-                      <span className="text-ink-muted"> of {days(k.capacity)}</span>
-                    </>
-                  )}
-                </span>
+                  }
+                />
               </div>
               <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 pl-[3.25rem] text-xs">
                 {gap && (
