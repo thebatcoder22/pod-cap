@@ -74,11 +74,8 @@ export function Committed({ sheet }: { sheet: CapacitySheet }) {
                 ) : k.committed !== null ? (
                   <span className="text-ink-muted">{days(round(k.capacity - k.committed))} free</span>
                 ) : (
-                  // The ticket count below says it when there are tickets.
-                  !k.notEstimated && <span className="text-ink-muted">Not estimated</span>
-                )}
-                {k.notEstimated > 0 && (
-                  <span className="text-ink-faint">{plural(k.notEstimated, "ticket")} not estimated</span>
+                  // Which tickets still need estimates is the No estimates card's job, beside this one.
+                  <span className="text-ink-muted">Not estimated</span>
                 )}
               </p>
             </li>

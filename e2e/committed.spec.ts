@@ -29,7 +29,8 @@ test("a lead sees committed skill-days against capacity, the overloaded skill an
   const fe = committed.getByRole("listitem", { name: "FE committed vs capacity" });
   await expect(fe).toContainText("6 of 21 days");
   await expect(fe).toContainText("15 days free");
-  await expect(fe).toContainText("1 ticket not estimated");
+  // Which tickets lack estimates is left to the No estimates card, not repeated on every skill.
+  await expect(fe).not.toContainText("not estimated");
 
   const be = committed.getByRole("listitem", { name: "BE committed vs capacity" });
   await expect(be).toContainText("16.5 of 14 days");
@@ -37,8 +38,7 @@ test("a lead sees committed skill-days against capacity, the overloaded skill an
 
   // No Data Eng Days anywhere, and no Data people in Velocity: not estimated, never 0.
   const data = committed.getByRole("listitem", { name: "Data committed vs capacity" });
-  // DTP-4625 is estimated in FE and BE, so it needs no Data; only DTP-4395, with no estimate at all, is still to do.
-  await expect(data).toContainText("No one1 ticket not estimated");
+  await expect(data).toContainText("No oneNot estimated");
   await expect(data).not.toContainText("0 of");
 
   const unestimated = page.getByRole("region", { name: "No estimates" });
