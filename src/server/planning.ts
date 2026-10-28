@@ -86,7 +86,7 @@ export type Commitment<T> = {
     capacity: number;
     /** The sum of the estimates in this skill; null when no ticket has one, so it never reads as 0. */
     committed: number | null;
-    /** Tickets with no estimate in this skill, counted apart from the committed days. */
+    /** Tickets with no estimate in any skill, so none yet in this one either; counted apart from the committed days. */
     notEstimated: number;
     /** Committed days beyond capacity; 0 when the skill has room. */
     over: number;
@@ -115,6 +115,9 @@ export function planCommitment<T extends { estimates: Estimates }>(
   items: ManualItem[],
   capacity: Capacity<unknown>["skills"],
 ): Commitment<T> {
+  // A ticket estimated in any skill needs nothing in the skills it leaves empty; only one with no estimate at all is
+  // still to estimate, and it is, in every skill.
+  const unestimated = tickets.filter((t) => !SKILLS.some((k) => t.estimates[k] !== undefined));
   const skills = capacity.map(({ skill, capacity }) => {
     const estimated = tickets.flatMap((t) => t.estimates[skill] ?? []);
     const days = [...estimated, ...items.flatMap((i) => (i.skill === skill ? i.days : []))];
@@ -123,11 +126,11 @@ export function planCommitment<T extends { estimates: Estimates }>(
       skill,
       capacity,
       committed,
-      notEstimated: tickets.length - estimated.length,
+      notEstimated: unestimated.length,
       over: round(Math.max(0, (committed ?? 0) - capacity)),
     };
   });
-  return { skills, unestimated: tickets.filter((t) => !SKILLS.some((k) => t.estimates[k] !== undefined)) };
+  return { skills, unestimated };
 }
 
 /**

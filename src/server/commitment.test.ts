@@ -52,7 +52,8 @@ describe("committed vs capacity", () => {
 
     const c = await commitment();
     expect(skill(c, "FE")).toEqual({ skill: "FE", capacity: 14, committed: 7, notEstimated: 0, over: 0 });
-    expect(skill(c, "BE")).toEqual({ skill: "BE", capacity: 7, committed: 2.5, notEstimated: 1, over: 0 });
+    // DTP-1313 is estimated in FE, so its empty BE Days means it needs no BE, not that BE is still to estimate.
+    expect(skill(c, "BE")).toEqual({ skill: "BE", capacity: 7, committed: 2.5, notEstimated: 0, over: 0 });
   });
 
   it("shows the gap in days for an overloaded skill", async () => {
@@ -65,9 +66,10 @@ describe("committed vs capacity", () => {
     plan("DTP-163", { [FE_DAYS]: 3 });
     plan("DTP-1313");
     const c = await commitment();
-    // DTP-1313 has no FE Days; there is no Data Days field at all.
+    // DTP-1313 has no estimate at all, so it is still to estimate in every skill; there is no Data Days field.
     expect(skill(c, "FE")).toMatchObject({ committed: 3, notEstimated: 1 });
-    expect(skill(c, "Data")).toMatchObject({ committed: null, notEstimated: 2, over: 0 });
+    expect(skill(c, "Data")).toMatchObject({ committed: null, notEstimated: 1, over: 0 });
+    expect(c.unestimated.map((t) => t.key)).toEqual(["DTP-1313"]);
   });
 
   it("counts an estimate of 0 as estimated", async () => {
@@ -86,7 +88,8 @@ describe("committed vs capacity", () => {
     plan("DTP-163", { customfield_11600: 8, customfield_11601: "5" });
     const c = await commitment();
     expect(skill(c, "Data")).toMatchObject({ capacity: 7, committed: 8, over: 1 });
-    expect(skill(c, "AI")).toMatchObject({ committed: null, notEstimated: 1 });
+    // Estimated in Data, so the ticket needs no AI.
+    expect(skill(c, "AI")).toMatchObject({ committed: null, notEstimated: 0 });
   });
 
   it("counts bugs like stories", async () => {

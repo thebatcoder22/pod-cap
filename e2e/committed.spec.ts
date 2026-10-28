@@ -37,7 +37,8 @@ test("a lead sees committed skill-days against capacity, the overloaded skill an
 
   // No Data Eng Days anywhere, and no Data people in Velocity: not estimated, never 0.
   const data = committed.getByRole("listitem", { name: "Data committed vs capacity" });
-  await expect(data).toContainText("No one2 tickets not estimated");
+  // DTP-4625 is estimated in FE and BE, so it needs no Data; only DTP-4395, with no estimate at all, is still to do.
+  await expect(data).toContainText("No one1 ticket not estimated");
   await expect(data).not.toContainText("0 of");
 
   const unestimated = page.getByRole("region", { name: "No estimates" });
