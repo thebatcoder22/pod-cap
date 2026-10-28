@@ -16,8 +16,6 @@ export function Committed({ sheet }: { sheet: CapacitySheet }) {
   const max = Math.max(1, ...commitment.skills.flatMap((k) => [k.capacity, k.committed ?? 0]));
   const gaps = new Set(sheet.skills.filter((k) => k.gap).map((k) => k.skill));
   const nobody = new Set(sheet.skills.filter((k) => !k.people).map((k) => k.skill));
-  // Every row keeps the pill's column when any has one, so the bars share one width and one scale.
-  const anyOver = commitment.skills.some((k) => k.over > 0);
 
   return (
     <section aria-labelledby="committed" className={`${card} p-5`}>
@@ -35,43 +33,15 @@ export function Committed({ sheet }: { sheet: CapacitySheet }) {
         {commitment.skills.map((k, i) => {
           const over = k.over > 0;
           const gap = gaps.has(k.skill);
-          const notes = [
-            gap && (
-              <span key="gap" className="flex items-center gap-1.5 font-medium text-danger">
-                <WarningCircleIcon size={14} weight="fill" aria-hidden />
-                No {k.skill} capacity this sprint
-              </span>
-            ),
-            !over &&
-              (k.committed !== null ? (
-                <span key="free" className="text-ink-muted">
-                  {days(round(k.capacity - k.committed))} free
-                </span>
-              ) : (
-                // The ticket count says it when there are tickets.
-                !k.notEstimated && (
-                  <span key="none" className="text-ink-muted">
-                    Not estimated
-                  </span>
-                )
-              )),
-            k.notEstimated > 0 && (
-              <span key="unestimated" className="text-ink-faint">
-                {plural(k.notEstimated, "ticket")} not estimated
-              </span>
-            ),
-          ].filter(Boolean);
           return (
             <li
               key={k.skill}
               aria-label={`${k.skill} committed vs capacity`}
-              className={`-mx-2 rounded-lg px-2 py-2 ${over || gap ? "bg-danger-soft" : ""} ${over && k.capacity ? "pt-6" : ""}`}
+              className={`-mx-2 rounded-lg px-2 py-1.5 ${over || gap ? "bg-danger-soft" : ""}`}
             >
-              <div
-                className={`grid ${anyOver ? "grid-cols-[3.5rem_minmax(0,1fr)_5.5rem_5rem]" : "grid-cols-[3.5rem_minmax(0,1fr)_5rem]"} items-center gap-3 text-sm`}
-              >
-                <span className="flex items-center gap-2 font-medium">
-                  <span className={`size-2 rounded-full ${SKILL_TONE[k.skill]}`} aria-hidden />
+              <div className="grid grid-cols-[2.5rem_minmax(0,1fr)_5rem] items-center gap-3 text-sm">
+                <span className="flex items-center gap-1.5 font-mono text-xs text-ink-muted">
+                  <span className={`size-1.5 rounded-full ${SKILL_TONE[k.skill]}`} aria-hidden />
                   {k.skill}
                 </span>
                 <CapacityBar
@@ -82,48 +52,50 @@ export function Committed({ sheet }: { sheet: CapacitySheet }) {
                   i={i}
                   label={
                     k.committed === null ? null : (
-                      <span className={`font-semibold ${over ? "text-danger" : ""}`}>{k.committed}</span>
+                      <span className={over ? "font-semibold text-danger" : "font-medium"}>{k.committed}</span>
                     )
                   }
-                  mark={over && k.capacity ? k.capacity : undefined}
                 />
-                {/* Placed after the pill in the grid, but first in the text, so it reads "10 of 6.3 days". */}
                 <span
-                  className={`col-start-[-2] row-start-1 flex h-full items-center justify-end border-l border-line pl-3 tabular-nums ${gap ? "font-semibold text-danger" : "text-ink-muted"}`}
+                  className={`flex self-stretch items-center justify-end border-l border-line pl-3 tabular-nums ${gap ? "font-semibold text-danger" : "text-ink-muted"}`}
                 >
                   {k.committed !== null && <span className="sr-only">{" of "}</span>}
                   {nobody.has(k.skill) ? "No one" : days(k.capacity)}
                 </span>
-                {over && (
-                  <span className="col-start-3 row-start-1 flex items-center gap-1 justify-self-start rounded-md bg-danger/10 px-1.5 py-0.5 text-xs font-medium whitespace-nowrap text-danger">
+              </div>
+              <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 pl-[3.25rem] text-xs">
+                {gap && (
+                  <span className="flex items-center gap-1.5 font-medium text-danger">
                     <WarningCircleIcon size={14} weight="fill" aria-hidden />
-                    {k.over}d over
+                    No {k.skill} capacity this sprint
                   </span>
                 )}
-              </div>
-              {notes.length > 0 && (
-                <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 pl-[4.25rem] text-xs">
-                  {notes.flatMap((n, j) => [
-                    j > 0 && (
-                      <span key={`sep-${j}`} className="text-ink-faint" aria-hidden>
-                        ·
-                      </span>
-                    ),
-                    n,
-                  ])}
-                </p>
-              )}
+                {over ? (
+                  <span className="flex items-center gap-1.5 font-medium text-danger">
+                    {!gap && <WarningCircleIcon size={14} weight="fill" aria-hidden />}
+                    Over by {days(k.over)}
+                  </span>
+                ) : k.committed !== null ? (
+                  <span className="text-ink-muted">{days(round(k.capacity - k.committed))} free</span>
+                ) : (
+                  // The ticket count below says it when there are tickets.
+                  !k.notEstimated && <span className="text-ink-muted">Not estimated</span>
+                )}
+                {k.notEstimated > 0 && (
+                  <span className="text-ink-faint">{plural(k.notEstimated, "ticket")} not estimated</span>
+                )}
+              </p>
             </li>
           );
         })}
       </ul>
-      <dl className="mt-5 grid grid-cols-3 divide-x divide-line border-t border-line pt-4">
+      <dl className="mt-5 grid grid-cols-3 gap-4 border-t border-line pt-4">
         {[
           ["Working days", sheet.workingDays],
           ["Holidays", sheet.holidays.length],
           ["Focus factor", `${sheet.focusPercent}%`],
         ].map(([label, value]) => (
-          <div key={label} className="space-y-1 px-4 first:pl-0">
+          <div key={label} className="space-y-1">
             <dt className="text-xs text-ink-muted">{label}</dt>
             <dd className={`text-lg font-semibold tabular-nums ${value === 0 ? "text-ink-faint" : ""}`}>{value}</dd>
           </div>
