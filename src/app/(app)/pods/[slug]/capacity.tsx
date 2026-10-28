@@ -48,7 +48,7 @@ export function Committed({ sheet }: { sheet: CapacitySheet }) {
                   used={k.committed ?? 0}
                   capacity={k.capacity}
                   max={max}
-                  tone={SKILL_TONE[k.skill]}
+                  tone="bg-accent"
                   i={i}
                   label={
                     k.committed === null ? null : (
