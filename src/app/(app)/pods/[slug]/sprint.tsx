@@ -20,7 +20,7 @@ import {
   plural,
 } from "./pod-ui";
 import { TicketTable } from "./ticket-table";
-import { Capacity, Committed, Unestimated } from "./capacity";
+import { Committed, Sheet, Unestimated } from "./capacity";
 import { Workload } from "./workload";
 import { OverloadedSkills, PickUp } from "./pick-up-panel";
 
@@ -78,27 +78,27 @@ export function Sprint({
         </span>
       </div>
 
-      <Capacity sheet={capacity} sprintId={sprint.id} canEdit={canEdit} />
-
       {tickets.length > 0 ? (
         <>
           <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-            <Committed commitment={capacity.commitment} />
+            <Committed sheet={capacity} />
             <Unestimated tickets={capacity.commitment.unestimated} />
           </div>
           <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
             <Workload load={capacity.load} />
             <Progress tickets={tickets} />
           </div>
+          <Sheet sheet={capacity} sprintId={sprint.id} canEdit={canEdit} />
         </>
       ) : (
-        // Manual items alone, with no tickets to estimate or track.
-        capacity.items.length > 0 && (
-          <div className="grid items-start gap-4 lg:grid-cols-2">
-            <Committed commitment={capacity.commitment} />
-            <Workload load={capacity.load} />
+        // No tickets to estimate or track, so the sheet takes the space beside capacity.
+        <>
+          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+            <Committed sheet={capacity} />
+            <Sheet sheet={capacity} sprintId={sprint.id} canEdit={canEdit} />
           </div>
-        )
+          {capacity.items.length > 0 && <Workload load={capacity.load} />}
+        </>
       )}
 
       {/* Shown even with no tickets yet: filling an empty upcoming sprint is when it helps most. */}

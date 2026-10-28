@@ -20,7 +20,7 @@ async function save(page: Page, field: ReturnType<Page["getByLabel"]>, value: st
 test("a lead enters leave and sees capacity per person and per skill, with the admin's holidays", async ({ page }) => {
   await signInAs(page, "aman@delightree.com");
   await expect(page).toHaveURL(/\/pods\/roadmap-2$/);
-  const bySkill = page.getByRole("region", { name: "Capacity by skill" });
+  const bySkill = page.getByRole("region", { name: "Committed vs capacity" });
   const sheet = page.getByRole("region", { name: "Capacity sheet" });
 
   // Oct Spint 2: ten weekdays at 70%.
