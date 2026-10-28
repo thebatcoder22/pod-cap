@@ -36,7 +36,7 @@
 26. As the admin, I want to add a person from the "No pod yet" list to a pod in one action, so that onboarding a new hire takes seconds.
 27. As the admin, I want to move a person from one pod to another, so that the platform follows reorganisations.
 28. As the admin, I want to remove a person who has left the company, so that they stop counting toward capacity.
-29. As a pod lead, I want each person to belong to exactly one pod, so that no capacity is ever counted twice.
+29. As a pod lead, I want someone shared with another pod to bring my pod only its share of their capacity, so that no capacity is ever counted twice.
 30. As a pod lead, I want pod leads to appear as members of their own pod with full capacity, so that the work I do myself is counted.
 31. As a pod lead, I want to see each member's name, main skill, and proficiencies on my pod page, so that I understand my team's shape at a glance.
 

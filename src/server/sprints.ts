@@ -34,7 +34,9 @@ export type SprintView = {
  * else the pod of its first owner in one (the assignee, then the Dev Owners in Jira's order), else the POD field.
  * Owners are set on work someone took on, while the POD field gets missed or names another pod, and a person's
  * work counts against their own pod's capacity. A ticket counts in one pod only, so pod totals never count it
- * twice; owners in other pods show on it as cross-pod help.
+ * twice; owners in other pods show on it as cross-pod help. Someone in two pods, like Shadab in Velocity and
+ * Support, has their tickets counted by the POD field; one naming neither of their pods goes to the pod with the
+ * larger share of them, then the older pod.
  */
 // Spelled out with aliases: Drizzle drops table names from columns in single-table selects, which would leave
 // the subquery's columns ambiguous. A null assignee becomes [null], which matches nobody.
@@ -42,8 +44,10 @@ export const ticketPodOptionId = sql<string | null>`coalesce(
   (select ticket_pod.jira_pod_option_id
    from jsonb_array_elements(jsonb_build_array("tickets"."assignee") || "tickets"."dev_owners") with ordinality ticket_owner(u, n)
    join people ticket_person on ticket_person.active and ticket_person.jira_account_id = ticket_owner.u->>'accountId'
-   join pods ticket_pod on ticket_pod.id = ticket_person.pod_id
-   order by ticket_pod.jira_pod_option_id = "tickets"."pod_option_id" desc, ticket_owner.n limit 1),
+   join pod_members ticket_member on ticket_member.person_id = ticket_person.id
+   join pods ticket_pod on ticket_pod.id = ticket_member.pod_id
+   order by ticket_pod.jira_pod_option_id = "tickets"."pod_option_id" desc, ticket_owner.n,
+     ticket_member.share desc, ticket_pod.id limit 1),
   "tickets"."pod_option_id"
 )`;
 

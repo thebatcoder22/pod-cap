@@ -43,7 +43,7 @@ async function Pod({ params, searchParams }: PageProps<"/pods/[slug]">) {
     view.sprint && view.sprint.state !== "closed" && capacity ? await getPickUp(page, view.sprint, capacity) : null;
   const { pod, members } = page;
   const lead = members.find((m) => m.isLead);
-  const canEdit = viewer.canEdit && viewer.pod?.id === pod.id;
+  const canEdit = viewer.canEdit && viewer.pods.some((p) => p.id === pod.id);
 
   return (
     <div className="space-y-8">
@@ -126,7 +126,7 @@ async function Pod({ params, searchParams }: PageProps<"/pods/[slug]">) {
       </div>
 
       <div {...rise(5)}>
-        <Team members={members} canEdit={canEdit} />
+        <Team members={members} skills={page.skills} canEdit={canEdit} />
       </div>
     </div>
   );

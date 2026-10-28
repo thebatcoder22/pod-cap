@@ -7,7 +7,7 @@ export const instant = false;
 
 export default async function Home() {
   const viewer = await requireViewer();
-  const slug = viewer.pod?.slug ?? (await listPods())[0]?.slug;
+  const slug = viewer.pods[0]?.slug ?? (await listPods())[0]?.slug;
   if (!slug) notFound();
   redirect(`/pods/${slug}`);
 }

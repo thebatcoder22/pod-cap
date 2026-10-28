@@ -24,10 +24,11 @@ test("a lead sees every pod's hours on the capacity calendar, then opens a pod t
   await page.goto("/calendar?month=2026-10");
   await expect(page.getByRole("heading", { name: "October 2026" })).toBeVisible();
 
-  // Oct Spint 2 runs 26 Oct to 6 Nov. Velocity's five people plan 5.6h a day each; DTP-4625's 22.5 days are 18h a day.
+  // Oct Spint 2 runs 26 Oct to 6 Nov. Velocity plans 5.6h a day for each of its three people only in
+  // it, and 2.8h for Shadab and Nanagoud, who are half in Support; DTP-4625's 22.5 days are 18h a day.
   await expect(page.getByRole("cell", { name: "Monday 26 October" })).toContainText("Oct Spint 2");
   const wednesday = page.getByRole("cell", { name: "Wednesday 28 October" });
-  await expect(wednesday.getByRole("link", { name: "Velocity: 18h booked of 28h" })).toBeVisible();
+  await expect(wednesday.getByRole("link", { name: "Velocity: 18h booked of 22.4h" })).toBeVisible();
   await expect(wednesday.getByRole("link", { name: "RoadMap 2: 0h booked of 28h" })).toBeVisible();
   // ABC sprint still has the days before it.
   await expect(page.getByRole("cell", { name: "Monday 19 October" })).toContainText("ABC sprint");

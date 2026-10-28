@@ -113,6 +113,7 @@ export function Sprint({
         <ManualItems
           items={capacity.items}
           people={page.members.map(({ id, name }) => ({ id, name }))}
+          skills={page.skills}
           podId={page.pod.id}
           sprintId={sprint.id}
           canEdit={canEdit}

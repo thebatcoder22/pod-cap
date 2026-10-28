@@ -1,4 +1,4 @@
-import { SKILLS } from "@/db/schema";
+import Link from "next/link";
 import { Avatar } from "@/components/brand";
 import type { PodPage as PodData } from "@/server/pods";
 import { setProficiencyAction } from "./actions";
@@ -7,8 +7,8 @@ import { SKILL_TONE, card, cardTitle, skillCell } from "./pod-ui";
 
 // ---- Team ----
 
-export function Team({ members, canEdit }: { members: PodData["members"]; canEdit: boolean }) {
-  const bySkill = SKILLS.map((skill) => ({ skill, people: members.filter((m) => m.mainSkill === skill) }));
+export function Team({ members, skills, canEdit }: Pick<PodData, "members" | "skills"> & { canEdit: boolean }) {
+  const bySkill = skills.map((skill) => ({ skill, people: members.filter((m) => m.mainSkill === skill) }));
 
   return (
     <section aria-labelledby="team" className="space-y-4">
@@ -39,7 +39,7 @@ export function Team({ members, canEdit }: { members: PodData["members"]; canEdi
             {bySkill.map(({ skill, people }) => (
               <li key={skill} className="flex items-start gap-3 text-sm">
                 <span className={`mt-1.5 size-2 shrink-0 rounded-full ${SKILL_TONE[skill]}`} aria-hidden />
-                <span className="w-9 font-mono text-xs leading-5 text-ink-muted">{skill}</span>
+                <span className="w-12 font-mono text-xs leading-5 text-ink-muted">{skill}</span>
                 <span className={`w-4 font-semibold tabular-nums ${people.length ? "" : "text-ink-faint"}`}>
                   {people.length}
                 </span>
@@ -51,13 +51,13 @@ export function Team({ members, canEdit }: { members: PodData["members"]; canEdi
           </ul>
         </section>
 
-        <Members members={members} canEdit={canEdit} />
+        <Members members={members} skills={skills} canEdit={canEdit} />
       </div>
     </section>
   );
 }
 
-function Members({ members, canEdit }: { members: PodData["members"]; canEdit: boolean }) {
+function Members({ members, skills, canEdit }: Pick<PodData, "members" | "skills"> & { canEdit: boolean }) {
   return (
     <section aria-labelledby="members" className={card}>
       <div className="flex items-baseline justify-between gap-3 px-4 pt-5 pb-3 sm:px-5">
@@ -78,7 +78,7 @@ function Members({ members, canEdit }: { members: PodData["members"]; canEdit: b
                 <th scope="col" className="py-2 pl-4 text-left font-medium sm:pl-5">
                   Name
                 </th>
-                {SKILLS.map((skill) => (
+                {skills.map((skill) => (
                   <th
                     key={skill}
                     scope="col"
@@ -100,10 +100,18 @@ function Members({ members, canEdit }: { members: PodData["members"]; canEdit: b
                       <span className="flex flex-wrap items-baseline gap-x-2">
                         <span className="font-medium">{m.name}</span>
                         {m.isLead && <span className="text-xs text-ink-faint">Lead</span>}
+                        {m.alsoIn && (
+                          <span className="text-xs text-ink-faint">
+                            {m.share}% here, also in{" "}
+                            <Link href={`/pods/${m.alsoIn.slug}`} className="hover:text-accent">
+                              {m.alsoIn.name}
+                            </Link>
+                          </span>
+                        )}
                       </span>
                     </div>
                   </td>
-                  {SKILLS.map((skill) => (
+                  {skills.map((skill) => (
                     <td key={skill} className="py-2.5 pr-2 text-right last:pr-4 sm:pr-3 sm:last:pr-5">
                       {skill === m.mainSkill ? (
                         <span

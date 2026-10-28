@@ -101,6 +101,7 @@ export const SKILL_TONE: Record<Skill, string> = {
   BE: "bg-accent/65",
   Data: "bg-accent/40",
   AI: "bg-accent/20",
+  DevOps: "bg-ink-faint/50",
 };
 
 /** The box every proficiency value sits in, editable or not, so the column lines up. */

@@ -177,7 +177,10 @@ describe("allowlist", () => {
   it("removes an address and makes it read only", async () => {
     await removeAllowlisted(aman, "Rahul@Delightree.com");
     expect((await listAllowlist(aman)).map((r) => r.email)).not.toContain("rahul@delightree.com");
-    expect(await viewerForEmail("rahul@delightree.com")).toMatchObject({ canEdit: false, pod: { slug: "velocity" } });
+    expect(await viewerForEmail("rahul@delightree.com")).toMatchObject({
+      canEdit: false,
+      pods: [{ slug: "velocity" }],
+    });
   });
 
   it("does not let the admin remove their own address", async () => {

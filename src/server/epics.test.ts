@@ -53,6 +53,7 @@ describe("epics", () => {
           { skill: "BE", days: null, notEstimated: 0 },
           { skill: "Data", days: null, notEstimated: 0 },
           { skill: "AI", days: null, notEstimated: 0 },
+          { skill: "DevOps", days: null, notEstimated: 0 },
         ],
         unestimated: 0,
         pods: [],
@@ -94,6 +95,7 @@ describe("epics", () => {
       BE: { skill: "BE", days: 3, notEstimated: 1 },
       Data: { skill: "Data", days: null, notEstimated: 2 },
       AI: { skill: "AI", days: null, notEstimated: 2 },
+      DevOps: { skill: "DevOps", days: null, notEstimated: 2 },
     });
     expect(e.unestimated).toBe(0);
 
@@ -154,7 +156,7 @@ describe("epics", () => {
     reparent("DTP-4687", "DTP-4830");
     await runSync(jira.make);
     const roadmap2 = (await getPodPage("roadmap-2"))!.pod;
-    const pending = await getPendingInJira(roadmap2.id);
+    const pending = await getPendingInJira([roadmap2.id]);
 
     expect(pending[0].pod).toEqual({ id: roadmap2.id, name: "RoadMap 2", slug: "roadmap-2" });
     // Shared by two pods, so it is on both lists.
@@ -165,7 +167,7 @@ describe("epics", () => {
     expect(pending.every((p) => p.epics.length && p.epics.every((e) => e.missing.length))).toBe(true);
     // RoadMap 1 sees its own pod first.
     const roadmap1 = (await getPodPage("roadmap-1"))!.pod;
-    expect((await getPendingInJira(roadmap1.id))[0].pod.slug).toBe("roadmap-1");
+    expect((await getPendingInJira([roadmap1.id]))[0].pod.slug).toBe("roadmap-1");
   });
 
   it("lets a lead size their own pod's epics, and keeps the size across syncs", async () => {

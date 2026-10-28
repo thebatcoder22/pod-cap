@@ -65,9 +65,12 @@ describe("snapshots", () => {
       // Nothing estimated reads as not estimated, never 0.
       { skill: "Data", capacity: 7, committed: null, completed: null },
       { skill: "AI", capacity: 7, committed: null, completed: null },
+      // No DevOps engineer in RoadMap 2, so no DevOps snapshot.
+      { skill: "DevOps", capacity: null, committed: null, completed: null },
     ]);
-    // Every pod gets one, not only the pods with tickets.
-    expect(skill(await trend("velocity", OCT_SPRINT_2), "BE")).toMatchObject({ capacity: 14 });
+    // Every pod gets one, not only the pods with tickets. Nanagoud brings Velocity half of his 7 days.
+    expect(skill(await trend("velocity", OCT_SPRINT_2), "BE")).toMatchObject({ capacity: 10.5 });
+    expect(skill(await trend("support", OCT_SPRINT_2), "DevOps")).toMatchObject({ capacity: 7 });
   });
 
   it("keeps the commitment frozen when Jira changes after the sprint started", async () => {
@@ -156,7 +159,7 @@ describe("snapshots", () => {
     await takeSnapshot(aman, roadmap2.pod.id, OCT_SPRINT_2, "start");
     expect(skill(await trend("roadmap-2", OCT_SPRINT_2), "FE")).toMatchObject({ capacity: 12.6, committed: 5 });
     // Only that pod's snapshot is retaken.
-    expect(skill(await trend("velocity", OCT_SPRINT_2), "FE")).toMatchObject({ capacity: 21 });
+    expect(skill(await trend("velocity", OCT_SPRINT_2), "FE")).toMatchObject({ capacity: 17.5 });
   });
 
   it("lets the admin take a close snapshot of a sprint a missed sync never saw close", async () => {

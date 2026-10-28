@@ -25,16 +25,17 @@ test("a lead sees committed skill-days against capacity, the overloaded skill an
   await expect(page).toHaveURL(/\/pods\/velocity$/);
   const committed = page.getByRole("region", { name: "Committed vs capacity" });
 
-  // Velocity in Oct Spint 2: three FE people and two BE people at 7 days each. DTP-4625 asks FE 6, BE 16.5.
+  // Velocity in Oct Spint 2: three FE people and two BE people at 7 days each, but Shadab (FE) and Nanagoud (BE)
+  // bring half of theirs, being in Support too. DTP-4625 asks FE 6, BE 16.5.
   const fe = committed.getByRole("listitem", { name: "FE committed vs capacity" });
-  await expect(fe).toContainText("6 of 21 days");
-  await expect(fe).toContainText("15 days free");
+  await expect(fe).toContainText("6 of 17.5 days");
+  await expect(fe).toContainText("11.5 days free");
   // Which tickets lack estimates is left to the No estimates card, not repeated on every skill.
   await expect(fe).not.toContainText("not estimated");
 
   const be = committed.getByRole("listitem", { name: "BE committed vs capacity" });
-  await expect(be).toContainText("16.5 of 14 days");
-  await expect(be).toContainText("Over by 2.5 days");
+  await expect(be).toContainText("16.5 of 10.5 days");
+  await expect(be).toContainText("Over by 6 days");
 
   // No Data Eng Days anywhere, and no Data people in Velocity: not estimated, never 0.
   const data = committed.getByRole("listitem", { name: "Data committed vs capacity" });

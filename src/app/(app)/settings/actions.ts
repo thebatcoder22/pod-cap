@@ -3,7 +3,7 @@
 import { refresh } from "next/cache";
 import type { Skill } from "@/db/schema";
 import { normalizeEmail } from "@/server/access";
-import { addFromJira, confirmJiraAccount, movePerson, removePerson } from "@/server/people";
+import { addFromJira, addToPod, confirmJiraAccount, movePerson, removePerson, setShare } from "@/server/people";
 import { ForbiddenError } from "@/server/permissions";
 import { getViewer } from "@/server/session";
 import {
@@ -105,15 +105,45 @@ export async function addFromJiraAction(_: ActionState, form: FormData) {
 
 export async function movePersonAction(_: ActionState, form: FormData) {
   return run(async () => {
-    const { name, pod } = await movePerson(await getViewer(), intField(form, "personId"), intField(form, "podId"));
+    const { name, pod } = await movePerson(
+      await getViewer(),
+      intField(form, "personId"),
+      intField(form, "fromPodId"),
+      intField(form, "podId"),
+    );
     return `${name} moved to ${pod}.`;
+  });
+}
+
+export async function addToPodAction(_: ActionState, form: FormData) {
+  return run(async () => {
+    const { name, pod } = await addToPod(await getViewer(), intField(form, "personId"), intField(form, "podId"));
+    return `${name} is also in ${pod} now, with half of their time in each pod.`;
+  });
+}
+
+export async function setShareAction(_: ActionState, form: FormData) {
+  return run(async () => {
+    const { name, pod, share, other } = await setShare(
+      await getViewer(),
+      intField(form, "personId"),
+      intField(form, "podId"),
+      intField(form, "share"),
+    );
+    return `${pod} now plans with ${share}% of ${name}'s time, and ${other.pod} with ${other.share}%.`;
   });
 }
 
 export async function removePersonAction(_: ActionState, form: FormData) {
   return run(async () => {
-    const { name } = await removePerson(await getViewer(), intField(form, "personId"));
-    return `${name} was removed and no longer counts toward any pod.`;
+    const { name, pod, stillIn } = await removePerson(
+      await getViewer(),
+      intField(form, "personId"),
+      intField(form, "podId"),
+    );
+    return stillIn
+      ? `${name} left ${pod} and now spends all of their time in ${stillIn}.`
+      : `${name} was removed and no longer counts toward any pod.`;
   });
 }
 

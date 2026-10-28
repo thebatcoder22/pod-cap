@@ -53,6 +53,8 @@ const ESTIMATE_FIELD: Record<Skill, string> = {
   BE: "BE Days",
   Data: "Data Eng Days",
   AI: "AI Eng Days",
+  // Not on DTP yet: until the Jira admin adds it, DevOps work is planned with manual items.
+  DevOps: "DevOps Days",
 };
 
 /** Estimate fields by skill, found by name, so a field the Jira admin adds later counts without a code change. */

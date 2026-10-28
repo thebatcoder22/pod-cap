@@ -25,7 +25,7 @@ describe("permissions", () => {
 
   it("refuses a pod member who is not allowlisted, even in their own pod", async () => {
     const lead = (await viewerForEmail("rahul@delightree.com"))!;
-    expect(() => assertCanEditPod({ ...lead, canEdit: false }, lead.pod!.id)).toThrow(ForbiddenError);
+    expect(() => assertCanEditPod({ ...lead, canEdit: false }, lead.pods[0].id)).toThrow(ForbiddenError);
   });
 
   it("reserves admin actions for the admin", async () => {

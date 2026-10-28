@@ -1,6 +1,6 @@
 import { and, asc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { jiraSettings, manualItems, people, pods, SKILLS, sprints, tickets, type Skill } from "@/db/schema";
+import { jiraSettings, manualItems, people, podMembers, pods, SKILLS, sprints, tickets, type Skill } from "@/db/schema";
 import { withProficiency } from "./people";
 import { assertCanEditPod } from "./permissions";
 import { ValidationError } from "./settings";
@@ -108,7 +108,7 @@ async function validate(podId: number, input: ManualItemInput) {
             id: people.id,
             name: people.name,
             mainSkill: people.mainSkill,
-            podId: people.podId,
+            member: sql<boolean>`exists (select 1 from ${podMembers} where ${podMembers.personId} = ${people.id} and ${podMembers.podId} = ${podId})`,
             pod: pods.name,
           })
           .from(people)
@@ -116,7 +116,7 @@ async function validate(podId: number, input: ManualItemInput) {
           .where(and(eq(people.id, input.personId), eq(people.active, true)))
       : [];
     if (!row) throw new ValidationError("That person is no longer in any pod.");
-    if (row.podId !== podId) throw new ValidationError(`${row.name} is not in ${row.pod}.`);
+    if (!row.member) throw new ValidationError(`${row.name} is not in ${row.pod}.`);
     const [{ proficiency }] = await withProficiency([row]);
     if (!proficiency[input.skill]) throw new ValidationError(`${row.name} has 0% in ${input.skill}.`);
   }

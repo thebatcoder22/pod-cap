@@ -2,8 +2,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { leave, sprints } from "@/db/schema";
 import { listManualItems } from "./manual-items";
-import { activePerson, linkedPeopleOutside } from "./people";
-import { assertCanEditPod } from "./permissions";
+import { activePerson, assertCanEditPerson, linkedPeopleOutside } from "./people";
 import { planCapacity, planCommitment, planLoad, planManualItems, workingDays } from "./planning";
 import type { PodPage } from "./pods";
 import { getPlanningSettings, ValidationError } from "./settings";
@@ -53,8 +52,8 @@ export async function getCapacitySheet(page: PodPage, sprint: Sprint, tickets: S
 /** A lead enters one of their own people's leave for a sprint, in half days. Zero clears it. */
 export async function setLeave(viewer: Viewer | null, personId: number, sprintId: number, days: number) {
   const person = await activePerson(personId);
-  // Active people are always in a pod (people_active_in_a_pod).
-  assertCanEditPod(viewer, person.podId!);
+  // Leave is the person's, so it counts in each of their pods.
+  await assertCanEditPerson(viewer, person.id);
   const [sprint] = Number.isInteger(sprintId) ? await db.select().from(sprints).where(eq(sprints.id, sprintId)) : [];
   if (!sprint) throw new ValidationError("That sprint is no longer on the board. Sync, then try again.");
 

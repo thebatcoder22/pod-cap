@@ -15,8 +15,10 @@ import {
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
-export const SKILLS = ["FE", "BE", "Data", "AI"] as const;
+export const SKILLS = ["FE", "BE", "Data", "AI", "DevOps"] as const;
 export type Skill = (typeof SKILLS)[number];
+/** Skills every pod shows. The rest show only in a pod with someone whose main skill it is. */
+export const CORE_SKILLS: readonly Skill[] = ["FE", "BE", "Data", "AI"];
 export const skill = pgEnum("skill", SKILLS);
 
 export const pods = pgTable("pods", {
@@ -30,19 +32,34 @@ export const pods = pgTable("pods", {
   leadPersonId: integer("lead_person_id").references((): AnyPgColumn => people.id),
 });
 
-export const people = pgTable(
-  "people",
+export const people = pgTable("people", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").unique(),
+  jiraAccountId: text("jira_account_id").unique(),
+  mainSkill: skill("main_skill").notNull(),
+  // An active person is in one pod or two (see podMembers); a removed one is in none.
+  active: boolean("active").notNull().default(true),
+});
+
+// Who is in which pod. Someone in two pods splits their capacity between them by share; a person's shares add up
+// to 100, so pod totals never count anyone twice.
+export const podMembers = pgTable(
+  "pod_members",
   {
-    id: serial("id").primaryKey(),
-    name: text("name").notNull(),
-    email: text("email").unique(),
-    jiraAccountId: text("jira_account_id").unique(),
-    // A single column, so a person is in one pod at a time. Null once removed.
-    podId: integer("pod_id").references(() => pods.id),
-    mainSkill: skill("main_skill").notNull(),
-    active: boolean("active").notNull().default(true),
+    podId: integer("pod_id")
+      .notNull()
+      .references(() => pods.id),
+    personId: integer("person_id")
+      .notNull()
+      .references(() => people.id),
+    // The percent of the person's capacity this pod plans with.
+    share: integer("share").notNull().default(100),
   },
-  (t) => [check("people_active_in_a_pod", sql`not ${t.active} or ${t.podId} is not null`)],
+  (t) => [
+    primaryKey({ columns: [t.podId, t.personId] }),
+    check("pod_members_share_range", sql`${t.share} between 1 and 100`),
+  ],
 );
 
 // Skills outside a person's main skill. No row means 0%; the main skill is always 100% and never stored.

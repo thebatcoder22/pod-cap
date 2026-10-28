@@ -25,12 +25,13 @@ describe("pod page", () => {
     expect(await getPodPage("nope")).toBeNull();
   });
 
-  it("lists all four pods in deck order for the pod tabs", async () => {
+  it("lists every pod in deck order, Support last for the pod tabs", async () => {
     expect(await listPods()).toEqual([
       { slug: "roadmap-1", name: "RoadMap 1", lead: "Shikhar Seth" },
       { slug: "roadmap-2", name: "RoadMap 2", lead: "Aman Tyagi" },
       { slug: "velocity", name: "Velocity", lead: "Rahul Saharan" },
       { slug: "atlas", name: "Atlas", lead: "Abdullah Ghani" },
+      { slug: "support", name: "Support", lead: "Shadab Anjum" },
     ]);
   });
 });
@@ -39,7 +40,13 @@ describe("proficiency", () => {
   const person = async (slug: string, name: string) => (await getPodPage(slug))!.members.find((m) => m.name === name)!;
 
   it("is 100% in the main skill and 0% in every other skill by default", async () => {
-    expect((await person("roadmap-2", "Kalpan Punamiya")).proficiency).toEqual({ FE: 0, BE: 0, Data: 100, AI: 0 });
+    expect((await person("roadmap-2", "Kalpan Punamiya")).proficiency).toEqual({
+      FE: 0,
+      BE: 0,
+      Data: 100,
+      AI: 0,
+      DevOps: 0,
+    });
   });
 
   it("lets a lead set a non-main skill for their own people, and every lead sees it", async () => {
@@ -48,7 +55,13 @@ describe("proficiency", () => {
     await setProficiency(aman, kalpan.id, "FE", 40);
     await setProficiency(aman, kalpan.id, "AI", 25);
     await setProficiency(aman, kalpan.id, "FE", 60);
-    expect((await person("roadmap-2", "Kalpan Punamiya")).proficiency).toEqual({ FE: 60, BE: 0, Data: 100, AI: 25 });
+    expect((await person("roadmap-2", "Kalpan Punamiya")).proficiency).toEqual({
+      FE: 60,
+      BE: 0,
+      Data: 100,
+      AI: 25,
+      DevOps: 0,
+    });
   });
 
   it("accepts the bounds 0 and 100", async () => {

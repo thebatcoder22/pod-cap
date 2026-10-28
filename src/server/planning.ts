@@ -1,10 +1,19 @@
-import { SKILLS, type Estimates, type JiraUser, type Skill, type SnapshotKind } from "@/db/schema";
-import { isoDay } from "@/lib/format";
+import { CORE_SKILLS, SKILLS, type Estimates, type JiraUser, type Skill, type SnapshotKind } from "@/db/schema";
 import type { Proficiency } from "./people";
+import { round, sumKnown, workingDays, sprintDays } from "./planning-days";
 
 // The planning engine: every capacity rule, and no I/O. See spec/implementation-decisions.md "Rules the planning engine encodes".
+// The day math and the capacity calendar live beside it, and are part of it.
+export { workingDays };
+export { HOURS_PER_DAY, planCalendar, type CalendarDay } from "./planning-calendar";
 
-export type PlanningInput<P extends { id: number; mainSkill: Skill }> = {
+/** The skills a pod plans in: FE, BE, Data and AI always, any other only when it is someone's main skill there. */
+export const podSkills = (people: { mainSkill: Skill }[]) =>
+  SKILLS.filter((k) => CORE_SKILLS.includes(k) || people.some((p) => p.mainSkill === k));
+
+type Member = { id: number; mainSkill: Skill; share: number };
+
+export type PlanningInput<P extends Member> = {
   sprint: { startDate: Date | null; endDate: Date | null };
   people: P[];
   /** Leave days by person id, in half-day steps. */
@@ -33,45 +42,20 @@ export type Capacity<P> = {
   total: number;
 };
 
-const DAY_MS = 86_400_000;
-
-/** Weekdays from `start` to `end` inclusive, both YYYY-MM-DD. */
-function weekdays(start: string, end: string) {
-  const days: string[] = [];
-  for (let t = Date.parse(start); t <= Date.parse(end); t += DAY_MS) {
-    const d = new Date(t);
-    if (d.getUTCDay() % 6 !== 0) days.push(d.toISOString().slice(0, 10));
-  }
-  return days;
-}
-
-/** Rounds away float noise, so 9.5 x 0.7 shows as 6.65. */
-const round = (n: number) => Math.round(n * 100) / 100;
-
-/** The sum of what is there; null when nothing is, so a missing number never reads as 0. */
-const sumKnown = (ns: (number | null | undefined)[]) => {
-  const known = ns.filter((n) => n !== null && n !== undefined);
-  return known.length ? round(known.reduce((sum, d) => sum + d, 0)) : null;
-};
-
-/** The sprint's weekdays, first and last day included. A sprint without dates has none. */
-function sprintDays({ startDate, endDate }: PlanningInput<never>["sprint"]) {
-  return startDate && endDate ? weekdays(isoDay(startDate), isoDay(endDate)) : [];
-}
-
-export const workingDays = (sprint: PlanningInput<never>["sprint"]) => sprintDays(sprint).length;
-
-/** Capacity = (working days - leave - holidays) x focus factor, never below zero. */
-export function planCapacity<P extends { id: number; mainSkill: Skill }>(input: PlanningInput<P>): Capacity<P> {
+/**
+ * Capacity = (working days - leave - holidays) x focus factor, never below zero. Someone in two pods brings each
+ * the share of it that pod plans with.
+ */
+export function planCapacity<P extends Member>(input: PlanningInput<P>): Capacity<P> {
   const days = sprintDays(input.sprint);
   const holidays = input.holidays.filter((h) => days.includes(h.date)).toSorted((a, b) => a.date.localeCompare(b.date));
   const available = days.length - holidays.length;
 
   const people = input.people.map((p) => {
     const leave = input.leave.get(p.id) ?? 0;
-    return { ...p, leave, capacity: round(Math.max(0, available - leave) * input.focusFactor) };
+    return { ...p, leave, capacity: round((Math.max(0, available - leave) * input.focusFactor * p.share) / 100) };
   });
-  const skills = SKILLS.map((skill) => {
+  const skills = podSkills(input.people).map((skill) => {
     const of = people.filter((p) => p.mainSkill === skill);
     const capacity = round(of.reduce((sum, p) => sum + p.capacity, 0));
     return { skill, people: of.length, capacity, gap: of.length > 0 && capacity === 0 && days.length > 0 };
@@ -362,8 +346,9 @@ export function planPickUp<
           .sort((a, b) => b.absorb - a.absorb),
         elsewhere: others
           .flatMap(({ pod, slug, skills }) => {
-            const k = skills.find((s) => s.skill === skill)!;
-            const room = round(k.capacity - (k.committed ?? 0));
+            // A pod without the skill has no room in it.
+            const k = skills.find((s) => s.skill === skill);
+            const room = k ? round(k.capacity - (k.committed ?? 0)) : 0;
             return room > 0 ? [{ pod, slug, free: room }] : [];
           })
           .sort((a, b) => b.free - a.free),
@@ -416,64 +401,4 @@ export function planEpics<E extends { key: string; podOptionId: string | null },
     const unestimated = mine.filter((t) => !SKILLS.some((k) => t.estimates[k] !== undefined)).length;
     return { ...e, owner, pods: worked, tickets: mine.length, skills, unestimated };
   });
-}
-
-/** The working day: 8 hours, Monday to Friday. */
-export const HOURS_PER_DAY = 8;
-
-/** A row's capacity and booked work across a sprint, in days. */
-type CalendarRow = { capacity: number; booked: number };
-
-export type CalendarDay<R> = {
-  date: string;
-  /** Inside the month asked for; the rest pad out its first and last weeks. */
-  inMonth: boolean;
-  holiday: string | null;
-  sprint: { id: number; name: string } | null;
-  /** Per row, capacity and booked work as hours on this day. */
-  rows: (R & CalendarRow)[];
-};
-
-/**
- * The capacity calendar for a month, YYYY-MM, as weeks of Monday to Friday. Jira tickets carry no dates and leave
- * is a number of days per sprint, so a sprint's capacity and booked work spread evenly over its working days that
- * are not holidays. Where two sprints overlap, the later one has the day.
- */
-export function planCalendar<R extends CalendarRow>(
-  month: string,
-  sprints: { sprint: { id: number; name: string; startDate: Date | null; endDate: Date | null }; rows: R[] }[],
-  holidays: { date: string; name: string }[],
-): CalendarDay<R>[][] {
-  const first = new Date(`${month}-01T00:00:00Z`);
-  const last = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0));
-  // From the Monday on or before the 1st to the Friday on or after the last day, less weeks with no weekday in it.
-  const from = new Date(first.getTime() - ((first.getUTCDay() + 6) % 7) * DAY_MS);
-  const to = new Date(last.getTime() + ((5 - last.getUTCDay() + 7) % 7) * DAY_MS);
-  const off = new Map(holidays.map((h) => [h.date, h.name]));
-
-  const byDay = new Map<string, { sprint: { id: number; name: string }; rows: (R & CalendarRow)[] }>();
-  const latestFirst = sprints.toSorted(
-    (a, b) => (b.sprint.startDate?.getTime() ?? 0) - (a.sprint.startDate?.getTime() ?? 0),
-  );
-  for (const { sprint, rows } of latestFirst) {
-    const open = sprintDays(sprint).filter((d) => !off.has(d));
-    const hours = (days: number) => round((days * HOURS_PER_DAY) / open.length);
-    const daily = rows.map((r) => ({ ...r, capacity: hours(r.capacity), booked: hours(r.booked) }));
-    for (const d of open)
-      if (!byDay.has(d)) byDay.set(d, { sprint: { id: sprint.id, name: sprint.name }, rows: daily });
-  }
-
-  const weeks: CalendarDay<R>[][] = [];
-  for (const d of weekdays(isoDay(from), isoDay(to))) {
-    if (new Date(d).getUTCDay() === 1 || !weeks.length) weeks.push([]);
-    const planned = byDay.get(d);
-    weeks.at(-1)!.push({
-      date: d,
-      inMonth: d.startsWith(month),
-      holiday: off.get(d) ?? null,
-      sprint: planned?.sprint ?? null,
-      rows: planned?.rows ?? [],
-    });
-  }
-  return weeks.filter((w) => w.some((d) => d.inMonth));
 }

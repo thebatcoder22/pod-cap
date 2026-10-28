@@ -10,7 +10,7 @@ export const instant = false;
 /** Every pod's open epics with something still to fill in on Jira, for leads to hand to their PMs. */
 export default async function PendingPage() {
   const viewer = await requireViewer();
-  const pending = await getPendingInJira(viewer.pod?.id ?? null);
+  const pending = await getPendingInJira(viewer.pods.map((p) => p.id));
 
   return (
     <div className="space-y-10">
@@ -37,7 +37,7 @@ export default async function PendingPage() {
                 <Link href={`/pods/${pod.slug}`} className="hover:text-accent">
                   {pod.name}
                 </Link>
-                {pod.id === viewer.pod?.id && (
+                {viewer.pods.some((p) => p.id === pod.id) && (
                   <span className="inline-flex items-center rounded-md bg-accent-soft px-1.5 py-0.5 text-xs font-medium text-accent">
                     Your pod
                   </span>

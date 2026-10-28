@@ -65,7 +65,13 @@ describe("capacity calendar", () => {
     expect(on(c, "2026-10-23").sprint?.name).toBe("ABC sprint");
     // Five people at 5.6h each.
     expect(row(c, "2026-10-28", "RoadMap 2")).toMatchObject({ capacity: 28, booked: 3.2 });
-    expect(on(c, "2026-10-28").rows.map((r) => r.name)).toEqual(["RoadMap 1", "RoadMap 2", "Velocity", "Atlas"]);
+    expect(on(c, "2026-10-28").rows.map((r) => r.name)).toEqual([
+      "RoadMap 1",
+      "RoadMap 2",
+      "Velocity",
+      "Atlas",
+      "Support",
+    ]);
   });
 
   it("books nothing on a holiday and spreads the sprint over the days left", async () => {

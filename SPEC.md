@@ -23,17 +23,18 @@ Anyone at Delightree signs in with Google and can see every pod. Allowlisted lea
 
 ## Glossary
 
-- **Pod**: a team identified by the Jira `POD` field value: RoadMap 1 (lead Shikhar), RoadMap 2 (lead Aman), Velocity (lead Rahul S), Atlas (lead Abdullah, called the Rebuild pod in the deck).
+- **Pod**: a team identified by the Jira `POD` field value: RoadMap 1 (lead Shikhar), RoadMap 2 (lead Aman), Velocity (lead Rahul S), Atlas (lead Abdullah, called the Rebuild pod in the deck), Support (lead Shadab).
 - **Pod lead**: the engineer who leads a pod; also counts as a working engineer with full capacity.
 - **Admin**: Aman; a pod lead who also controls platform settings.
-- **Person**: an engineer who belongs to exactly one pod, linked to one Jira account.
-- **Skill**: one of FE, BE, Data, AI. Mobile and React Native work counts as FE. QA and Design are not skills in this platform.
+- **Person**: an engineer who belongs to one pod, or to two, linked to one Jira account.
+- **Share**: the percent of a person's capacity a pod plans with. It is 100% for someone in one pod; someone in two pods splits it between them, 50/50 by default.
+- **Skill**: one of FE, BE, Data, AI, DevOps. Mobile and React Native work counts as FE. DevOps shows only in a pod where it is someone's main skill. QA and Design are not skills in this platform.
 - **Proficiency**: a percentage per person per skill describing how fast that person does that kind of work relative to a specialist. A person's main skill is 100%; others default to 0%.
 - **Working days**: weekdays inside the sprint's date range.
 - **Leave**: days a person is away during a sprint, entered by their pod lead.
 - **Holiday**: a company-wide non-working day, maintained by the admin.
 - **Focus factor**: the share of available days that is plannable, default 70%, leaving the rest for thinking, monitoring, and rituals.
-- **Capacity**: a person's plannable days in a sprint: (working days - leave days - holidays) x focus factor. A full 10-day sprint gives 7 days.
+- **Capacity**: a person's plannable days in a sprint: (working days - leave days - holidays) x focus factor. A full 10-day sprint gives 7 days. A pod gets its share of it.
 - **Estimate**: per-skill person-days on a Jira ticket, read from the Jira fields FE Days, BE Days, Data Eng Days, AI Eng Days.
 - **Skill-days**: an amount of estimated work in one skill, measured in specialist person-days.
 - **Plannable ticket**: a Jira issue of type Story, Improvement, Tech Story, Bug, Prod Bug, or Dev Custom Task. Sub-tasks and Epics are not plannable.
@@ -65,7 +66,7 @@ In [spec/implementation-decisions.md](spec/implementation-decisions.md): archite
 - Writing anything back to Jira (estimates, assignments, sprint moves).
 - Ticket workflow, comments, or sub-tasks on manual items; anything that turns the platform into a Jira clone.
 - QA and Design capacity.
-- People in more than one pod, and history of pod membership.
+- People in more than two pods, and history of pod membership.
 - Per-person availability percentages (leads and new hires use full capacity; leave covers absence).
 - An AI "Suggest a plan" assistant.
 - Day ranges for T-shirt sizes.

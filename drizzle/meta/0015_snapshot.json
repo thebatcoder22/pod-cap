@@ -1,0 +1,1057 @@
+{
+  "id": "10399561-849b-4785-8c00-d026382657b9",
+  "prevId": "36b3ab92-c086-4815-bff3-2acd363ca0da",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.allowlist": {
+      "name": "allowlist",
+      "schema": "",
+      "columns": {
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "is_admin": {
+          "name": "is_admin",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.epic_sizes": {
+      "name": "epic_sizes",
+      "schema": "",
+      "columns": {
+        "epic_key": {
+          "name": "epic_key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "size": {
+          "name": "size",
+          "type": "tshirt_size",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.epics": {
+      "name": "epics",
+      "schema": "",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "summary": {
+          "name": "summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status_category": {
+          "name": "status_category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pod_option_id": {
+          "name": "pod_option_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ready_for_production_date": {
+          "name": "ready_for_production_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.holidays": {
+      "name": "holidays",
+      "schema": "",
+      "columns": {
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.jira_settings": {
+      "name": "jira_settings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "site": {
+          "name": "site",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_ciphertext": {
+          "name": "token_ciphertext",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_updated_at": {
+          "name": "token_updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "jira_settings_single_row": {
+          "name": "jira_settings_single_row",
+          "value": "\"jira_settings\".\"id\" = 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.leave": {
+      "name": "leave",
+      "schema": "",
+      "columns": {
+        "person_id": {
+          "name": "person_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sprint_id": {
+          "name": "sprint_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "days": {
+          "name": "days",
+          "type": "numeric(3, 1)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "leave_person_id_people_id_fk": {
+          "name": "leave_person_id_people_id_fk",
+          "tableFrom": "leave",
+          "tableTo": "people",
+          "columnsFrom": [
+            "person_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "leave_sprint_id_sprints_id_fk": {
+          "name": "leave_sprint_id_sprints_id_fk",
+          "tableFrom": "leave",
+          "tableTo": "sprints",
+          "columnsFrom": [
+            "sprint_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "leave_person_id_sprint_id_pk": {
+          "name": "leave_person_id_sprint_id_pk",
+          "columns": [
+            "person_id",
+            "sprint_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "leave_half_days": {
+          "name": "leave_half_days",
+          "value": "\"leave\".\"days\" > 0 and \"leave\".\"days\" * 2 = trunc(\"leave\".\"days\" * 2)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.manual_items": {
+      "name": "manual_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "pod_id": {
+          "name": "pod_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sprint_id": {
+          "name": "sprint_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "manual_item_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "skill": {
+          "name": "skill",
+          "type": "skill",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "days": {
+          "name": "days",
+          "type": "numeric(4, 1)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "jira_key": {
+          "name": "jira_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "manual_items_pod_id_pods_id_fk": {
+          "name": "manual_items_pod_id_pods_id_fk",
+          "tableFrom": "manual_items",
+          "tableTo": "pods",
+          "columnsFrom": [
+            "pod_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "manual_items_sprint_id_sprints_id_fk": {
+          "name": "manual_items_sprint_id_sprints_id_fk",
+          "tableFrom": "manual_items",
+          "tableTo": "sprints",
+          "columnsFrom": [
+            "sprint_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "manual_items_person_id_people_id_fk": {
+          "name": "manual_items_person_id_people_id_fk",
+          "tableFrom": "manual_items",
+          "tableTo": "people",
+          "columnsFrom": [
+            "person_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "manual_items_half_days": {
+          "name": "manual_items_half_days",
+          "value": "\"manual_items\".\"days\" > 0 and \"manual_items\".\"days\" * 2 = trunc(\"manual_items\".\"days\" * 2)"
+        },
+        "manual_items_key_on_placeholders": {
+          "name": "manual_items_key_on_placeholders",
+          "value": "\"manual_items\".\"jira_key\" is null or \"manual_items\".\"kind\" = 'placeholder'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.people": {
+      "name": "people",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "jira_account_id": {
+          "name": "jira_account_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "main_skill": {
+          "name": "main_skill",
+          "type": "skill",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "active": {
+          "name": "active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "people_email_unique": {
+          "name": "people_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        },
+        "people_jira_account_id_unique": {
+          "name": "people_jira_account_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "jira_account_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.planning_settings": {
+      "name": "planning_settings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "focus_percent": {
+          "name": "focus_percent",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "planning_settings_single_row": {
+          "name": "planning_settings_single_row",
+          "value": "\"planning_settings\".\"id\" = 1"
+        },
+        "planning_settings_focus_range": {
+          "name": "planning_settings_focus_range",
+          "value": "\"planning_settings\".\"focus_percent\" between 1 and 100"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.pod_members": {
+      "name": "pod_members",
+      "schema": "",
+      "columns": {
+        "pod_id": {
+          "name": "pod_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "share": {
+          "name": "share",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 100
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "pod_members_pod_id_pods_id_fk": {
+          "name": "pod_members_pod_id_pods_id_fk",
+          "tableFrom": "pod_members",
+          "tableTo": "pods",
+          "columnsFrom": [
+            "pod_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "pod_members_person_id_people_id_fk": {
+          "name": "pod_members_person_id_people_id_fk",
+          "tableFrom": "pod_members",
+          "tableTo": "people",
+          "columnsFrom": [
+            "person_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "pod_members_pod_id_person_id_pk": {
+          "name": "pod_members_pod_id_person_id_pk",
+          "columns": [
+            "pod_id",
+            "person_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "pod_members_share_range": {
+          "name": "pod_members_share_range",
+          "value": "\"pod_members\".\"share\" between 1 and 100"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.pods": {
+      "name": "pods",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "jira_pod_option_id": {
+          "name": "jira_pod_option_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "jira_pod_value": {
+          "name": "jira_pod_value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lead_person_id": {
+          "name": "lead_person_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "pods_lead_person_id_people_id_fk": {
+          "name": "pods_lead_person_id_people_id_fk",
+          "tableFrom": "pods",
+          "tableTo": "people",
+          "columnsFrom": [
+            "lead_person_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "pods_jira_pod_option_id_unique": {
+          "name": "pods_jira_pod_option_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "jira_pod_option_id"
+          ]
+        },
+        "pods_slug_unique": {
+          "name": "pods_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.proficiencies": {
+      "name": "proficiencies",
+      "schema": "",
+      "columns": {
+        "person_id": {
+          "name": "person_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "skill": {
+          "name": "skill",
+          "type": "skill",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "percent": {
+          "name": "percent",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "proficiencies_person_id_people_id_fk": {
+          "name": "proficiencies_person_id_people_id_fk",
+          "tableFrom": "proficiencies",
+          "tableTo": "people",
+          "columnsFrom": [
+            "person_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "proficiencies_person_id_skill_pk": {
+          "name": "proficiencies_person_id_skill_pk",
+          "columns": [
+            "person_id",
+            "skill"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "proficiencies_percent_range": {
+          "name": "proficiencies_percent_range",
+          "value": "\"proficiencies\".\"percent\" between 0 and 100"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.snapshots": {
+      "name": "snapshots",
+      "schema": "",
+      "columns": {
+        "pod_id": {
+          "name": "pod_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sprint_id": {
+          "name": "sprint_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sprint_name": {
+          "name": "sprint_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sprint_start_date": {
+          "name": "sprint_start_date",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sprint_end_date": {
+          "name": "sprint_end_date",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "snapshot_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "skill": {
+          "name": "skill",
+          "type": "skill",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "capacity": {
+          "name": "capacity",
+          "type": "numeric(6, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "committed": {
+          "name": "committed",
+          "type": "numeric(6, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed": {
+          "name": "completed",
+          "type": "numeric(6, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "taken_at": {
+          "name": "taken_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "snapshots_pod_id_pods_id_fk": {
+          "name": "snapshots_pod_id_pods_id_fk",
+          "tableFrom": "snapshots",
+          "tableTo": "pods",
+          "columnsFrom": [
+            "pod_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "snapshots_pod_id_sprint_id_kind_skill_pk": {
+          "name": "snapshots_pod_id_sprint_id_kind_skill_pk",
+          "columns": [
+            "pod_id",
+            "sprint_id",
+            "kind",
+            "skill"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sprints": {
+      "name": "sprints",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "sprint_state",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "complete_date": {
+          "name": "complete_date",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sync_runs": {
+      "name": "sync_runs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "finished_at": {
+          "name": "finished_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "sync_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'running'"
+        },
+        "error": {
+          "name": "error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tickets": {
+      "name": "tickets",
+      "schema": "",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "summary": {
+          "name": "summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status_category": {
+          "name": "status_category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "priority": {
+          "name": "priority",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pod_option_id": {
+          "name": "pod_option_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sprint_ids": {
+          "name": "sprint_ids",
+          "type": "integer[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
+        },
+        "assignee": {
+          "name": "assignee",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dev_owners": {
+          "name": "dev_owners",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "epic_key": {
+          "name": "epic_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "epic_summary": {
+          "name": "epic_summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ready_for_production_date": {
+          "name": "ready_for_production_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estimates": {
+          "name": "estimates",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "logged_done": {
+          "name": "logged_done",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.manual_item_kind": {
+      "name": "manual_item_kind",
+      "schema": "public",
+      "values": [
+        "work",
+        "placeholder"
+      ]
+    },
+    "public.skill": {
+      "name": "skill",
+      "schema": "public",
+      "values": [
+        "FE",
+        "BE",
+        "Data",
+        "AI",
+        "DevOps"
+      ]
+    },
+    "public.snapshot_kind": {
+      "name": "snapshot_kind",
+      "schema": "public",
+      "values": [
+        "start",
+        "close"
+      ]
+    },
+    "public.sprint_state": {
+      "name": "sprint_state",
+      "schema": "public",
+      "values": [
+        "future",
+        "active",
+        "closed"
+      ]
+    },
+    "public.sync_status": {
+      "name": "sync_status",
+      "schema": "public",
+      "values": [
+        "running",
+        "succeeded",
+        "failed"
+      ]
+    },
+    "public.tshirt_size": {
+      "name": "tshirt_size",
+      "schema": "public",
+      "values": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

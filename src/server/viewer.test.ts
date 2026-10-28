@@ -9,9 +9,12 @@ describe("signed-in viewer", () => {
     expect(await viewerForEmail("aman@delightree.com")).toMatchObject({
       name: "Aman Tyagi",
       isAdmin: true,
-      pod: { slug: "roadmap-2", name: "RoadMap 2" },
+      pods: [{ slug: "roadmap-2", name: "RoadMap 2" }],
     });
-    expect(await viewerForEmail("abdullah@delightree.com")).toMatchObject({ isAdmin: false, pod: { slug: "atlas" } });
+    expect(await viewerForEmail("abdullah@delightree.com")).toMatchObject({
+      isAdmin: false,
+      pods: [{ slug: "atlas" }],
+    });
   });
 
   it("views read only at a Delightree address that is not allowlisted", async () => {

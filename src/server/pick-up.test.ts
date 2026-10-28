@@ -165,7 +165,9 @@ describe("pick-up panel", () => {
     expect(p.short[0].elsewhere).toEqual([
       { pod: "Atlas", slug: "atlas", free: 14 },
       { pod: "RoadMap 1", slug: "roadmap-1", free: 7 },
-      { pod: "Velocity", slug: "velocity", free: 4 },
+      // Nanagoud's 7 BE days split between his two pods.
+      { pod: "Support", slug: "support", free: 3.5 },
+      { pod: "Velocity", slug: "velocity", free: 0.5 },
     ]);
   });
 });

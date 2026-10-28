@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { ArrowSquareOutIcon, PlusIcon, WarningCircleIcon } from "@phosphor-icons/react";
-import { SKILLS } from "@/db/schema";
+import type { Skill } from "@/db/schema";
 import type { CapacitySheet } from "@/server/capacity";
 import { addManualItemAction, deleteManualItemAction, updateManualItemAction, type ItemState } from "./actions";
 
@@ -25,6 +25,7 @@ type Person = { id: number; name: string };
 export function ManualItems(props: {
   items: ManualItem[];
   people: Person[];
+  skills: Skill[];
   podId: number;
   sprintId: number;
   canEdit: boolean;
@@ -127,12 +128,14 @@ function Row({ item, canEdit, onEdit }: { item: ManualItem; canEdit: boolean; on
 function ItemForm({
   item,
   people,
+  skills,
   podId,
   sprintId,
   onDone,
 }: {
   item?: ManualItem;
   people: Person[];
+  skills: Skill[];
   podId: number;
   sprintId: number;
   onDone?: () => void;
@@ -197,7 +200,7 @@ function ItemForm({
         <label>
           <span className={label}>Skill</span>
           <select name="skill" defaultValue={typed?.skill ?? item?.skill ?? "FE"} className={`${field} pr-8`}>
-            {SKILLS.map((k) => (
+            {skills.map((k) => (
               <option key={k}>{k}</option>
             ))}
           </select>

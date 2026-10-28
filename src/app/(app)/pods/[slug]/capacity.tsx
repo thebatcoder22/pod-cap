@@ -39,7 +39,7 @@ export function Committed({ sheet }: { sheet: CapacitySheet }) {
               aria-label={`${k.skill} committed vs capacity`}
               className={`-mx-2 rounded-lg px-2 py-1.5 ${over || gap ? "bg-danger-soft" : ""}`}
             >
-              <div className="grid grid-cols-[2.5rem_minmax(0,1fr)_5rem] items-center gap-3 text-sm">
+              <div className="grid grid-cols-[3.5rem_minmax(0,1fr)_5rem] items-center gap-3 text-sm">
                 <span className="flex items-center gap-1.5 font-mono text-xs text-ink-muted">
                   <span className={`size-1.5 rounded-full ${SKILL_TONE[k.skill]}`} aria-hidden />
                   {k.skill}
@@ -59,7 +59,7 @@ export function Committed({ sheet }: { sheet: CapacitySheet }) {
                   {nobody.has(k.skill) ? "No one" : days(k.capacity)}
                 </span>
               </div>
-              <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 pl-[3.25rem] text-xs">
+              <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 pl-[4.25rem] text-xs">
                 {gap && (
                   <span className="flex items-center gap-1.5 font-medium text-danger">
                     <WarningCircleIcon size={14} weight="fill" aria-hidden />
@@ -156,6 +156,11 @@ export function Sheet({ sheet, sprintId, canEdit }: { sheet: CapacitySheet; spri
                     <span className="flex flex-wrap items-baseline gap-x-2">
                       <span className="font-medium">{p.name}</span>
                       <span className="font-mono text-xs text-ink-faint">{p.mainSkill}</span>
+                      {p.alsoIn && (
+                        <span className="text-xs text-ink-faint">
+                          {p.share}% here, rest in {p.alsoIn.name}
+                        </span>
+                      )}
                     </span>
                   </div>
                 </td>

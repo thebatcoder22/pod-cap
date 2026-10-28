@@ -53,7 +53,7 @@ const iconButton =
 export async function AppShell() {
   const [viewer, pods] = await Promise.all([getViewer(), listPods()]);
   if (!viewer) return <ShellFrame />;
-  const own = viewer.pod?.slug ?? null;
+  const own = viewer.pods.map((p) => p.slug);
 
   return (
     <>
@@ -64,7 +64,7 @@ export async function AppShell() {
         </div>
 
         <p className="mt-8 mb-1.5 px-2 text-xs font-medium text-ink-faint">Pods</p>
-        <PodNav pods={pods} ownSlug={own} />
+        <PodNav pods={pods} ownSlugs={own} />
 
         <p className="mt-8 mb-1.5 px-2 text-xs font-medium text-ink-faint">For PMs</p>
         <nav aria-label="For PMs" className="space-y-px">
@@ -134,7 +134,7 @@ export async function AppShell() {
         </div>
         <div className="pb-2">
           <div className="px-4">
-            <PodTabs pods={pods} ownSlug={own} />
+            <PodTabs pods={pods} ownSlugs={own} />
           </div>
         </div>
       </header>

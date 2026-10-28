@@ -41,14 +41,14 @@ export async function getEpicList(pod: { id: number }) {
   return epicList(await planAll(), pod);
 }
 
-/** Each pod's open epics with something still to fill in on Jira, the viewer's pod first. Pods with none are left out. */
-export async function getPendingInJira(viewerPodId: number | null) {
+/** Each pod's open epics with something still to fill in on Jira, the viewer's pods first. Pods with none are left out. */
+export async function getPendingInJira(viewerPodIds: number[]) {
   const [planned, podRows] = await Promise.all([
     planAll(),
     db.select({ id: pods.id, name: pods.name, slug: pods.slug }).from(pods).orderBy(pods.id),
   ]);
   return podRows
-    .toSorted((a, b) => Number(b.id === viewerPodId) - Number(a.id === viewerPodId))
+    .toSorted((a, b) => Number(viewerPodIds.includes(b.id)) - Number(viewerPodIds.includes(a.id)))
     .map((pod) => ({ pod, epics: epicList(planned, pod).filter((e) => e.missing.length) }))
     .filter((p) => p.epics.length);
 }

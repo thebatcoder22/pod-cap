@@ -14,7 +14,7 @@ function Lead({ pod }: { pod: Pod }) {
 const isActive = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
 /** The pods in the desktop sidebar. */
-export function PodNav({ pods, ownSlug }: { pods: Pod[]; ownSlug: string | null }) {
+export function PodNav({ pods, ownSlugs }: { pods: Pod[]; ownSlugs: string[] }) {
   const pathname = usePathname();
   return (
     <nav aria-label="Pods" className="space-y-px">
@@ -43,7 +43,7 @@ export function PodNav({ pods, ownSlug }: { pods: Pod[]; ownSlug: string | null 
               {pod.name}
               <Lead pod={pod} />
             </span>
-            {pod.slug === ownSlug && (
+            {ownSlugs.includes(pod.slug) && (
               <span className="ml-auto text-xs font-normal text-ink-faint">
                 <span aria-hidden>You</span>
                 <span className="sr-only">(your pod)</span>
@@ -57,7 +57,7 @@ export function PodNav({ pods, ownSlug }: { pods: Pod[]; ownSlug: string | null 
 }
 
 /** The pods as a scrolling tab strip on small screens. */
-export function PodTabs({ pods, ownSlug }: { pods: Pod[]; ownSlug: string | null }) {
+export function PodTabs({ pods, ownSlugs }: { pods: Pod[]; ownSlugs: string[] }) {
   const pathname = usePathname();
   return (
     <nav aria-label="Pods" className="-mx-4 flex items-center gap-1 overflow-x-auto px-4">
@@ -75,7 +75,7 @@ export function PodTabs({ pods, ownSlug }: { pods: Pod[]; ownSlug: string | null
           >
             {pod.name}
             <Lead pod={pod} />
-            {pod.slug === ownSlug && <span className="sr-only"> (your pod)</span>}
+            {ownSlugs.includes(pod.slug) && <span className="sr-only"> (your pod)</span>}
           </Link>
         );
       })}

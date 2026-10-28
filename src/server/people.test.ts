@@ -3,7 +3,16 @@ import { resetDb } from "../../tests/db";
 import { fakeJira } from "../../tests/fake-jira";
 import { db } from "@/db";
 import { tickets, type JiraUser } from "@/db/schema";
-import { addFromJira, confirmJiraAccount, getPeopleAdmin, movePerson, removePerson, type PeopleAdmin } from "./people";
+import {
+  addFromJira,
+  addToPod,
+  confirmJiraAccount,
+  getPeopleAdmin,
+  movePerson,
+  removePerson,
+  setShare,
+  type PeopleAdmin,
+} from "./people";
 import { ForbiddenError } from "./permissions";
 import { getPodPage } from "./pods";
 import { saveJiraSettings, ValidationError } from "./settings";
@@ -200,7 +209,7 @@ describe("the No pod yet list", () => {
 describe("membership", () => {
   it("moves a person to another pod, so they are in exactly one", async () => {
     const mayank = member(await getPeopleAdmin(aman), "Mayank Awasthi")!;
-    await movePerson(aman, mayank.id, await podId("velocity"));
+    await movePerson(aman, mayank.id, await podId("roadmap-2"), await podId("velocity"));
 
     expect(await podMembers("roadmap-2")).not.toContain("Mayank Awasthi");
     expect(await podMembers("velocity")).toContain("Mayank Awasthi");
@@ -210,7 +219,7 @@ describe("membership", () => {
   it("removes a person who has left, and they stop counting anywhere", async () => {
     await runSync(fakeJira().make);
     const mayank = member(await getPeopleAdmin(aman), "Mayank Awasthi")!;
-    await removePerson(aman, mayank.id);
+    await removePerson(aman, mayank.id, mayank.pod.id);
     await runSync(fakeJira().make);
 
     expect(await podMembers("roadmap-2")).not.toContain("Mayank Awasthi");
@@ -222,15 +231,15 @@ describe("membership", () => {
 
   it("keeps pod leads in their own pod", async () => {
     const shikhar = member(await getPeopleAdmin(aman), "Shikhar Seth")!;
-    await expect(movePerson(aman, shikhar.id, await podId("atlas"))).rejects.toThrow(ValidationError);
-    await expect(removePerson(aman, shikhar.id)).rejects.toThrow(ValidationError);
+    await expect(movePerson(aman, shikhar.id, shikhar.pod.id, await podId("atlas"))).rejects.toThrow(ValidationError);
+    await expect(removePerson(aman, shikhar.id, shikhar.pod.id)).rejects.toThrow(ValidationError);
     expect(await podMembers("roadmap-1")).toContain("Shikhar Seth");
   });
 
   it("refuses to move a person to a pod that does not exist, or the one they are in", async () => {
     const mayank = member(await getPeopleAdmin(aman), "Mayank Awasthi")!;
-    await expect(movePerson(aman, mayank.id, 9999)).rejects.toThrow(ValidationError);
-    await expect(movePerson(aman, mayank.id, await podId("roadmap-2"))).rejects.toThrow("already in RoadMap 2");
+    await expect(movePerson(aman, mayank.id, mayank.pod.id, 9999)).rejects.toThrow(ValidationError);
+    await expect(movePerson(aman, mayank.id, mayank.pod.id, mayank.pod.id)).rejects.toThrow("already in RoadMap 2");
   });
 });
 
@@ -247,8 +256,10 @@ describe("non-admins", () => {
         () => getPeopleAdmin(viewer),
         () => confirmJiraAccount(viewer, shikhar.id, ACCOUNT.jatin),
         () => addFromJira(viewer, { accountId: ACCOUNT.jatin, podId: atlas, mainSkill: "BE" }),
-        () => movePerson(viewer, mayank.id, atlas),
-        () => removePerson(viewer, mayank.id),
+        () => movePerson(viewer, mayank.id, mayank.pod.id, atlas),
+        () => addToPod(viewer, mayank.id, atlas),
+        () => setShare(viewer, mayank.id, mayank.pod.id, 50),
+        () => removePerson(viewer, mayank.id, mayank.pod.id),
       ];
       for (const action of actions) await expect(action()).rejects.toThrow(ForbiddenError);
     }

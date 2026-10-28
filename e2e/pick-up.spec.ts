@@ -44,11 +44,11 @@ test("a lead sees who can pick up backlog tickets, stretch options, and who coul
   await expect(nanagoud.getByRole("listitem")).toContainText(/DTP-4711.*BE 1d/);
   await expect(nanagoud.getByRole("listitem")).not.toContainText("Stretch");
 
-  // BE: 16.5 committed against 14 days.
+  // BE: 16.5 committed against 10.5 days.
   const be = page.getByRole("listitem", { name: "Covering BE" });
-  await expect(be).toContainText("BE over by 2.5 days");
-  // His 7 free days at 50% are 3.5 BE days, more than the 2.5 missing.
-  await expect(be).toContainText(/Manish Bisht\s*50%\s*2.5 skill-days/);
+  await expect(be).toContainText("BE over by 6 days");
+  // His 7 free days at 50% are 3.5 BE days, toward the 6 missing.
+  await expect(be).toContainText(/Manish Bisht\s*50%\s*3.5 skill-days/);
   await expect(be.getByRole("link", { name: "Atlas" })).toHaveAttribute("href", "/pods/atlas?sprint=432");
   await expect(be).toContainText(/Atlas\s*14 days/);
 });

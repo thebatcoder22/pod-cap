@@ -170,7 +170,7 @@ describe("manual items", () => {
   it("flags a person's item as unassigned once they leave the pod", async () => {
     const mayank = await personId("Mayank Awasthi");
     await item({ title: "Interviews", personId: mayank, days: 2 });
-    await movePerson(aman, mayank, (await getPodPage("velocity"))!.pod.id);
+    await movePerson(aman, mayank, (await getPodPage("roadmap-2"))!.pod.id, (await getPodPage("velocity"))!.pod.id);
     const s = await sheet();
     expect(s.load.unassigned).toBe(2);
     expect(s.load.items).toMatchObject([{ title: "Interviews", unassigned: { FE: 2 } }]);
