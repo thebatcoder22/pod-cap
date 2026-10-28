@@ -140,12 +140,12 @@ export function CapacityBar({
 }) {
   const share = (n: number) => `${(n / max) * 100}%`;
   const over = used - capacity;
-  // Over capacity, blue and red meet square and flush, as one bar that turns red at capacity.
+  // Over capacity, blue and red meet square across a hairline gap, like the sprint progress segments.
   const joined = over > 0 && capacity > 0;
   const end = joined ? "rounded-l-full" : "rounded-full";
   return (
     // The margin keeps room for the label, so the widths stay shares of the scale.
-    <span className={`${className} relative h-1.5 ${label !== undefined ? "mr-10" : ""}`}>
+    <span className={`${className} relative h-1.5 gap-0.5 ${label !== undefined ? "mr-10" : ""}`}>
       <span className={`h-full ${end} bg-fill`} style={{ width: share(capacity) }} aria-hidden>
         <span
           className={`grow-x block h-full ${end} ${tone}`}
