@@ -5,50 +5,31 @@
  * Shape rule: 8px radius for every container and control; avatars and progress bars are fully round.
  */
 :root {
-  --bg: #fbfbfb;
-  --surface: #ffffff;
-  --sidebar: #f6f6f7;
-  --fill: #f2f2f4;
-  --ink: #17171a;
-  --ink-muted: #55555e;
-  --ink-faint: #74747d;
-  --line: #e7e7ea;
-  --line-strong: #d6d6db;
-  --accent: #2b4fc7;
-  --accent-ink: #ffffff;
-  --accent-soft: #eef2fd;
-  --success: #1f7a4d;
-  --success-soft: #ecf7f1;
-  --warning: #a15c07;
-  --danger: #b42318;
-  --danger-soft: #fef3f2;
-  /* Elevation tinted to the zinc ink, never pure black. */
-  --card-shadow: 0 1px 2px rgb(23 23 26 / 0.04), 0 0 0 1px rgb(23 23 26 / 0.02);
-  --pop-shadow: 0 1px 2px rgb(23 23 26 / 0.06), 0 4px 12px -2px rgb(23 23 26 / 0.06);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0d0d0f;
-    --surface: #141417;
-    --sidebar: #101012;
-    --fill: #1c1c20;
-    --ink: #f3f3f5;
-    --ink-muted: #a3a3ad;
-    --ink-faint: #8a8a94;
-    --line: #26262b;
-    --line-strong: #393940;
-    --accent: #7391f2;
-    --accent-ink: #0d0d0f;
-    --accent-soft: #1a2244;
-    --success: #4cc48a;
-    --success-soft: #11291d;
-    --warning: #e2a344;
-    --danger: #f97066;
-    --danger-soft: #2a1513;
-    --card-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
-    --pop-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 16px -4px rgb(0 0 0 / 0.5);
-  }
+  --bg: light-dark(#fbfbfb, #0d0d0f);
+  --surface: light-dark(#ffffff, #141417);
+  --sidebar: light-dark(#f6f6f7, #101012);
+  --fill: light-dark(#f2f2f4, #1c1c20);
+  --ink: light-dark(#17171a, #f3f3f5);
+  --ink-muted: light-dark(#55555e, #a3a3ad);
+  --ink-faint: light-dark(#74747d, #8a8a94);
+  --line: light-dark(#e7e7ea, #26262b);
+  --line-strong: light-dark(#d6d6db, #393940);
+  --accent: light-dark(#2b4fc7, #7391f2);
+  --accent-ink: light-dark(#ffffff, #0d0d0f);
+  --accent-soft: light-dark(#eef2fd, #1a2244);
+  --success: light-dark(#1f7a4d, #4cc48a);
+  --success-soft: light-dark(#ecf7f1, #11291d);
+  --warning: light-dark(#a15c07, #e2a344);
+  --danger: light-dark(#b42318, #f97066);
+  --danger-soft: light-dark(#fef3f2, #2a1513);
+  /* Elevation tinted to the zinc ink in light, never pure black; each layer is transparent in the scheme that doesn't use it. */
+  --card-shadow:
+    0 1px 2px light-dark(rgb(23 23 26 / 0.04), rgb(0 0 0 / 0.35)),
+    0 0 0 1px light-dark(rgb(23 23 26 / 0.02), transparent);
+  --pop-shadow:
+    0 1px 2px light-dark(rgb(23 23 26 / 0.06), rgb(0 0 0 / 0.4)),
+    0 4px 12px -2px light-dark(rgb(23 23 26 / 0.06), transparent),
+    0 6px 16px -4px light-dark(transparent, rgb(0 0 0 / 0.5));
 }
 
 @theme inline {
@@ -75,8 +56,15 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Follows the OS unless the theme toggle pinned a scheme (set before paint by the script in the root layout). */
 html {
   color-scheme: light dark;
+}
+html[data-theme="light"] {
+  color-scheme: light;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 body {

@@ -5,6 +5,7 @@ import { signOut } from "@/auth";
 import { listPods } from "@/server/pods";
 import { getViewer } from "@/server/session";
 import { NavLink, PodNav, PodTabs } from "./pod-tabs";
+import { ThemeToggle } from "./theme-toggle";
 
 function Brand() {
   return (
@@ -102,6 +103,7 @@ export async function AppShell() {
               <span className="block truncate text-sm font-medium">{viewer.name}</span>
               <span className="block truncate text-xs text-ink-faint">{viewer.email}</span>
             </span>
+            <ThemeToggle className={iconButton} />
             <SignOutButton className={iconButton} label="hidden" />
           </div>
         </div>
@@ -126,6 +128,7 @@ export async function AppShell() {
                 <span className="sr-only">Settings</span>
               </NavLink>
             )}
+            <ThemeToggle className={iconButton} />
             <SignOutButton className={iconButton} label="hidden" />
           </div>
         </div>
