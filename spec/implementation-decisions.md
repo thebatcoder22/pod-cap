@@ -22,7 +22,7 @@
 - Site: delightree.atlassian.net. Project: DTP. Board: 267. All four pods work in DTP only.
 - Pod field: `POD` (customfield_11457), a required single select with options Atlas (11229), Velocity (11230), RoadMap 1-Shikar (11231), RoadMap 2-Aman (11232) and Support (11265).
   Pods match tickets and epics on the option id, so renaming an option in Jira changes nothing; each sync refreshes the label shown on the pod page.
-- Estimate fields: `FE Days` (customfield_11525) and `BE Days` (customfield_11524). `Data Days` and `AI Days` do not exist yet and will be added by the Jira admin. Field IDs are discovered by name at sync time, so new fields work without a code change.
+- Estimate fields: `FE Days` (customfield_11525) and `BE Days` (customfield_11524). `Data Eng Days` (customfield_11527) and `AI Eng Days` (customfield_11528) were added later. Field IDs are discovered by name at sync time, so new fields work without a code change.
 - Owners: `Dev Owners` (customfield_10777, multi user) and the system assignee.
 - Sprint: customfield_10020. Ready for Production Date: customfield_10946.
 - Plannable issue types: Story, Improvement, Tech Story, Bug, Prod Bug, Dev Custom Task. Epics are synced for grouping. Sub-tasks are ignored.

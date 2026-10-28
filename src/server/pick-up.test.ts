@@ -29,7 +29,7 @@ beforeEach(async () => {
   aman = (await viewerForEmail("aman@delightree.com"))!;
   await saveJiraSettings(aman, { site: "https://delightree.atlassian.net", email: "aman@delightree.com", token: "t" });
   jira = fakeJira();
-  jira.fields.push({ id: DATA_DAYS, name: "Data Days", custom: true, schema: { type: "number" } });
+  jira.fields.push({ id: DATA_DAYS, name: "Data Eng Days", custom: true, schema: { type: "number" } });
 });
 
 /** A new DTP ticket, in RoadMap 2's backlog unless the fields say otherwise. */

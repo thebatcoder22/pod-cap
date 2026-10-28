@@ -105,7 +105,7 @@ describe("who is working on what", () => {
     // No owner at all, and AI days with only an FE owner.
     plan("DTP-163", [], { [FE_DAYS]: 2, [BE_DAYS]: 1 });
     plan("DTP-1313", ["Mayank Awasthi"], { [FE_DAYS]: 3, customfield_11601: 4 });
-    jira.fields.push({ id: "customfield_11601", name: "AI Days", custom: true, schema: { type: "number" } });
+    jira.fields.push({ id: "customfield_11601", name: "AI Eng Days", custom: true, schema: { type: "number" } });
     const l = await load();
     expect(ticket(l, "DTP-163").unassigned).toEqual({ FE: 2, BE: 1 });
     expect(ticket(l, "DTP-1313").unassigned).toEqual({ AI: 4 });

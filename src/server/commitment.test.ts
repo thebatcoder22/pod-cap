@@ -77,11 +77,11 @@ describe("committed vs capacity", () => {
     expect(c.unestimated).toEqual([]);
   });
 
-  it("finds estimate fields by name, so Data Days and AI Days count once the Jira admin adds them", async () => {
+  it("finds estimate fields by name, so Data Eng Days and AI Eng Days count", async () => {
     jira.fields.push(
-      { id: "customfield_11600", name: "Data Days", custom: true, schema: { type: "number" } },
+      { id: "customfield_11600", name: "Data Eng Days", custom: true, schema: { type: "number" } },
       // A field with the right name but the wrong type is not an estimate.
-      { id: "customfield_11601", name: "AI Days", custom: true, schema: { type: "string" } },
+      { id: "customfield_11601", name: "AI Eng Days", custom: true, schema: { type: "string" } },
     );
     plan("DTP-163", { customfield_11600: 8, customfield_11601: "5" });
     const c = await commitment();

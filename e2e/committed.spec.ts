@@ -34,7 +34,7 @@ test("a lead sees committed skill-days against capacity, the overloaded skill an
   await expect(be).toContainText("16.5 of 14 days");
   await expect(be).toContainText("Over by 2.5 days");
 
-  // No Data Days or AI Days anywhere: not estimated, never 0.
+  // No Data Eng Days or AI Eng Days anywhere: not estimated, never 0.
   await expect(committed.getByRole("listitem", { name: "Data committed vs capacity" })).toContainText("Not estimated");
 
   const unestimated = page.getByRole("region", { name: "No estimates" });

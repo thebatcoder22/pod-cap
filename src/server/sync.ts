@@ -34,11 +34,19 @@ const FIELD = {
 } as const;
 const FIELDS = ["summary", "issuetype", "status", "priority", "assignee", "parent", ...Object.values(FIELD)];
 
-/** Estimate fields by skill, found by name: Data Days and AI Days start counting once the Jira admin adds them. */
+// The Jira field holding each skill's estimate, by its name on DTP.
+const ESTIMATE_FIELD: Record<Skill, string> = {
+  FE: "FE Days",
+  BE: "BE Days",
+  Data: "Data Eng Days",
+  AI: "AI Eng Days",
+};
+
+/** Estimate fields by skill, found by name, so a field the Jira admin adds later counts without a code change. */
 export function estimateFields(fields: JiraField[]) {
   const ids = new Map<Skill, string>();
   for (const skill of SKILLS) {
-    const field = fields.find((f) => f.name === `${skill} Days` && f.schema?.type === "number");
+    const field = fields.find((f) => f.name === ESTIMATE_FIELD[skill] && f.schema?.type === "number");
     if (field) ids.set(skill, field.id);
   }
   return ids;

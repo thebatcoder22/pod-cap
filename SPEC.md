@@ -34,7 +34,7 @@ Anyone at Delightree signs in with Google and can see every pod. Allowlisted lea
 - **Holiday**: a company-wide non-working day, maintained by the admin.
 - **Focus factor**: the share of available days that is plannable, default 70%, leaving the rest for thinking, monitoring, and rituals.
 - **Capacity**: a person's plannable days in a sprint: (working days - leave days - holidays) x focus factor. A full 10-day sprint gives 7 days.
-- **Estimate**: per-skill person-days on a Jira ticket, read from the Jira fields FE Days, BE Days, Data Days, AI Days.
+- **Estimate**: per-skill person-days on a Jira ticket, read from the Jira fields FE Days, BE Days, Data Eng Days, AI Eng Days.
 - **Skill-days**: an amount of estimated work in one skill, measured in specialist person-days.
 - **Plannable ticket**: a Jira issue of type Story, Improvement, Tech Story, Bug, Prod Bug, or Dev Custom Task. Sub-tasks and Epics are not plannable.
 - **Manual item**: work recorded in the platform, either non-Jira work (support, interviews, onboarding) or a placeholder for planned work not yet in Jira.
