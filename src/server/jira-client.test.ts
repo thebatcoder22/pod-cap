@@ -10,6 +10,7 @@ let site: string;
 const seen: (string | undefined)[] = [];
 const searchBodies: { jql: string; fields: string[]; nextPageToken?: string }[] = [];
 let throttled = 0;
+let cutOff = 0;
 
 const json = (res: ServerResponse, body: unknown, status = 200) => {
   res.writeHead(status, { "content-type": "application/json" });
@@ -45,6 +46,12 @@ beforeAll(async () => {
         fields: {},
       }));
       return json(res, { issues, ...(from + 100 < 250 ? { nextPageToken: String(from + 100) } : {}) });
+    }
+    if (url.pathname === "/rest/api/3/myself" && cutOff++ === 0) {
+      // Drop the connection halfway through the body, as Jira did once on dev.
+      res.writeHead(200, { "content-type": "application/json", "content-length": "100" });
+      res.write('{"accountId":');
+      return setTimeout(() => res.destroy(), 10);
     }
     const status = Number(req.url!.split("/").pop()) || 200;
     if (status === 400)
@@ -99,6 +106,11 @@ describe("Jira client", () => {
     expect(new Set(issues.map((i) => i.key)).size).toBe(250);
     expect(searchBodies.map((b) => b.nextPageToken)).toEqual([undefined, "100", "200"]);
     expect(searchBodies[0]).toMatchObject({ jql: "project = DTP", fields: ["summary"] });
+  });
+
+  it("retries a connection that drops halfway through the answer", async () => {
+    expect(await client().myself()).toMatchObject({ key: "DTP" });
+    expect(cutOff).toBe(2);
   });
 
   it("reports a site that does not answer as unreachable", async () => {

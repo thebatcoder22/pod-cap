@@ -49,6 +49,7 @@ export const createJiraClient: MakeJiraClient = ({ site, email, token }) => {
   async function call<T>(path: string, body?: unknown): Promise<T> {
     for (let attempt = 0; ; attempt++) {
       let res: Response;
+      let data: unknown;
       try {
         res = await fetch(`${site}${path}`, {
           method: body ? "POST" : "GET",
@@ -62,11 +63,18 @@ export const createJiraClient: MakeJiraClient = ({ site, email, token }) => {
           redirect: "error",
           signal: AbortSignal.timeout(20_000),
         });
+        // Reading the body can fail too: the connection may drop halfway ("terminated").
+        if (res.ok) data = await res.json();
       } catch (e) {
+        // Every call only reads, so a dropped connection is safe to retry.
+        if (attempt < MAX_RETRIES) {
+          await new Promise((r) => setTimeout(r, 2 ** attempt * 250));
+          continue;
+        }
         const cause = e instanceof Error ? ((e.cause as Error | undefined)?.message ?? e.message) : String(e);
         throw new JiraError("unreachable", `Could not reach ${site} (${cause}).`);
       }
-      if (res.ok) return res.json() as Promise<T>;
+      if (res.ok) return data as T;
       if (res.status === 429 && attempt < MAX_RETRIES) {
         // Jira says how long to back off; cap it so a sync cannot stall for minutes.
         const seconds = Math.min(Number(res.headers.get("retry-after")) || 2 ** attempt, 10);
