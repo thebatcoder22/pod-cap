@@ -133,10 +133,11 @@ export function Sprint({
 function Progress({ tickets }: { tickets: Ticket[] }) {
   const count = (c: Category) => tickets.filter((t) => t.statusCategory === c).length;
   const done = count("done");
-  // Done first, so the bar fills from the left as the sprint completes.
-  const segments = [GROUPS[2], GROUPS[0], GROUPS[1]].map((g) => ({ ...g, n: count(g.category) }));
+  // Done first, so the bar fills from the left as the sprint completes. The counts below follow the bar's colors.
+  const order = [GROUPS[2], GROUPS[0], GROUPS[1]];
+  const segments = order.map((g) => ({ ...g, n: count(g.category) }));
   // Jira's own status names, in group order, so "Code Review" and "QA" are not lost inside "In progress".
-  const statuses = GROUPS.flatMap(({ category }) => {
+  const statuses = order.flatMap(({ category }) => {
     const names = [...new Set(tickets.filter((t) => t.statusCategory === category).map((t) => t.status))];
     return names.map((name) => ({ name, category, n: tickets.filter((t) => t.status === name).length }));
   });
@@ -165,8 +166,7 @@ function Progress({ tickets }: { tickets: Ticket[] }) {
         )}
       </div>
       <dl className="mt-5 grid grid-cols-3 gap-4">
-        {GROUPS.map((g) => {
-          const n = count(g.category);
+        {segments.map(({ n, ...g }) => {
           return (
             <div key={g.category} className="space-y-1">
               <dt className="flex items-center gap-1.5 text-xs text-ink-muted">
