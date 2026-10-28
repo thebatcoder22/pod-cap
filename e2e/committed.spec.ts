@@ -33,7 +33,7 @@ test("a lead sees committed skill-days against capacity, the overloaded skill an
 
   const be = committed.getByRole("listitem", { name: "BE committed vs capacity" });
   await expect(be).toContainText("16.5 of 14 days");
-  await expect(be).toContainText("Over by 2.5 days");
+  await expect(be).toContainText("2.5d over");
 
   // No Data Eng Days anywhere, and no Data people in Velocity: not estimated, never 0.
   const data = committed.getByRole("listitem", { name: "Data committed vs capacity" });

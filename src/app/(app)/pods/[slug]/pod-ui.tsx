@@ -119,7 +119,7 @@ export function Empty({ icon, title, children }: { icon: React.ReactNode; title:
 /**
  * Days used against capacity, on a scale shared by every bar in a card so their lengths compare. The track is
  * the capacity itself and ends there, so a short track is a small capacity; anything past it runs on in red.
- * A label rides just past the end of the bar.
+ * A label rides just past the end of the bar; a mark ticks where capacity ends, with its number above.
  */
 export function CapacityBar({
   used,
@@ -129,6 +129,7 @@ export function CapacityBar({
   i,
   className = "flex",
   label,
+  mark,
 }: {
   used: number;
   capacity: number;
@@ -137,12 +138,13 @@ export function CapacityBar({
   i: number;
   className?: string;
   label?: React.ReactNode;
+  mark?: number;
 }) {
   const share = (n: number) => `${(n / max) * 100}%`;
   const over = used - capacity;
   return (
     // The margin keeps room for the label, so the widths stay shares of the scale.
-    <span className={`${className} relative h-1.5 gap-0.5 ${label !== undefined ? "mr-10" : ""}`}>
+    <span className={`${className} relative h-2 gap-0.5 ${label !== undefined ? "mr-10" : ""}`}>
       <span className="h-full rounded-full bg-fill" style={{ width: share(capacity) }} aria-hidden>
         <span
           className={`grow-x block h-full rounded-full ${tone}`}
@@ -157,6 +159,18 @@ export function CapacityBar({
           style={{ width: share(over), "--i": i } as React.CSSProperties}
           aria-hidden
         />
+      )}
+      {mark !== undefined && (
+        // Visual only: the capacity is in the row's text already.
+        <span
+          className="absolute -top-1 -bottom-1 w-px -translate-x-1/2 bg-ink-faint"
+          style={{ left: `calc(${share(capacity)} + 1px)` }}
+          aria-hidden
+        >
+          <span className="absolute bottom-full left-1/2 mb-0.5 -translate-x-1/2 text-xs text-ink-muted tabular-nums">
+            {mark}
+          </span>
+        </span>
       )}
       {label != null && (
         <span
