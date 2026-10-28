@@ -69,7 +69,14 @@ export async function getSprintView(jiraPodOptionId: string, requested?: string)
   const rows = await db
     .select()
     .from(tickets)
-    .where(and(eq(ticketPodOptionId, jiraPodOptionId), sql`${sprint.id} = any(${tickets.sprintIds})`))
+    .where(
+      and(
+        eq(ticketPodOptionId, jiraPodOptionId),
+        sql`${sprint.id} = any(${tickets.sprintIds})`,
+        // Logged already done, so no sprint's capacity went into it.
+        eq(tickets.loggedDone, false),
+      ),
+    )
     .orderBy(sql`split_part(${tickets.key}, '-', 2)::int`);
 
   const site = settings?.site ?? null;

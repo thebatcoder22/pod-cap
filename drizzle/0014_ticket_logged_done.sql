@@ -1,0 +1,1 @@
+ALTER TABLE "tickets" ADD COLUMN "logged_done" boolean DEFAULT false NOT NULL;

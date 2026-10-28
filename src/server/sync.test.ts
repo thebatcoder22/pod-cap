@@ -95,6 +95,25 @@ describe("Jira sync", () => {
     expect(ticket.devOwners).toHaveLength(7);
   });
 
+  it("leaves out tickets created already done, but not ones done later", async () => {
+    const jira = fakeJira();
+    const done = { name: "Done", statusCategory: { key: "done" } };
+    // Logged already done: resolved minutes after it was created.
+    Object.assign(jira.issue("DTP-4820").fields, {
+      status: done,
+      created: "2026-10-26T16:45:56.971+0000",
+      resolutiondate: "2026-10-26T16:52:10.000+0000",
+    });
+    // Done a week into the sprint.
+    Object.assign(jira.issue("DTP-4395").fields, {
+      status: done,
+      created: "2026-10-14T08:17:00.000+0000",
+      resolutiondate: "2026-10-22T13:56:00.000+0000",
+    });
+    await runSync(jira.make);
+    expect(await keys(ROADMAP_1, "432")).toEqual(["DTP-4395"]);
+  });
+
   it("ignores sub-tasks", async () => {
     const jira = fakeJira();
     // A sub-task that carries a POD value still never shows.

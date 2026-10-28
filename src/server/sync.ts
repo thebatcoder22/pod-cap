@@ -32,7 +32,20 @@ const FIELD = {
   sprint: "customfield_10020",
   readyForProduction: "customfield_10946",
 } as const;
-const FIELDS = ["summary", "issuetype", "status", "priority", "assignee", "parent", ...Object.values(FIELD)];
+const FIELDS = [
+  "summary",
+  "issuetype",
+  "status",
+  "priority",
+  "assignee",
+  "parent",
+  "created",
+  "resolutiondate",
+  ...Object.values(FIELD),
+];
+// ponytail: resolved this soon after being created means it was logged already done. Jira's changelog would tell
+// for sure, at a request per ticket.
+const LOGGED_DONE_WITHIN = 60 * 60 * 1000;
 
 // The Jira field holding each skill's estimate, by its name on DTP.
 const ESTIMATE_FIELD: Record<Skill, string> = {
@@ -236,6 +249,8 @@ type IssueFields = {
   [FIELD.devOwners]: JiraUser[] | null;
   [FIELD.sprint]: { id: number }[] | null;
   [FIELD.readyForProduction]: string | null;
+  created?: string;
+  resolutiondate?: string | null;
 };
 
 const fieldsOf = (issue: JiraIssue) => issue.fields as IssueFields;
@@ -275,6 +290,11 @@ function toTicket(issue: JiraIssue, estimateIds: Map<Skill, string>): typeof tic
     epicSummary: epic?.fields.summary ?? null,
     readyForProductionDate: f[FIELD.readyForProduction] ?? null,
     estimates,
+    loggedDone:
+      f.status.statusCategory.key === "done" &&
+      !!f.created &&
+      !!f.resolutiondate &&
+      Date.parse(f.resolutiondate) - Date.parse(f.created) < LOGGED_DONE_WITHIN,
   };
 }
 
