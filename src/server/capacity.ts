@@ -6,7 +6,7 @@ import { activePerson, assertCanEditPerson, linkedPeopleOutside } from "./people
 import { planCapacity, planCommitment, planLoad, planManualItems, workingDays } from "./planning";
 import type { PodPage } from "./pods";
 import { getPlanningSettings, ValidationError } from "./settings";
-import type { SprintView } from "./sprints";
+import { getTicketsElsewhere, type SprintView } from "./sprints";
 import type { Viewer } from "./viewer";
 
 type Sprint = typeof sprints.$inferSelect;
@@ -20,7 +20,7 @@ export type CapacitySheet = Awaited<ReturnType<typeof getCapacitySheet>>;
  */
 export async function getCapacitySheet(page: PodPage, sprint: Sprint, tickets: SprintView["tickets"]) {
   const ids = page.members.map((m) => m.id);
-  const [settings, rows, others, items] = await Promise.all([
+  const [settings, rows, others, items, elsewhere] = await Promise.all([
     getPlanningSettings(),
     ids.length
       ? db
@@ -30,6 +30,7 @@ export async function getCapacitySheet(page: PodPage, sprint: Sprint, tickets: S
       : [],
     linkedPeopleOutside(page.pod.id),
     listManualItems(page.pod.id, sprint.id),
+    getTicketsElsewhere(page.pod.jiraPodOptionId, sprint.id),
   ]);
   const manual = planManualItems(items);
   const counting = manual.filter((i) => i.counts);
@@ -45,7 +46,7 @@ export async function getCapacitySheet(page: PodPage, sprint: Sprint, tickets: S
     focusPercent: settings.focusPercent,
     items: manual,
     commitment: planCommitment(tickets, counting, plan.skills),
-    load: planLoad(tickets, counting, plan.people, new Map(others.map((p) => [p.jiraAccountId, p]))),
+    load: planLoad(tickets, counting, plan.people, new Map(others.map((p) => [p.jiraAccountId, p])), elsewhere),
   };
 }
 

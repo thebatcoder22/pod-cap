@@ -38,7 +38,8 @@ export async function getCalendar(month: string, slug?: string) {
           const { load, total } = await getCapacitySheet(page, sprint, view.tickets);
           const href = `/pods/${page.pod.slug}?sprint=${sprint.id}`;
           if (!slug) {
-            const booked = load.people.reduce((sum, p) => sum + p.calendarDays, 0) + load.unassigned;
+            // Work on other pods' tickets is booked in those pods, so no day is booked twice.
+            const booked = load.people.reduce((sum, p) => sum + p.calendarDays - p.elsewhereDays, 0) + load.unassigned;
             const pod = `/pods/${page.pod.slug}/calendar?month=${month}`;
             return [{ key: page.pod.slug, name: page.pod.name, href: pod, tickets: [], capacity: total, booked }];
           }

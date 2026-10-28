@@ -149,4 +149,23 @@ describe("who is working on what", () => {
     expect(person(l, "Mayank Awasthi")).toMatchObject({ skillDays: 2 });
     expect(l.people.map((p) => p.name)).not.toContain("Manish Bisht");
   });
+
+  it("counts a member's share of another pod's ticket against their own capacity, not the pod's commitment", async () => {
+    // DTP-4750: POD Velocity, assigned to Saikrishna, with Aman as a Dev Owner. It counts in Velocity, but the BE
+    // day is Aman's, so RoadMap 2 sees it on him.
+    plan("DTP-163", ["Aman Tyagi", "Saikrishna Kotagiri"], {
+      [FE_DAYS]: 3,
+      [BE_DAYS]: 0.5,
+      customfield_11457: { value: "Velocity", id: "11230" },
+      assignee: user("Saikrishna Kotagiri"),
+    });
+    plan("DTP-1313", ["Aman Tyagi"], { [BE_DAYS]: 2 });
+    const l = await load();
+    expect(l.tickets.map((t) => t.key)).toEqual(["DTP-1313"]);
+    expect(person(l, "Aman Tyagi")).toMatchObject({ skillDays: 2.5, calendarDays: 2.5, elsewhereDays: 0.5, free: 4.5 });
+    expect(person(l, "Aman Tyagi").tickets.map((t) => [t.key, t.attributed, t.elsewhere?.name ?? null])).toEqual([
+      ["DTP-1313", { BE: 2 }, null],
+      ["DTP-163", { BE: 0.5 }, "Velocity"],
+    ]);
+  });
 });

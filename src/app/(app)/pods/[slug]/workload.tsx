@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CaretRightIcon, WarningCircleIcon } from "@phosphor-icons/react/dist/ssr";
 import { SKILLS } from "@/db/schema";
 import { TicketKey } from "@/components/jira";
@@ -125,6 +126,16 @@ function PersonRow({ person: p, max, i }: { person: PersonLoad; max: number; i: 
                   {t.summary}
                 </span>
                 <span className="ml-auto flex shrink-0 items-center gap-3 text-xs">
+                  {t.elsewhere && (
+                    // Counts in that pod's commitment, but takes this person's time here.
+                    <Link
+                      href={`/pods/${t.elsewhere.slug}`}
+                      title={`Counts in ${t.elsewhere.name}'s commitment`}
+                      className="rounded-md bg-accent-soft px-1.5 py-px text-accent hover:underline"
+                    >
+                      {t.elsewhere.name}
+                    </Link>
+                  )}
                   <span className="flex items-center gap-1.5 text-ink-muted" title={t.status}>
                     <StatusIcon category={t.statusCategory} size={14} />
                     <span className="sr-only sm:not-sr-only">{t.status}</span>

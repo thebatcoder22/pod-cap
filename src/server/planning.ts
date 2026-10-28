@@ -170,8 +170,13 @@ export type Load<P, T, M> = {
     calendarDays: number;
     /** Capacity - calendar days; below zero means overloaded. */
     free: number;
-    /** The sprint's tickets this person owns, with the skill-days attributed to them. */
-    tickets: (T & { attributed: Estimates })[];
+    /** Of those calendar days, the ones on tickets that count in another pod. */
+    elsewhereDays: number;
+    /**
+     * The sprint's tickets this person owns, with the skill-days attributed to them. Those that count in another
+     * pod come last, with that pod.
+     */
+    tickets: (T & { attributed: Estimates; elsewhere: { name: string; slug: string } | null })[];
     /** Their manual items. */
     items: M[];
   })[];
@@ -191,9 +196,19 @@ export type Load<P, T, M> = {
  * Attribution: a ticket's skill-days for a skill go to its owners (the assignee and the Dev Owners) with
  * proficiency above zero in it, split evenly. Owners from other pods take their share, as cross-pod help.
  * A manual item goes to its person. One without a person counts against the pod, as the lead chose.
+ *
+ * A member's share of a ticket that counts in another pod is theirs too: it takes their time, so it counts against
+ * their capacity here, while the ticket's days count in that pod's commitment only. Someone in two pods is the
+ * exception: their other pod's tickets come out of the share of them that pod plans with.
  */
 export function planLoad<
-  P extends { id: number; capacity: number; jiraAccountId: string | null; proficiency: Proficiency },
+  P extends {
+    id: number;
+    capacity: number;
+    jiraAccountId: string | null;
+    proficiency: Proficiency;
+    alsoIn: { slug: string } | null;
+  },
   T extends Owned,
   M extends ManualItem,
 >(
@@ -202,11 +217,15 @@ export function planLoad<
   people: P[],
   /** Active people in other pods, by Jira account id. */
   others: Map<string, { pod: string; proficiency: Proficiency }>,
+  /** The sprint's tickets that count in other pods. */
+  elsewhere: (T & { pod: { name: string; slug: string } })[] = [],
 ): Load<P, T, M> {
   const members = new Map(people.flatMap((p) => (p.jiraAccountId ? [[p.jiraAccountId, p]] : [])));
-  const owned = new Map(people.map((p) => [p, [] as (T & { attributed: Estimates })[]]));
+  type Mine = T & { attributed: Estimates; elsewhere: { name: string; slug: string } | null };
+  const owned = new Map(people.map((p) => [p, [] as Mine[]]));
 
-  const planned = tickets.map((t) => {
+  /** Each member's skill-days on a ticket, and the skill-days none of its owners can do. */
+  const attribute = (t: Owned) => {
     const unassigned: Estimates = {};
     const shares = new Map<P, Estimates>();
     for (const skill of SKILLS) {
@@ -222,9 +241,14 @@ export function planLoad<
         if (p) shares.set(p, { ...shares.get(p), [skill]: days / able.length });
       }
     }
+    return { shares, unassigned };
+  };
+
+  const planned = tickets.map((t) => {
+    const { shares, unassigned } = attribute(t);
     for (const o of t.owners) {
       const p = members.get(o.accountId);
-      if (p) owned.get(p)!.push({ ...t, attributed: shares.get(p) ?? {} });
+      if (p) owned.get(p)!.push({ ...t, attributed: shares.get(p) ?? {}, elsewhere: null });
     }
     const crossPod = t.owners.flatMap((o) => {
       const other = others.get(o.accountId);
@@ -232,6 +256,15 @@ export function planLoad<
     });
     return { ...t, crossPod, unassigned };
   });
+
+  for (const t of elsewhere) {
+    const { shares } = attribute(t);
+    for (const o of t.owners) {
+      const p = members.get(o.accountId);
+      if (p && p.alsoIn?.slug !== t.pod.slug)
+        owned.get(p)!.push({ ...t, attributed: shares.get(p) ?? {}, elsewhere: t.pod });
+    }
+  }
 
   const byId = new Map(people.map((p) => [p.id, p]));
   const doer = (i: M) => {
@@ -251,15 +284,15 @@ export function planLoad<
         attributed: Object.fromEntries(Object.entries(t.attributed).map(([k, d]) => [k, round(d)])),
       }));
       const mine = items.filter((i) => doer(i) === p);
-      const attributed = [
-        ...owned.get(p)!.flatMap((t) => Object.entries(t.attributed) as [Skill, number][]),
-        ...mine.map((i) => [i.skill, i.days] as [Skill, number]),
-      ];
-      const calendarDays = sum(attributed.map(([skill, d]) => d / (p.proficiency[skill] / 100)));
+      const attributed = (ts: Mine[]) => ts.flatMap((t) => Object.entries(t.attributed) as [Skill, number][]);
+      const cost = (work: [Skill, number][]) => sum(work.map(([skill, d]) => d / (p.proficiency[skill] / 100)));
+      const work = [...attributed(owned.get(p)!), ...mine.map((i) => [i.skill, i.days] as [Skill, number])];
+      const calendarDays = cost(work);
       return {
         ...p,
-        skillDays: round(sum(attributed.map(([, d]) => d))),
+        skillDays: round(sum(work.map(([, d]) => d))),
         calendarDays: round(calendarDays),
+        elsewhereDays: round(cost(attributed(owned.get(p)!.filter((t) => t.elsewhere)))),
         free: round(p.capacity - calendarDays),
         tickets,
         items: mine,

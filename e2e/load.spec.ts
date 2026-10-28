@@ -47,3 +47,23 @@ test("a lead sees each person's load, opens a person, and sees unassigned work a
   // Shahid is in RoadMap 1, and Manish keeps the ticket in Velocity.
   await expect(page.getByRole("row", { name: /DTP-4395/ })).toContainText("Cross-pod help: Shahid Khan (RoadMap 1)");
 });
+
+test("a lead sees their person's work on another pod's ticket in their load, tagged with that pod", async ({
+  page,
+}) => {
+  await signInAs(page, "shikhar@delightree.com");
+  await expect(page).toHaveURL(/\/pods\/roadmap-1$/);
+  const load = page.getByRole("region", { name: "Who is working on what" });
+
+  // DTP-4395 counts in Velocity, where Manish is, but Shahid owns it too.
+  const shahid = load.getByRole("group").filter({ hasText: "Shahid Khan" });
+  await expect(shahid).toContainText("on 1 ticket");
+  await shahid.getByText("Shahid Khan").click();
+  const ticket = shahid.getByRole("list", { name: "Shahid Khan's tickets" }).getByRole("listitem");
+  await expect(ticket).toContainText(/DTP-4395.*Velocity/);
+  await expect(ticket.getByRole("link", { name: "Velocity" })).toHaveAttribute("href", "/pods/velocity");
+  await page.waitForTimeout(800);
+  await load.screenshot({ path: "/tmp/shot-load.png" });
+  // Its days stay in Velocity's commitment, not RoadMap 1's.
+  await expect(page.getByRole("row", { name: /DTP-4395/ })).toHaveCount(0);
+});

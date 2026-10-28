@@ -1,6 +1,6 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { jiraSettings, sprints, tickets, type Estimates, type JiraUser, type StatusCategory } from "@/db/schema";
+import { jiraSettings, pods, sprints, tickets, type Estimates, type JiraUser, type StatusCategory } from "@/db/schema";
 
 type SprintRow = typeof sprints.$inferSelect;
 
@@ -73,18 +73,29 @@ export async function getSprintView(jiraPodOptionId: string, requested?: string)
   const rows = await db
     .select()
     .from(tickets)
-    .where(
-      and(
-        eq(ticketPodOptionId, jiraPodOptionId),
-        sql`${sprint.id} = any(${tickets.sprintIds})`,
-        // Logged already done, so no sprint's capacity went into it.
-        eq(tickets.loggedDone, false),
-      ),
-    )
-    .orderBy(sql`split_part(${tickets.key}, '-', 2)::int`);
+    .where(and(eq(ticketPodOptionId, jiraPodOptionId), inSprint(sprint.id)))
+    .orderBy(byKey);
 
   const site = settings?.site ?? null;
   return { sprints: all, sprint, tickets: rows.map((t) => ticketView(t, site)) };
+}
+
+// Logged already done, so no sprint's capacity went into it.
+const inSprint = (sprintId: number) => and(sql`${sprintId} = any(${tickets.sprintIds})`, eq(tickets.loggedDone, false));
+const byKey = sql`split_part(${tickets.key}, '-', 2)::int`;
+
+/** The sprint's tickets that count in another pod, with that pod. A pod's people can be owners on them too. */
+export async function getTicketsElsewhere(jiraPodOptionId: string, sprintId: number) {
+  const [rows, [settings]] = await Promise.all([
+    db
+      .select({ ticket: tickets, pod: { name: pods.name, slug: pods.slug } })
+      .from(tickets)
+      .innerJoin(pods, eq(pods.jiraPodOptionId, ticketPodOptionId))
+      .where(and(ne(ticketPodOptionId, jiraPodOptionId), inSprint(sprintId)))
+      .orderBy(byKey),
+    db.select({ site: jiraSettings.site }).from(jiraSettings),
+  ]);
+  return rows.map((r) => ({ ...ticketView(r.ticket, settings?.site ?? null), pod: r.pod }));
 }
 
 /** A synced ticket as the pod page shows it. `site` is null when Jira is not connected. */

@@ -56,6 +56,9 @@
 - Attribution: a ticket's skill-days for a skill go to its owners, the assignee and the Dev Owners, whose proficiency in that skill is above zero, split evenly; someone in both counts once. If no candidate exists, the days become unassigned pod work and raise a flag.
 - A manual item's days go to its person. An item with no person counts against the pod without a flag, since the lead chose to reserve it there; an item whose person has left the pod, or has 0% in its skill, is unassigned work and raises a flag.
 - Calendar days consumed by a person for attributed work = skill-days / proficiency in that skill.
+- A person's load includes their share of sprint tickets that count in another pod, tagged with that pod, because the work takes their time.
+  Those days stay in the other pod's commitment and calendar total, so nothing is counted twice.
+  Someone in two pods is the exception: their other pod's tickets come out of the share of them that pod plans with.
 - Free days = capacity - calendar days consumed. It can be negative, which means overloaded.
 - An exact match is a backlog plannable ticket in the same pod, not in any active or future sprint, whose estimate is only in the person's main skill and fits their free days.
 - A stretch option is the same, but for a skill where the person's proficiency is above zero and below 100%, with cost = skill-days / proficiency, which must fit free days.

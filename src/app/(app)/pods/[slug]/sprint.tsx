@@ -97,7 +97,8 @@ export function Sprint({
             <Committed sheet={capacity} />
             <Sheet sheet={capacity} sprintId={sprint.id} canEdit={canEdit} />
           </div>
-          {capacity.items.length > 0 && <Workload load={capacity.load} />}
+          {/* Its people can still be busy: on manual items, or on other pods' tickets. */}
+          {capacity.load.people.some((p) => p.tickets.length + p.items.length > 0) && <Workload load={capacity.load} />}
         </>
       )}
 
