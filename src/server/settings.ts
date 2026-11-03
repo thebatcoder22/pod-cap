@@ -7,7 +7,8 @@ import { assertAdmin } from "./permissions";
 import { decryptSecret, encryptSecret } from "./secrets";
 import type { Viewer } from "./viewer";
 
-const JIRA_PROJECT = "DTP";
+// The projects the sync reads.
+const JIRA_PROJECTS = ["DTP", "AS"];
 
 /** Bad input the admin can fix. The message is shown as is. */
 export class ValidationError extends Error {
@@ -74,7 +75,7 @@ export type ConnectionResult =
   | { ok: true; message: string }
   | { ok: false; reason: "not-configured" | "bad-credentials" | "no-project-access" | "unreachable"; message: string };
 
-/** Confirms the saved token can read the DTP project. */
+/** Confirms the saved token can read every project the sync reads. */
 export async function testJiraConnection(
   viewer: Viewer | null,
   makeClient: MakeJiraClient = createJiraClient,
@@ -91,10 +92,13 @@ export async function testJiraConnection(
   const jira = makeClient(creds);
 
   let me;
+  let key = "";
   try {
     me = await jira.myself();
-    const project = await jira.getProject(JIRA_PROJECT);
-    return { ok: true, message: `Connected as ${me.displayName}. ${project.key} (${project.name}) is readable.` };
+    const projects = [];
+    for (key of JIRA_PROJECTS) projects.push(await jira.getProject(key));
+    const readable = projects.map((p) => `${p.key} (${p.name})`).join(" and ");
+    return { ok: true, message: `Connected as ${me.displayName}. ${readable} are readable.` };
   } catch (e) {
     if (!(e instanceof JiraError)) throw e;
     if (e.kind === "unreachable") return { ok: false, reason: "unreachable", message: e.message };
@@ -116,7 +120,7 @@ export async function testJiraConnection(
     return {
       ok: false,
       reason: "no-project-access",
-      message: `Signed in as ${me.displayName}, but that account cannot read the ${JIRA_PROJECT} project.`,
+      message: `Signed in as ${me.displayName}, but that account cannot read the ${key} project.`,
     };
   }
 }

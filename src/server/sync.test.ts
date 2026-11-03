@@ -191,6 +191,26 @@ describe("Jira sync", () => {
     expect(await keys(ATLAS, "432")).toEqual([]);
   });
 
+  it("plans AS Tasks in a board sprint in their assignee's pod, leaving out their sub-tasks", async () => {
+    const jira = fakeJira();
+    const story = jira.issue("DTP-4625");
+    // AS's shape: a Task with no POD and no Dev Owners, and a sub-task under it.
+    const task = structuredClone(story);
+    Object.assign(task, { id: "69900", key: "AS-19" });
+    Object.assign(task.fields, {
+      issuetype: { id: "10007", name: "Task", subtask: false },
+      customfield_11457: null,
+      customfield_10777: null,
+    });
+    const subtask = structuredClone(task);
+    Object.assign(subtask, { id: "69901", key: "AS-20" });
+    subtask.fields.issuetype = { id: "10008", name: "Sub-task", subtask: true };
+    jira.issues.push(task, subtask);
+    await runSync(jira.make);
+
+    expect(await keys(VELOCITY, "432")).toEqual(["AS-19", "DTP-4625"]);
+  });
+
   it("puts a ticket whose assignee is in no pod in its first Dev Owner's pod, unless an owner is in its POD", async () => {
     const jira = fakeJira();
     const rahul = jira.issue("DTP-4625").fields.assignee;

@@ -14,7 +14,7 @@
 
 8. As the admin, I want to enter the Jira site, account email, and API token on a settings page, so that the platform can read Jira on our behalf.
 9. As the admin, I want the token to be stored encrypted and never shown again or sent to the browser, so that a leaked page cannot expose it.
-10. As the admin, I want a "Test connection" action that confirms the token can read the DTP project, so that I know setup worked before relying on it.
+10. As the admin, I want a "Test connection" action that confirms the token can read the DTP and AS projects, so that I know setup worked before relying on it.
 11. As the admin, I want to replace the token, so that I can rotate it when it expires.
 12. As a pod lead, I want Jira to sync automatically every hour, so that the numbers are fresh without anyone remembering to refresh.
 13. As a pod lead, I want a "Sync now" button, so that I can pull changes immediately during a planning meeting.

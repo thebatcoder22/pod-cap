@@ -22,7 +22,9 @@ const viewer = async (email: string) => (await viewerForEmail(email))!;
 const site = "https://delightree.atlassian.net";
 
 /** Records the credentials it was built with; each call fails the way Jira would when told to. */
-function fakeJira(fail: { myself?: JiraError["kind"]; project?: JiraError["kind"] } = {}) {
+const PROJECT_NAMES: Record<string, string> = { DTP: "Delightree Product", AS: "AI-SDLC" };
+
+function fakeJira(fail: { myself?: JiraError["kind"]; project?: JiraError["kind"]; only?: string } = {}) {
   const used: JiraCredentials[] = [];
   const make = (creds: JiraCredentials): JiraClient => {
     used.push(creds);
@@ -32,8 +34,8 @@ function fakeJira(fail: { myself?: JiraError["kind"]; project?: JiraError["kind"
         return { accountId: "a1", displayName: "Aman Tyagi" };
       },
       async getProject(key) {
-        if (fail.project) throw new JiraError(fail.project, "boom");
-        return { key, name: "Delightree Product" };
+        if (fail.project && (!fail.only || fail.only === key)) throw new JiraError(fail.project, "boom");
+        return { key, name: PROJECT_NAMES[key] };
       },
       listFields: async () => [],
       listSprints: async () => [],
@@ -108,10 +110,18 @@ describe("Jira settings", () => {
   describe("test connection", () => {
     beforeEach(() => saveJiraSettings(aman, { site, email: "aman@delightree.com", token: "t" }));
 
-    it("succeeds when the token can read DTP", async () => {
+    it("succeeds when the token can read DTP and AS", async () => {
       expect(await testJiraConnection(aman, fakeJira().make)).toEqual({
         ok: true,
-        message: "Connected as Aman Tyagi. DTP (Delightree Product) is readable.",
+        message: "Connected as Aman Tyagi. DTP (Delightree Product) and AS (AI-SDLC) are readable.",
+      });
+    });
+
+    it("names the project the account cannot read", async () => {
+      expect(await testJiraConnection(aman, fakeJira({ project: "forbidden", only: "AS" }).make)).toEqual({
+        ok: false,
+        reason: "no-project-access",
+        message: "Signed in as Aman Tyagi, but that account cannot read the AS project.",
       });
     });
 

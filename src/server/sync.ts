@@ -22,10 +22,12 @@ import type { Viewer } from "./viewer";
 
 export const BOARD_ID = 267;
 const EPIC = "Epic";
-const PLANNABLE_TYPES = ["Story", "Improvement", "Tech Story", "Bug", "Prod Bug", "Dev Custom Task"];
+// Task is AS's type; DTP has none.
+const PLANNABLE_TYPES = ["Story", "Improvement", "Tech Story", "Task", "Bug", "Prod Bug", "Dev Custom Task"];
+// AS is the AI SDLC project; it shares DTP's custom fields and board 267's sprints. "AS" is a JQL keyword, so quoted.
 // Epics come in the same search: they carry the POD and Ready for Production Date fields too.
-const JQL = `project = DTP AND issuetype in (${[...PLANNABLE_TYPES, EPIC].map((t) => `"${t}"`).join(", ")})`;
-// DTP's custom field ids, verified against the live project (see spec/implementation-decisions.md "Jira mapping").
+const JQL = `project in (DTP, "AS") AND issuetype in (${[...PLANNABLE_TYPES, EPIC].map((t) => `"${t}"`).join(", ")})`;
+// The site's custom field ids, shared by DTP and AS,, verified against the live project (see spec/implementation-decisions.md "Jira mapping").
 const FIELD = {
   pod: "customfield_11457",
   devOwners: "customfield_10777",
@@ -78,7 +80,7 @@ export async function syncNow(viewer: Viewer | null, makeClient?: MakeJiraClient
 }
 
 /**
- * Pulls every sprint on the board and every plannable DTP ticket and epic, replacing the previous copy.
+ * Pulls every sprint on the board and every plannable DTP and AS ticket and epic, replacing the previous copy.
  * Shared by the daily cron and "Sync now". Returns "skipped" when another sync holds the lock.
  * A sprint seen going from future to active gets a start snapshot for every pod, and one seen closing a close one.
  */
@@ -323,7 +325,7 @@ function describe(e: unknown): string {
   if (e instanceof JiraError) {
     if (e.kind === "unauthorized")
       return "Jira rejected the saved API token (401). The admin can replace it in Settings.";
-    if (e.kind === "forbidden") return `The Jira account cannot read DTP or board ${BOARD_ID} (403). ${e.message}`;
+    if (e.kind === "forbidden") return `The Jira account cannot read DTP, AS or board ${BOARD_ID} (403). ${e.message}`;
     return e.message;
   }
   if (e instanceof ValidationError) return e.message;

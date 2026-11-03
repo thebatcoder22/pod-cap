@@ -17,16 +17,18 @@
 - **Admin and editing actions**: server actions for leave, proficiency, manual items, epic sizes, settings, holidays, allowlist, and membership. Every action checks permissions on the server.
 - **Secrets**: the Jira token is encrypted with an application key held in an environment variable before it is stored.
 
-## Jira mapping (facts verified against the live DTP project)
+## Jira mapping (facts verified against the live DTP and AS projects)
 
-- Site: delightree.atlassian.net. Project: DTP. Board: 267. All pods work in DTP only.
+- Site: delightree.atlassian.net. Projects: DTP and AS (AI-SDLC). Board: 267.
+- AS shares DTP's custom fields, and its tickets go in board 267's sprints. "AS" is a JQL keyword, so the query quotes it.
+  It has no POD values, so its tickets count in their owners' pods. Until the Jira admin adds Sprint and the Days fields to it, AS tickets are in no sprint.
 - Pod field: `POD` (customfield_11457), a required single select with options Atlas (11229), Velocity (11230), RoadMap 1-Shikar (11231), RoadMap 2-Aman (11232) and Support (11265).
   Pods match tickets and epics on the option id, so renaming an option in Jira changes nothing; each sync refreshes the label shown on the pod page.
 - Estimate fields: `FE Days` (customfield_11525) and `BE Days` (customfield_11524). `Data Eng Days` (customfield_11527) and `AI Eng Days` (customfield_11528) were added later. A `DevOps Days` field is read once the Jira admin adds it; until then DevOps work is planned with manual items. Field IDs are discovered by name at sync time, so new fields work without a code change.
 - Owners: `Dev Owners` (customfield_10777, multi user) and the system assignee.
 - Sprint: customfield_10020. Ready for Production Date: customfield_10946.
 - Effort: customfield_10947, a select of "1 Sprint" to "7 Sprints". A ticket's estimates are spread evenly over that many sprints, so each sprint it is in counts its share; empty means 1. On DTP it is mostly set on epics, which are in no sprint, so it has no effect there.
-- Plannable issue types: Story, Improvement, Tech Story, Bug, Prod Bug, Dev Custom Task. Epics are synced for grouping. Sub-tasks are ignored.
+- Plannable issue types: Story, Improvement, Tech Story, Task (AS only), Bug, Prod Bug, Dev Custom Task. Epics are synced for grouping. Sub-tasks are ignored.
 - The platform never writes to Jira.
 
 ## Data model (platform-owned)

@@ -71,7 +71,7 @@ In [spec/implementation-decisions.md](spec/implementation-decisions.md): archite
 - An AI "Suggest a plan" assistant.
 - Day ranges for T-shirt sizes.
 - A custom domain (v1 uses the default Vercel URL).
-- Jira projects other than DTP.
+- Jira projects other than DTP and AS.
 
 ## Further Notes
 
