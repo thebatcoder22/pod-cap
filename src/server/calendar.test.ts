@@ -105,6 +105,29 @@ describe("bandwidth", () => {
     expect(mayank.sprints[2]).toBeNull();
   });
 
+  it("links a person's tickets without an epic to Jira: the ticket itself, or a search for several", async () => {
+    await runSync(jira.make);
+    const mayank = async () =>
+      (await getBandwidth("2026-10-19")).pods[1].people.find((p) => p.name === "Mayank Awasthi")!.sprints[1]!.work;
+    expect(await mayank()).toEqual([
+      expect.objectContaining({
+        label: "1 ticket without an epic",
+        url: "https://delightree.atlassian.net/browse/DTP-163",
+      }),
+    ]);
+
+    const other = jira.issue("DTP-1313").fields;
+    delete other.parent;
+    Object.assign(other, pick(jira.issue("DTP-163").fields));
+    await runSync(jira.make);
+    expect(await mayank()).toEqual([
+      expect.objectContaining({
+        label: "2 tickets without an epic",
+        url: `https://delightree.atlassian.net/issues/?jql=${encodeURIComponent("key in (DTP-163, DTP-1313)")}`,
+      }),
+    ]);
+  });
+
   it("gives a week to the sprint holding its Wednesday, the later one where two do", () => {
     const sprint = (id: number, start: string, end: string) => ({
       id,
@@ -129,4 +152,12 @@ describe("bandwidth", () => {
     expect(bandwidthFrom("2026-11-09")).toBe("2026-11-09");
     expect(new Date(`${bandwidthFrom("nonsense")}T00:00:00Z`).getUTCDay()).toBe(1);
   });
+});
+
+/** The fields that put a ticket in RoadMap 2's Oct Spint 2, owned by Mayank. */
+const pick = (f: Record<string, unknown>) => ({
+  customfield_11457: f.customfield_11457,
+  customfield_10020: f.customfield_10020,
+  assignee: f.assignee,
+  customfield_10777: f.customfield_10777,
 });

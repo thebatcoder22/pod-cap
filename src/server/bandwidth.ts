@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { sprints } from "@/db/schema";
+import { jiraSettings, sprints } from "@/db/schema";
 import { isoDay } from "@/lib/format";
 import { getCapacitySheet } from "./capacity";
 import { mondayOf, planWeeks } from "./planning";
@@ -26,8 +26,9 @@ export const bandwidthFrom = (requested?: string) =>
  * booked against their plannable days.
  */
 export async function getBandwidth(from: string) {
-  const [all, pages] = await Promise.all([
+  const [all, [settings], pages] = await Promise.all([
     db.select().from(sprints),
+    db.select({ site: jiraSettings.site }).from(jiraSettings),
     Promise.all((await listPods()).map((p) => getPodPage(p.slug))),
   ]);
   const pods = pages.filter((p): p is PodPage => p !== null);
@@ -41,7 +42,7 @@ export async function getBandwidth(from: string) {
         shown.map(async (sprint) => {
           const view = await getSprintView(page.pod.jiraPodOptionId, String(sprint.id));
           const { load } = await getCapacitySheet(page, sprint, view.tickets);
-          return [sprint.id, new Map(load.people.map((p) => [p.id, cell(p)]))] as const;
+          return [sprint.id, new Map(load.people.map((p) => [p.id, cell(p, settings?.site ?? null)]))] as const;
         }),
       );
       return new Map(bySprint);
@@ -67,15 +68,14 @@ export async function getBandwidth(from: string) {
 type Person = Awaited<ReturnType<typeof getCapacitySheet>>["load"]["people"][number];
 
 /** A person's sprint: their work grouped by epic, most tickets first, then manual items, and their days. */
-function cell(p: Person) {
+function cell(p: Person, site: string | null) {
   const epics = new Map<string, { label: string; url: string | null; tickets: string[] }>();
-  const loose: string[] = [];
+  const loose: Person["tickets"] = [];
   for (const t of p.tickets) {
-    const line = `${t.key} ${t.summary}`;
-    if (!t.epic) loose.push(line);
+    if (!t.epic) loose.push(t);
     else {
       const e = epics.get(t.epic.key) ?? { label: t.epic.summary, url: t.epic.url, tickets: [] };
-      e.tickets.push(line);
+      e.tickets.push(`${t.key} ${t.summary}`);
       epics.set(t.epic.key, e);
     }
   }
@@ -85,8 +85,12 @@ function cell(p: Person) {
       ? [
           {
             label: `${loose.length} ${loose.length === 1 ? "ticket" : "tickets"} without an epic`,
-            url: null,
-            tickets: loose,
+            // One ticket opens itself; several open a Jira search for just those.
+            url:
+              loose.length === 1
+                ? loose[0].url
+                : site && `${site}/issues/?jql=${encodeURIComponent(`key in (${loose.map((t) => t.key).join(", ")})`)}`,
+            tickets: loose.map((t) => `${t.key} ${t.summary}`),
           },
         ]
       : []),
