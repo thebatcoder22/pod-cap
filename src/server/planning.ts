@@ -5,7 +5,7 @@ import { round, sumKnown, workingDays, sprintDays } from "./planning-days";
 // The planning engine: every capacity rule, and no I/O. See spec/implementation-decisions.md "Rules the planning engine encodes".
 // The day math and the capacity calendar live beside it, and are part of it.
 export { workingDays };
-export { HOURS_PER_DAY, planCalendar, type CalendarDay } from "./planning-calendar";
+export { HOURS_PER_DAY, mondayOf, planCalendar, planWeeks, type CalendarDay } from "./planning-calendar";
 
 /** The skills a pod plans in: FE, BE, Data and AI always, any other only when it is someone's main skill there. */
 export const podSkills = (people: { mainSkill: Skill }[]) =>

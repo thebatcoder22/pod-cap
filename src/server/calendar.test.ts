@@ -3,6 +3,8 @@ import { resetDb } from "../../tests/db";
 import { fakeJira } from "../../tests/fake-jira";
 import dtpSprints from "../../tests/fixtures/dtp-board-267-sprints.json";
 import type { JiraUser } from "@/db/schema";
+import { bandwidthFrom, getBandwidth } from "./bandwidth";
+import { planWeeks } from "./planning";
 import { calendarMonth, getCalendar, type Calendar } from "./calendar";
 import { addHoliday, saveJiraSettings } from "./settings";
 import { runSync } from "./sync";
@@ -57,23 +59,6 @@ describe("capacity calendar", () => {
     expect(on(c, "2026-11-09")).toMatchObject({ sprint: null, rows: [] });
   });
 
-  it("shows every pod with its hours, and gives the later sprint the day two sprints share", async () => {
-    await runSync(jira.make);
-    const c = await getCalendar("2026-10");
-    // ABC sprint runs to 27 Oct, but Oct Spint 2 starts on 26 Oct.
-    expect(on(c, "2026-10-26").sprint?.name).toBe("Oct Spint 2");
-    expect(on(c, "2026-10-23").sprint?.name).toBe("ABC sprint");
-    // Five people at 5.6h each.
-    expect(row(c, "2026-10-28", "RoadMap 2")).toMatchObject({ capacity: 28, booked: 3.2 });
-    expect(on(c, "2026-10-28").rows.map((r) => r.name)).toEqual([
-      "RoadMap 1",
-      "RoadMap 2",
-      "Velocity",
-      "Atlas",
-      "Support",
-    ]);
-  });
-
   it("books nothing on a holiday and spreads the sprint over the days left", async () => {
     await addHoliday(aman, { date: "2026-11-03", name: "Founders' Day" });
     await runSync(jira.make);
@@ -87,5 +72,61 @@ describe("capacity calendar", () => {
     expect(calendarMonth("2026-11")).toBe("2026-11");
     expect(calendarMonth("2026-13")).toMatch(/^\d{4}-\d{2}$/);
     expect(calendarMonth(undefined)).not.toBe("2026-13");
+  });
+});
+
+describe("bandwidth", () => {
+  it("shows each pod's people, sprint by sprint, with the epics they work on and their days", async () => {
+    jira.issue("DTP-163").fields.parent = {
+      key: "DTP-9001",
+      fields: { summary: "Territory", issuetype: { name: "Epic" } },
+    };
+    await runSync(jira.make);
+    const b = await getBandwidth("2026-10-19");
+    // ABC sprint holds the week of 19 Oct, Oct Spint 2 the next two, and nothing is planned after.
+    expect(b.weeks.map((r) => [r.sprint?.name ?? null, r.weeks.length])).toEqual([
+      ["ABC sprint", 1],
+      ["Oct Spint 2", 2],
+      [null, 9],
+    ]);
+    expect(b.pods.map((p) => p.name)).toEqual(["RoadMap 1", "RoadMap 2", "Velocity", "Atlas", "Support"]);
+    const mayank = b.pods[1].people.find((p) => p.name === "Mayank Awasthi")!;
+    expect(mayank.sprints[1]).toEqual({
+      work: [
+        {
+          label: "Territory",
+          url: "https://delightree.atlassian.net/browse/DTP-9001",
+          tickets: [expect.stringMatching(/^DTP-163 /)],
+        },
+      ],
+      booked: 4,
+      capacity: 7,
+    });
+    expect(mayank.sprints[2]).toBeNull();
+  });
+
+  it("gives a week to the sprint holding its Wednesday, the later one where two do", () => {
+    const sprint = (id: number, start: string, end: string) => ({
+      id,
+      name: `S${id}`,
+      startDate: new Date(`${start}T04:30:00Z`),
+      endDate: new Date(`${end}T14:30:00Z`),
+    });
+    // S1 starts on a Thursday, so its first week is nobody's; S2 overlaps its last week and takes it.
+    const runs = planWeeks("2026-11-02", 4, [
+      sprint(1, "2026-11-05", "2026-11-25"),
+      sprint(2, "2026-11-23", "2026-12-04"),
+    ]);
+    expect(runs.map((r) => [r.sprint?.id ?? null, r.weeks])).toEqual([
+      [null, ["2026-11-02"]],
+      [1, ["2026-11-09", "2026-11-16"]],
+      [2, ["2026-11-23"]],
+    ]);
+  });
+
+  it("starts on the Monday of the day asked for, else this week", () => {
+    expect(bandwidthFrom("2026-11-11")).toBe("2026-11-09");
+    expect(bandwidthFrom("2026-11-09")).toBe("2026-11-09");
+    expect(new Date(`${bandwidthFrom("nonsense")}T00:00:00Z`).getUTCDay()).toBe(1);
   });
 });

@@ -34,8 +34,8 @@ async function PodCalendar({ params, searchParams }: PageProps<"/pods/[slug]/cal
         <p className="max-w-2xl text-sm text-ink-muted">
           Each person&apos;s booked hours against their plannable hours, day by day, from the tickets they own in each
           sprint. Hover a person for their tickets, or open them for the sprint.{" "}
-          <Link href={`/calendar?month=${calendar.month}`} className="text-accent hover:underline">
-            See all pods
+          <Link href="/calendar" className="text-accent hover:underline">
+            See every pod&apos;s bandwidth
           </Link>
         </p>
       </header>

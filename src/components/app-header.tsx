@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDotsIcon, GearSixIcon, ListChecksIcon, SignOutIcon } from "@phosphor-icons/react/dist/ssr";
+import { TableIcon, GearSixIcon, ListChecksIcon, SignOutIcon } from "@phosphor-icons/react/dist/ssr";
 import { Avatar, BrandMark } from "./brand";
 import { signOut } from "@/auth";
 import { listPods } from "@/server/pods";
@@ -81,8 +81,8 @@ export async function AppShell() {
             className="flex h-8 items-center gap-2.5 rounded-lg px-2 text-sm text-ink-muted transition-colors hover:bg-fill hover:text-ink"
             activeClassName="bg-surface font-medium text-ink shadow-card hover:bg-surface"
           >
-            <CalendarDotsIcon size={18} aria-hidden className="mx-px" />
-            Capacity calendar
+            <TableIcon size={18} aria-hidden className="mx-px" />
+            Bandwidth
           </NavLink>
         </nav>
 
@@ -119,8 +119,8 @@ export async function AppShell() {
               <span className="sr-only">Pending in Jira</span>
             </NavLink>
             <NavLink href="/calendar" className={iconButton} activeClassName="bg-fill text-ink">
-              <CalendarDotsIcon size={18} aria-hidden />
-              <span className="sr-only">Capacity calendar</span>
+              <TableIcon size={18} aria-hidden />
+              <span className="sr-only">Bandwidth</span>
             </NavLink>
             {viewer.isAdmin && (
               <NavLink href="/settings" className={iconButton} activeClassName="bg-fill text-ink">

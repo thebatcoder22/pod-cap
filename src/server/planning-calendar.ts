@@ -60,3 +60,30 @@ export function planCalendar<R extends CalendarRow>(
   }
   return weeks.filter((w) => w.some((d) => d.inMonth));
 }
+
+type DatedSprint = { id: number; name: string; startDate: Date | null; endDate: Date | null };
+
+/** The Monday on or before a YYYY-MM-DD day. */
+export const mondayOf = (day: string) => {
+  const d = new Date(`${day}T00:00:00Z`);
+  return isoDay(new Date(d.getTime() - ((d.getUTCDay() + 6) % 7) * DAY_MS));
+};
+
+/**
+ * `count` weeks from the Monday `from`, as runs of weeks in the same sprint. A week is in the sprint holding its
+ * Wednesday, so a sprint starting or ending a day off still owns its weeks; where two sprints hold it, the later.
+ */
+export function planWeeks(from: string, count: number, sprints: DatedSprint[]) {
+  const latestFirst = sprints.toSorted((a, b) => (b.startDate?.getTime() ?? 0) - (a.startDate?.getTime() ?? 0));
+  const runs: { sprint: { id: number; name: string } | null; weeks: string[] }[] = [];
+  for (let w = 0; w < count; w++) {
+    const monday = Date.parse(from) + w * 7 * DAY_MS;
+    const wednesday = isoDay(new Date(monday + 2 * DAY_MS));
+    const s = latestFirst.find((s) => sprintDays(s).includes(wednesday));
+    const last = runs.at(-1);
+    const week = isoDay(new Date(monday));
+    if (last && last.sprint?.id === s?.id) last.weeks.push(week);
+    else runs.push({ sprint: s ? { id: s.id, name: s.name } : null, weeks: [week] });
+  }
+  return runs;
+}
