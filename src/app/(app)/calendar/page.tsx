@@ -96,13 +96,17 @@ async function Sheet({ searchParams }: Pick<PageProps<"/calendar">, "searchParam
                     <th
                       key={w}
                       scope="col"
+                      aria-label={`${w === thisWeek ? "This week, week" : "Week"} of ${label(w)}`}
                       className={`border-b border-line px-3 pb-2 text-left font-normal tabular-nums ${
                         i === r.weeks.length - 1 ? "border-r last:border-r-0" : ""
-                      } ${r.sprint ? "" : "bg-sidebar"} ${w === thisWeek ? "text-accent" : "text-ink-faint"}`}
+                      } ${r.sprint ? "" : "bg-sidebar"} ${w === thisWeek ? "font-medium text-accent" : "text-ink-faint"}`}
                     >
-                      <span className="inline-flex items-center gap-1.5">
+                      {/* A tick where each week after a sprint's first begins, so the dates read as columns. */}
+                      <span
+                        className={`-ml-3 flex h-4 items-center gap-1.5 pl-3 ${i > 0 ? "border-l border-line-strong" : ""}`}
+                      >
                         {w === thisWeek && <span aria-hidden className="size-1.5 rounded-full bg-accent" />}
-                        {w === thisWeek ? "This week" : `Week of ${label(w)}`}
+                        {label(w)}
                       </span>
                     </th>
                   )),
