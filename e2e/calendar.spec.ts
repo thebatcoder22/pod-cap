@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { people } from "../src/db/schema";
+import { people, tickets } from "../src/db/schema";
 import { E2E_DATABASE_URL } from "../playwright.config";
 import { signInAs } from "./sign-in-as";
 
@@ -14,8 +14,30 @@ async function linkRahul(on: boolean) {
     .where(eq(people.name, "Rahul Saharan"));
   await db.$client.end();
 }
-test.beforeEach(() => linkRahul(true));
-test.afterEach(() => linkRahul(false));
+// Parked: in the sprint, but nobody is working on it. Here only, so other pods' numbers stay put.
+async function parkTicket(on: boolean) {
+  const db = drizzle(E2E_DATABASE_URL);
+  if (on)
+    await db.insert(tickets).values({
+      key: "DTP-4630",
+      summary: "Checklist audit trail",
+      type: "Story",
+      status: "On Hold",
+      statusCategory: "new",
+      priority: "Medium",
+      podOptionId: "11230",
+      sprintIds: [432],
+      assignee: { accountId: "a-rahul", displayName: "Rahul Saharan" },
+      devOwners: [],
+      epicKey: "DTP-4640",
+      epicSummary: "Checklist audits",
+      estimates: { BE: 3 },
+    });
+  else await db.delete(tickets).where(eq(tickets.key, "DTP-4630"));
+  await db.$client.end();
+}
+test.beforeEach(() => Promise.all([linkRahul(true), parkTicket(true)]));
+test.afterEach(() => Promise.all([linkRahul(false), parkTicket(false)]));
 
 test("product sees who works on what across every pod, week by week, then opens a pod's calendar", async ({ page }) => {
   await signInAs(page, "aman@delightree.com");
@@ -31,6 +53,8 @@ test("product sees who works on what across every pod, week by week, then opens 
   // Rahul's 16.5 BE days on Checklists v2 against his 7 plannable days.
   await expect(rahul.getByText("Checklists v2")).toBeVisible();
   await expect(rahul.getByLabel("16.5 of 7 days booked")).toBeVisible();
+  // His On Hold ticket books none of his days, here or on the pod calendar below.
+  await expect(rahul.getByText("Checklist audits")).toHaveCount(0);
   // Manish has no Jira account linked, so nothing of his is booked.
   await expect(page.getByRole("row", { name: /^Manish Bisht/ }).getByText("7d free", { exact: true })).toBeVisible();
 

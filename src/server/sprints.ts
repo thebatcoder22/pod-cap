@@ -83,8 +83,13 @@ export async function getSprintView(jiraPodOptionId: string, requested?: string)
   return { sprints: all, sprint, tickets: rows.map((t) => ticketView(t, site)) };
 }
 
-// Logged already done, so no sprint's capacity went into it.
-const inSprint = (sprintId: number) => and(sql`${sprintId} = any(${tickets.sprintIds})`, eq(tickets.loggedDone, false));
+// Logged already done, so no sprint's capacity went into it; or On Hold, so none goes into it while it stays parked.
+const inSprint = (sprintId: number) =>
+  and(
+    sql`${sprintId} = any(${tickets.sprintIds})`,
+    eq(tickets.loggedDone, false),
+    sql`lower(${tickets.status}) <> 'on hold'`,
+  );
 const byKey = sql`split_part(${tickets.key}, '-', 2)::int`;
 
 /** The sprint's tickets that count in another pod, with that pod. A pod's people can be owners on them too. */
