@@ -71,7 +71,11 @@ export async function AppShell() {
           <Brand />
         </div>
 
-        <p className="mt-8 mb-1.5 px-2 text-xs font-medium text-ink-faint">Pods</p>
+        <div className="mt-6">
+          <SyncNow line={line} />
+        </div>
+
+        <p className="mt-6 mb-1.5 px-2 text-xs font-medium text-ink-faint">Pods</p>
         <PodNav pods={pods} ownSlugs={own} />
 
         <p className="mt-8 mb-1.5 px-2 text-xs font-medium text-ink-faint">For PMs</p>
@@ -95,7 +99,6 @@ export async function AppShell() {
         </nav>
 
         <div className="mt-auto space-y-3">
-          <SyncNow line={line} />
           {viewer.isAdmin && (
             <NavLink
               href="/settings"
