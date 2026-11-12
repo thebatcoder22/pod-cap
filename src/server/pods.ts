@@ -25,6 +25,11 @@ export type PodPage = {
     share: number;
     /** Their other pod, when they are in two. */
     alsoIn: { name: string; slug: string } | null;
+    /**
+     * Whether their share of tickets that count in a pod they are not in counts here. Always, for someone in one pod;
+     * for someone in two, only in the one with the larger share of them, then the older pod, so it counts once.
+     */
+    takesOutsideWork: boolean;
   }[];
   /** FE, BE, Data and AI, plus any other skill that is someone's main skill here. */
   skills: Skill[];
@@ -48,18 +53,28 @@ export async function getPodPage(slug: string): Promise<PodPage | null> {
       .where(and(eq(podMembers.podId, pod.id), eq(people.active, true)))
       .orderBy(desc(sql`${people.id} = ${pod.leadPersonId ?? 0}`), asc(people.name)),
     db
-      .select({ personId: podMembers.personId, name: pods.name, slug: pods.slug })
+      .select({
+        personId: podMembers.personId,
+        podId: pods.id,
+        share: podMembers.share,
+        name: pods.name,
+        slug: pods.slug,
+      })
       .from(podMembers)
       .innerJoin(pods, eq(pods.id, podMembers.podId))
       .where(ne(podMembers.podId, pod.id)),
   ]);
   const other = new Map(elsewhere.map(({ personId, ...p }) => [personId, p]));
 
-  const members = (await withProficiency(rows)).map((m) => ({
-    ...m,
-    isLead: m.id === pod.leadPersonId,
-    alsoIn: other.get(m.id) ?? null,
-  }));
+  const members = (await withProficiency(rows)).map((m) => {
+    const o = other.get(m.id);
+    return {
+      ...m,
+      isLead: m.id === pod.leadPersonId,
+      alsoIn: o ? { name: o.name, slug: o.slug } : null,
+      takesOutsideWork: !o || m.share > o.share || (m.share === o.share && pod.id < o.podId),
+    };
+  });
 
   return {
     pod: {

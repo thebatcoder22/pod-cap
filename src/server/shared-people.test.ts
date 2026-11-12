@@ -140,6 +140,23 @@ describe("someone in two pods", () => {
     expect(support.sheet.load.tickets[0].crossPod).toEqual([]);
   });
 
+  it("has their share of a third pod's ticket counted once, in the pod with the larger share of them", async () => {
+    const roadmap2 = (await getPodPage("roadmap-2"))!.pod;
+    plan("DTP-163", { value: roadmap2.jiraPodValue, id: roadmap2.jiraPodOptionId }, [shadab()], { [FE_DAYS]: 2 });
+    const velocity = await member("velocity", "Shadab Anjum");
+    await setShare(aman, velocity.id, (await getPodPage("velocity"))!.pod.id, 70);
+    await runSync(jira.make);
+
+    const committed = (s: Awaited<ReturnType<typeof sheet>>) =>
+      s.sheet.commitment.skills.find((k) => k.skill === "FE")!.committed;
+    const owns = (s: Awaited<ReturnType<typeof sheet>>) =>
+      s.sheet.load.people.find((p) => p.name === "Shadab Anjum")!.tickets.map((t) => t.key);
+    expect(committed(await sheet("velocity"))).toBe(2);
+    expect(owns(await sheet("velocity"))).toEqual(["DTP-163"]);
+    expect(committed(await sheet("support"))).toBeNull();
+    expect(owns(await sheet("support"))).toEqual([]);
+  });
+
   it("has leave the lead of either pod sets, which counts in both", async () => {
     await runSync(jira.make);
     const rahul = (await viewerForEmail("rahul@delightree.com"))!;

@@ -127,10 +127,10 @@ function PersonRow({ person: p, max, i }: { person: PersonLoad; max: number; i: 
                 </span>
                 <span className="ml-auto flex shrink-0 items-center gap-3 text-xs">
                   {t.elsewhere && (
-                    // Counts in that pod's commitment, but takes this person's time here.
+                    // That pod's ticket, but this person's share of it counts here.
                     <Link
                       href={`/pods/${t.elsewhere.slug}`}
-                      title={`Counts in ${t.elsewhere.name}'s commitment`}
+                      title={`${t.elsewhere.name}'s ticket. ${p.name}'s share counts here.`}
                       className="rounded-md bg-accent-soft px-1.5 py-px text-accent hover:underline"
                     >
                       {t.elsewhere.name}
@@ -172,7 +172,7 @@ function ManualLine({ item, children }: { item: { title: string }; children: Rea
 export function CrossPod({ owners }: { owners: LoadTicket["crossPod"] }) {
   if (!owners.length) return null;
   return (
-    <span className="rounded-md bg-accent-soft px-1.5 py-px text-accent">
+    <span className="rounded-md bg-accent-soft px-1.5 py-px text-accent" title="Their share counts in their own pod">
       Cross-pod help: {owners.map((o) => `${o.displayName} (${o.pod})`).join(", ")}
     </span>
   );

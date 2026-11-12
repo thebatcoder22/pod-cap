@@ -16,7 +16,7 @@ async function snapshotPod(slug: string, sprint: Sprint, kind: SnapshotKind) {
   const page = (await getPodPage(slug))!;
   const view = await getSprintView(page.pod.jiraPodOptionId, String(sprint.id));
   const sheet = await getCapacitySheet(page, sprint, view.tickets);
-  const rows = planSnapshot(kind, sheet.commitment.skills, view.tickets).map((k) => ({
+  const rows = planSnapshot(kind, sheet.commitment.skills, sheet.load.counted).map((k) => ({
     ...k,
     podId: page.pod.id,
     sprintId: sprint.id,

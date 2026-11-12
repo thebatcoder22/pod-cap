@@ -44,13 +44,16 @@ function plan(key: string, devOwners: string[], fields: Record<string, unknown> 
   });
 }
 
-// RoadMap 2 in Oct Spint 2, with no leave: 7 days of capacity each.
-async function load() {
+// A pod in Oct Spint 2, with no leave: 7 days of capacity each.
+async function sheet(slug = "roadmap-2") {
   await runSync(jira.make);
-  const page = (await getPodPage("roadmap-2"))!;
+  const page = (await getPodPage(slug))!;
   const view = await getSprintView(page.pod.jiraPodOptionId, "432");
-  return (await getCapacitySheet(page, view.sprint!, view.tickets)).load;
+  return getCapacitySheet(page, view.sprint!, view.tickets);
 }
+const load = async () => (await sheet()).load;
+const committed = (s: Awaited<ReturnType<typeof sheet>>, skill: string) =>
+  s.commitment.skills.find((k) => k.skill === skill)!.committed;
 
 type Load = Awaited<ReturnType<typeof load>>;
 const person = (l: Load, name: string) => l.people.find((p) => p.name === name)!;
@@ -150,7 +153,29 @@ describe("who is working on what", () => {
     expect(l.people.map((p) => p.name)).not.toContain("Manish Bisht");
   });
 
-  it("counts a member's share of another pod's ticket against their own capacity, not the pod's commitment", async () => {
+  it("counts the share of an owner from another pod in that pod's commitment, not the ticket's", async () => {
+    // DTP-4820 in Nov Spint 1: Aman's ticket, with 5 FE days done by Saikrishna and Shadab from other pods.
+    plan("DTP-163", ["Mayank Awasthi", "Manish Bisht"], { [FE_DAYS]: 4, [BE_DAYS]: 2 });
+    const roadmap2 = await sheet();
+    expect(committed(roadmap2, "FE")).toBe(2);
+    expect(committed(roadmap2, "BE")).toBe(2);
+    expect(person(roadmap2.load, "Mayank Awasthi")).toMatchObject({ skillDays: 2 });
+
+    const velocity = await sheet("velocity");
+    expect(committed(velocity, "FE")).toBe(2);
+    expect(velocity.load.people.find((p) => p.name === "Manish Bisht")!.tickets.map((t) => t.key)).toContain("DTP-163");
+  });
+
+  it("moves all of a skill's days to another pod when only an owner there can do it", async () => {
+    // Aman has no FE, so Manish does all 5 FE days of Aman's ticket.
+    plan("DTP-163", ["Aman Tyagi", "Manish Bisht"], { [FE_DAYS]: 5 });
+    const roadmap2 = await sheet();
+    expect(committed(roadmap2, "FE")).toBe(0);
+    expect(ticket(roadmap2.load, "DTP-163").unassigned).toEqual({});
+    expect(committed(await sheet("velocity"), "FE")).toBe(5);
+  });
+
+  it("counts a member's share of another pod's ticket against their own capacity and the pod's commitment", async () => {
     // DTP-4750: POD Velocity, assigned to Saikrishna, with Aman as a Dev Owner. It counts in Velocity, but the BE
     // day is Aman's, so RoadMap 2 sees it on him.
     plan("DTP-163", ["Aman Tyagi", "Saikrishna Kotagiri"], {
@@ -160,7 +185,10 @@ describe("who is working on what", () => {
       assignee: user("Saikrishna Kotagiri"),
     });
     plan("DTP-1313", ["Aman Tyagi"], { [BE_DAYS]: 2 });
-    const l = await load();
+    const s = await sheet();
+    const l = s.load;
+    expect(committed(s, "BE")).toBe(2.5);
+    expect(committed(s, "FE")).toBeNull();
     expect(l.tickets.map((t) => t.key)).toEqual(["DTP-1313"]);
     expect(person(l, "Aman Tyagi")).toMatchObject({ skillDays: 2.5, calendarDays: 2.5, elsewhereDays: 0.5, free: 4.5 });
     expect(person(l, "Aman Tyagi").tickets.map((t) => [t.key, t.attributed, t.elsewhere?.name ?? null])).toEqual([

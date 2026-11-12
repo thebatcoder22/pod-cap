@@ -41,12 +41,13 @@ export async function getCapacitySheet(page: PodPage, sprint: Sprint, tickets: S
     holidays: settings.holidays,
     focusFactor: settings.focusPercent / 100,
   });
+  const load = planLoad(tickets, counting, plan.people, new Map(others.map((p) => [p.jiraAccountId, p])), elsewhere);
   return {
     ...plan,
     focusPercent: settings.focusPercent,
     items: manual,
-    commitment: planCommitment(tickets, counting, plan.skills),
-    load: planLoad(tickets, counting, plan.people, new Map(others.map((p) => [p.jiraAccountId, p])), elsewhere),
+    commitment: planCommitment(tickets, load.counted, counting, plan.skills),
+    load,
   };
 }
 

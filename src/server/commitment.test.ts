@@ -27,6 +27,9 @@ function plan(key: string, fields: Record<string, unknown> = {}) {
   Object.assign(jira.issue(key).fields, {
     customfield_11457: { value: "RoadMap 2-Aman", id: "11232" },
     customfield_10020: [OCT_SPRINT_2],
+    // No owners, so every skill-day stays in RoadMap 2: owners from other pods would take their share to theirs.
+    assignee: null,
+    customfield_10777: [],
     ...fields,
   });
 }

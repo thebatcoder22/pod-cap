@@ -89,16 +89,17 @@ export function planManualItems<M extends { ticketPod: string | null }>(items: M
 type ManualItem = { personId: number | null; skill: Skill; days: number };
 
 /**
- * Committed skill-days per skill = the sum of the sprint's ticket estimates and manual items, set against
- * capacity.
+ * Committed skill-days per skill = the skill-days the sprint's tickets put on this pod (see `Load["counted"]`) and
+ * its manual items, set against capacity. `tickets` are the pod's own, checked for missing estimates.
  */
 export function planCommitment<T extends { estimates: Estimates }>(
   tickets: T[],
+  counted: { here: Estimates }[],
   items: ManualItem[],
   capacity: Capacity<unknown>["skills"],
 ): Commitment<T> {
   const skills = capacity.map(({ skill, capacity }) => {
-    const estimated = tickets.flatMap((t) => t.estimates[skill] ?? []);
+    const estimated = counted.flatMap((t) => t.here[skill] ?? []);
     const days = [...estimated, ...items.flatMap((i) => (i.skill === skill ? i.days : []))];
     const committed = sumKnown(days);
     return {
@@ -112,16 +113,16 @@ export function planCommitment<T extends { estimates: Estimates }>(
 }
 
 /**
- * What a snapshot freezes per skill: capacity and committed skill-days, and at close the skill-days of tickets
- * Done in Jira. Completed is null when no Done ticket has an estimate in the skill, so it never reads as 0.
+ * What a snapshot freezes per skill: capacity and committed skill-days, and at close the skill-days tickets Done in
+ * Jira put on the pod. Completed is null when no Done ticket has an estimate in the skill, so it never reads as 0.
  */
 export function planSnapshot(
   kind: SnapshotKind,
   skills: Commitment<unknown>["skills"],
-  tickets: { statusCategory: string; estimates: Estimates }[],
+  counted: { statusCategory: string; here: Estimates }[],
 ) {
   return skills.map(({ skill, capacity, committed }) => {
-    const done = tickets.map((t) => (t.statusCategory === "done" ? t.estimates[skill] : undefined));
+    const done = counted.map((t) => (t.statusCategory === "done" ? t.here[skill] : undefined));
     return { skill, capacity, committed, completed: kind === "close" ? sumKnown(done) : null };
   });
 }
@@ -188,6 +189,11 @@ export type Load<P, T, M> = {
   })[];
   /** Manual items. One whose person is not in the pod, or cannot do its skill, is unassigned work. */
   items: (M & { unassigned: Estimates })[];
+  /**
+   * The sprint's tickets with skill-days in this pod's commitment, and those skill-days: the pod's own tickets less
+   * the shares of owners in other pods, and other pods' tickets with the shares of this pod's people.
+   */
+  counted: (T & { here: Estimates })[];
   /** All unassigned skill-days together. */
   unassigned: number;
 };
@@ -197,9 +203,10 @@ export type Load<P, T, M> = {
  * proficiency above zero in it, split evenly. Owners from other pods take their share, as cross-pod help.
  * A manual item goes to its person. One without a person counts against the pod, as the lead chose.
  *
- * A member's share of a ticket that counts in another pod is theirs too: it takes their time, so it counts against
- * their capacity here, while the ticket's days count in that pod's commitment only. Someone in two pods is the
- * exception: their other pod's tickets come out of the share of them that pod plans with.
+ * Skill-days count in the commitment of the pod of whoever does them. A member's share of a ticket that counts in
+ * another pod counts here, against their capacity and the pod's commitment, and an owner from another pod takes
+ * their share out of this pod's. Someone in two pods is the exception: their other pod's tickets come out of the
+ * share of them that pod plans with, and a third pod's out of the pod that takes their outside work.
  */
 export function planLoad<
   P extends {
@@ -208,6 +215,7 @@ export function planLoad<
     jiraAccountId: string | null;
     proficiency: Proficiency;
     alsoIn: { slug: string } | null;
+    takesOutsideWork: boolean;
   },
   T extends Owned,
   M extends ManualItem,
@@ -228,6 +236,8 @@ export function planLoad<
   const attribute = (t: Owned) => {
     const unassigned: Estimates = {};
     const shares = new Map<P, Estimates>();
+    /** Skill-days that go to owners in other pods. */
+    const outside: Estimates = {};
     for (const skill of SKILLS) {
       const days = t.estimates[skill];
       if (!days) continue;
@@ -239,13 +249,19 @@ export function planLoad<
       for (const o of able) {
         const p = members.get(o.accountId);
         if (p) shares.set(p, { ...shares.get(p), [skill]: days / able.length });
+        else outside[skill] = (outside[skill] ?? 0) + days / able.length;
       }
     }
-    return { shares, unassigned };
+    return { shares, unassigned, outside };
   };
 
+  const counted: (T & { here: Estimates })[] = [];
   const planned = tickets.map((t) => {
-    const { shares, unassigned } = attribute(t);
+    const { shares, unassigned, outside } = attribute(t);
+    const here = Object.fromEntries(
+      SKILLS.flatMap((k) => (t.estimates[k] === undefined ? [] : [[k, t.estimates[k]! - (outside[k] ?? 0)]])),
+    );
+    counted.push({ ...t, here });
     for (const o of t.owners) {
       const p = members.get(o.accountId);
       if (p) owned.get(p)!.push({ ...t, attributed: shares.get(p) ?? {}, elsewhere: null });
@@ -259,11 +275,15 @@ export function planLoad<
 
   for (const t of elsewhere) {
     const { shares } = attribute(t);
+    const here: Estimates = {};
     for (const o of t.owners) {
       const p = members.get(o.accountId);
-      if (p && p.alsoIn?.slug !== t.pod.slug)
-        owned.get(p)!.push({ ...t, attributed: shares.get(p) ?? {}, elsewhere: t.pod });
+      if (!p || p.alsoIn?.slug === t.pod.slug || !p.takesOutsideWork) continue;
+      const mine = shares.get(p) ?? {};
+      owned.get(p)!.push({ ...t, attributed: mine, elsewhere: t.pod });
+      for (const [k, d] of Object.entries(mine) as [Skill, number][]) here[k] = (here[k] ?? 0) + d;
     }
+    if (Object.keys(here).length) counted.push({ ...t, here });
   }
 
   const byId = new Map(people.map((p) => [p.id, p]));
@@ -301,6 +321,7 @@ export function planLoad<
     tickets: planned,
     items: manual,
     unassigned: round(sum([...planned, ...manual].flatMap((t) => Object.values(t.unassigned)))),
+    counted,
   };
 }
 

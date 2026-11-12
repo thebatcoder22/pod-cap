@@ -54,14 +54,16 @@
   Owners are set on work someone took on, while the POD field gets missed or names another pod.
   Owners in other pods show on it as cross-pod help.
   An owner in two pods, like Shadab in Velocity and Support, puts a ticket whose POD names neither in the pod with the larger share of them, then the older pod.
-- Committed skill-days for a pod = the sum of estimates of plannable tickets in the sprint that count for that pod, plus manual items in that pod and sprint. A placeholder linked to a Jira ticket stops counting once the ticket is synced into the sprint for a pod; a ticket that counts for no pod takes nothing over.
+- Committed skill-days for a pod = the skill-days of the sprint's plannable tickets that fall to the pod, plus manual items in that pod and sprint.
+  Skill-days fall to the pod of whoever does them: a ticket's estimates count for its pod, less the shares of owners in other pods, which count in theirs.
+  Work no owner can do stays with the ticket's pod. A placeholder linked to a Jira ticket stops counting once the ticket is synced into the sprint for a pod; a ticket that counts for no pod takes nothing over.
 - A missing estimate for a skill is "not estimated", which is distinct from zero and is counted and surfaced.
 - Attribution: a ticket's skill-days for a skill go to its owners, the assignee and the Dev Owners, whose proficiency in that skill is above zero, split evenly; someone in both counts once. If no candidate exists, the days become unassigned pod work and raise a flag.
 - A manual item's days go to its person. An item with no person counts against the pod without a flag, since the lead chose to reserve it there; an item whose person has left the pod, or has 0% in its skill, is unassigned work and raises a flag.
 - Calendar days consumed by a person for attributed work = skill-days / proficiency in that skill.
 - A person's load includes their share of sprint tickets that count in another pod, tagged with that pod, because the work takes their time.
-  Those days stay in the other pod's commitment and calendar total, so nothing is counted twice.
-  Someone in two pods is the exception: their other pod's tickets come out of the share of them that pod plans with.
+  Those days count in their own pod's commitment, not the other pod's, so nothing is counted twice.
+  Someone in two pods is the exception: their other pod's tickets come out of the share of them that pod plans with, and a third pod's tickets count in the pod with the larger share of them, then the older pod.
 - Free days = capacity - calendar days consumed. It can be negative, which means overloaded.
 - An exact match is a backlog plannable ticket in the same pod, not in any active or future sprint, whose estimate is only in the person's main skill and fits their free days.
 - A stretch option is the same, but for a skill where the person's proficiency is above zero and below 100%, with cost = skill-days / proficiency, which must fit free days.
