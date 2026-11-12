@@ -51,7 +51,7 @@ export function Sprint({
           Sprint overview
         </h2>
         <Empty icon={<TrayIcon size={20} aria-hidden />} title="No sprints yet">
-          Press Sync now to pull the sprints on board {BOARD_ID} from Jira.
+          Press Sync with Jira in the sidebar to pull the sprints on board {BOARD_ID} from Jira.
         </Empty>
       </section>
     );

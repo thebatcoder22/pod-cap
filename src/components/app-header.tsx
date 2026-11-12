@@ -4,6 +4,9 @@ import { Avatar, BrandMark } from "./brand";
 import { signOut } from "@/auth";
 import { listPods } from "@/server/pods";
 import { getViewer } from "@/server/session";
+import { getSyncStatus } from "@/server/sync";
+import { dayTime } from "@/lib/format";
+import { SyncNow, type SyncLine } from "./sync-now";
 import { NavLink, PodNav, PodTabs } from "./pod-tabs";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -51,8 +54,13 @@ const iconButton =
   "grid size-8 place-items-center rounded-lg text-ink-muted transition hover:bg-fill hover:text-ink active:scale-[0.96]";
 
 export async function AppShell() {
-  const [viewer, pods] = await Promise.all([getViewer(), listPods()]);
+  const [viewer, pods, sync] = await Promise.all([getViewer(), listPods(), getSyncStatus()]);
   if (!viewer) return <ShellFrame />;
+  const line: SyncLine = sync.running
+    ? { text: "Syncing with Jira now…", failed: false }
+    : sync.failure
+      ? { text: `Sync failed ${dayTime(sync.failure.at)}`, failed: true }
+      : { text: sync.lastSuccessAt ? `Synced ${dayTime(sync.lastSuccessAt)}` : "Never synced", failed: false };
   const own = viewer.pods.map((p) => p.slug);
 
   return (
@@ -87,6 +95,7 @@ export async function AppShell() {
         </nav>
 
         <div className="mt-auto space-y-3">
+          <SyncNow line={line} />
           {viewer.isAdmin && (
             <NavLink
               href="/settings"
@@ -114,6 +123,7 @@ export async function AppShell() {
         <div className="flex h-14 items-center gap-3 px-4">
           <Brand />
           <div className="ml-auto flex items-center gap-1">
+            <SyncNow line={line} compact />
             <NavLink href="/pending" className={iconButton} activeClassName="bg-fill text-ink">
               <ListChecksIcon size={18} aria-hidden />
               <span className="sr-only">Pending in Jira</span>

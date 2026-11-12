@@ -73,7 +73,7 @@ export function estimateFields(fields: JiraField[]) {
 
 export type SyncResult = { status: "succeeded" } | { status: "skipped" } | { status: "failed"; error: string };
 
-/** "Sync now": any signed-in lead may pull from Jira. */
+/** "Sync with Jira": any signed-in lead may pull from Jira. */
 export async function syncNow(viewer: Viewer | null, makeClient?: MakeJiraClient) {
   if (!viewer) throw new ForbiddenError("Sign in to sync with Jira.");
   return runSync(makeClient);
@@ -81,7 +81,7 @@ export async function syncNow(viewer: Viewer | null, makeClient?: MakeJiraClient
 
 /**
  * Pulls every sprint on the board and every plannable DTP and AS ticket and epic, replacing the previous copy.
- * Shared by the daily cron and "Sync now". Returns "skipped" when another sync holds the lock.
+ * Shared by the daily cron and "Sync with Jira". Returns "skipped" when another sync holds the lock.
  * A sprint seen going from future to active gets a start snapshot for every pod, and one seen closing a close one.
  */
 export async function runSync(makeClient: MakeJiraClient = createJiraClient): Promise<SyncResult> {

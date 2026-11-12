@@ -14,3 +14,7 @@ export const isoDay = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: TIM
 
 /** Mon, 9 Nov 2026 */
 export const longDay = (d: Date) => format(d, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+
+/** 12 Nov, 10:50 */
+export const dayTime = (d: Date) =>
+  format(d, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });

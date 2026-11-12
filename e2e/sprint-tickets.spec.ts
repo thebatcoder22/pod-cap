@@ -15,7 +15,7 @@ test("a lead sees their pod's tickets for the upcoming sprint and can switch spr
   await signInAs(page, "rahul@delightree.com");
   await expect(page).toHaveURL(/\/pods\/velocity$/);
 
-  await expect(page.getByText("Last synced 23 Oct 2026, 14:00")).toBeVisible();
+  await expect(page.getByText("Synced 23 Oct, 14:00")).toBeVisible();
   const picker = page.getByLabel("Sprint", { exact: true });
   await expect(picker).toHaveValue("432");
   await expect(page.getByText("26 Oct to 6 Nov")).toBeVisible();
@@ -41,7 +41,7 @@ test("a failed sync explains why and keeps the last good data", async ({ page })
   await expect(page).toHaveURL(/\/pods\/roadmap-1$/);
   await page.goto("/pods/velocity");
 
-  await page.getByRole("button", { name: "Sync now" }).click();
+  await page.getByRole("button", { name: "Sync with Jira" }).click();
   await expect(page.getByText("Sync failed.")).toBeVisible();
   const banner = page.getByRole("alert").filter({ hasText: "Jira sync" });
   await expect(banner).toContainText("Jira is not connected yet. The admin can connect it in Settings.");

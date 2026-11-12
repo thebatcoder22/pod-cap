@@ -11,14 +11,10 @@ import { getSyncStatus } from "@/server/sync";
 import { getCapacitySheet } from "@/server/capacity";
 import { getPickUp } from "@/server/pick-up";
 import { getEpicList } from "@/server/epics";
-import { SyncNowButton } from "./sprint-controls";
 import { badge, plural, rise } from "./pod-ui";
 import { Sprint } from "./sprint";
 import { Epics, PendingInJira } from "./epics";
 import { Team } from "./team";
-
-// Covers the "Sync now" server action on this page.
-export const maxDuration = 300;
 
 export default function PodPage({ params, searchParams }: PageProps<"/pods/[slug]">) {
   return (
@@ -83,14 +79,6 @@ async function Pod({ params, searchParams }: PageProps<"/pods/[slug]">) {
             <ChartLineUpIcon size={16} aria-hidden />
             Trends
           </Link>
-          <p className="text-sm text-ink-faint">
-            {sync.running
-              ? "Syncing with Jira now…"
-              : sync.lastSuccessAt
-                ? `Last synced ${dateTime(sync.lastSuccessAt)}`
-                : "Never synced"}
-          </p>
-          <SyncNowButton />
         </div>
       </header>
 

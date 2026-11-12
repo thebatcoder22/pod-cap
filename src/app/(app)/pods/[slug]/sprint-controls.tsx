@@ -1,28 +1,7 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowsClockwiseIcon } from "@phosphor-icons/react";
-import { syncNowAction } from "./actions";
-
-export function SyncNowButton() {
-  const [state, sync, syncing] = useActionState(syncNowAction, null);
-  return (
-    <form action={sync} className="flex items-center gap-3">
-      <span aria-live="polite" className={`text-sm ${state?.ok === false ? "text-danger" : "text-ink-muted"}`}>
-        {!syncing && state?.message}
-      </span>
-      <button
-        type="submit"
-        disabled={syncing}
-        className="flex h-8 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-3 text-sm font-medium shadow-card transition hover:bg-fill active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
-      >
-        <ArrowsClockwiseIcon size={16} aria-hidden className={syncing ? "animate-spin" : ""} />
-        {syncing ? "Syncing…" : "Sync now"}
-      </button>
-    </form>
-  );
-}
 
 type Option = { id: number; name: string; state: "active" | "future" | "closed" };
 const GROUPS = [

@@ -5,7 +5,7 @@
 - One Next.js application (App Router, TypeScript) serves the UI and the server logic, deployed on Vercel.
 - Postgres on Neon (provisioned through the Vercel Marketplace) holds all platform-owned data.
 - Auth.js with the Google provider handles sign-in; any @delightree.com account may enter read only, an allowlist table decides who may edit, and the session carries the person's pod and admin flag.
-- A Vercel Cron job runs the Jira sync hourly and triggers snapshots; "Sync now" calls the same sync service.
+- A Vercel Cron job runs the Jira sync hourly and triggers snapshots; "Sync with Jira" calls the same sync service.
 - The UI is built with the `/design-taste-frontend` skill.
 
 ## Modules

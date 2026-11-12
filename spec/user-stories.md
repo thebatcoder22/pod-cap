@@ -17,10 +17,10 @@
 10. As the admin, I want a "Test connection" action that confirms the token can read the DTP and AS projects, so that I know setup worked before relying on it.
 11. As the admin, I want to replace the token, so that I can rotate it when it expires.
 12. As a pod lead, I want Jira to sync automatically every hour, so that the numbers are fresh without anyone remembering to refresh.
-13. As a pod lead, I want a "Sync now" button, so that I can pull changes immediately during a planning meeting.
+13. As a pod lead, I want a "Sync with Jira" button in the sidebar on every page, so that I can pull changes immediately during a planning meeting.
 14. As a pod lead, I want to see when the last successful sync happened, so that I know how fresh the numbers are.
 15. As a pod lead, I want a clear error banner when a sync fails, with the reason, so that I do not plan on stale data without knowing it.
-16. As a pod lead, I want two syncs never to run at the same time, so that pressing "Sync now" repeatedly cannot corrupt data.
+16. As a pod lead, I want two syncs never to run at the same time, so that pressing "Sync with Jira" repeatedly cannot corrupt data.
 17. As a pod lead, I want the sync to pull all sprints on the DTP board, including future ones, so that I can plan the next sprint before it starts.
 18. As a pod lead, I want the sync to pull each plannable ticket's pod, sprint, status, type, priority, assignee, Dev Owners, parent epic, estimates, and Ready for Production Date, so that every view is built from current Jira facts.
 19. As a pod lead, I want epics to be synced with their child tickets, so that I can see how big each epic really is.

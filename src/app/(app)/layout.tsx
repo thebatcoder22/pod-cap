@@ -1,6 +1,9 @@
 import { Suspense } from "react";
 import { AppShell, ShellFrame } from "@/components/app-header";
 
+// Covers the sidebar's "Sync with Jira" server action, which any page here can run.
+export const maxDuration = 300;
+
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex-1 lg:grid lg:grid-cols-[248px_minmax(0,1fr)]">
