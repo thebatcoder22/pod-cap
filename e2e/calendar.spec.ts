@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { people, tickets } from "../src/db/schema";
 import { E2E_DATABASE_URL } from "../playwright.config";
@@ -36,8 +36,50 @@ async function parkTicket(on: boolean) {
   else await db.delete(tickets).where(eq(tickets.key, "DTP-4630"));
   await db.$client.end();
 }
-test.beforeEach(() => Promise.all([linkRahul(true), parkTicket(true)]));
-test.afterEach(() => Promise.all([linkRahul(false), parkTicket(false)]));
+// Unestimated tickets on three more epics: more epics than a cell shows, without booking Rahul any days.
+const extra = ["Audit export", "Audit filters", "Audit retention"];
+async function moreEpics(on: boolean) {
+  const db = drizzle(E2E_DATABASE_URL);
+  const keys = extra.map((_, i) => `DTP-465${i}`);
+  if (on)
+    await db.insert(tickets).values([
+      ...extra.map((summary, i) => ({
+        key: keys[i],
+        summary,
+        type: "Story",
+        status: "In Progress",
+        statusCategory: "indeterminate" as const,
+        priority: "Medium",
+        podOptionId: "11230",
+        sprintIds: [432],
+        assignee: { accountId: "a-rahul", displayName: "Rahul Saharan" },
+        devOwners: [],
+        epicKey: `DTP-466${i}`,
+        epicSummary: summary,
+        estimates: {},
+      })),
+      // Checklists v2 started in the sprint before, so it runs on into Oct Spint 2.
+      {
+        key: "DTP-4653",
+        summary: "Checklist templates",
+        type: "Story",
+        status: "Done",
+        statusCategory: "done" as const,
+        priority: "Medium",
+        podOptionId: "11230",
+        sprintIds: [332],
+        assignee: { accountId: "a-rahul", displayName: "Rahul Saharan" },
+        devOwners: [],
+        epicKey: "DTP-4610",
+        epicSummary: "Checklists v2",
+        estimates: {},
+      },
+    ]);
+  else await db.delete(tickets).where(inArray(tickets.key, [...keys, "DTP-4653"]));
+  await db.$client.end();
+}
+test.beforeEach(() => Promise.all([linkRahul(true), parkTicket(true), moreEpics(true)]));
+test.afterEach(() => Promise.all([linkRahul(false), parkTicket(false), moreEpics(false)]));
 
 test("product sees who works on what across every pod, week by week, then opens a pod's calendar", async ({ page }) => {
   await signInAs(page, "aman@delightree.com");
@@ -55,6 +97,16 @@ test("product sees who works on what across every pod, week by week, then opens 
   await expect(rahul.getByLabel("16.5 of 7 days booked")).toBeVisible();
   // His On Hold ticket books none of his days, here or on the pod calendar below.
   await expect(rahul.getByText("Checklist audits")).toHaveCount(0);
+  // An epic running through back-to-back sprints is one chip across them.
+  const sprint = (await page.getByRole("columnheader", { name: "Oct Spint 2" }).boundingBox())!;
+  const run = (await rahul.getByText("Checklists v2", { exact: true }).boundingBox())!;
+  expect(run.x).toBeLessThan(sprint.x);
+  expect(run.x + run.width).toBeGreaterThan(sprint.x + sprint.width / 2);
+  // Past three epics the rest fold into "+N more", which opens to show them.
+  await rahul.getByText(/^\+\d+ more$/).click();
+  for (const epic of ["Checklists v2", ...extra]) await expect(rahul.getByText(epic, { exact: true })).toBeVisible();
+  await rahul.getByText("Show less").click();
+  await expect(rahul.getByText(/^\+\d+ more$/)).toBeVisible();
   // Manish has no Jira account linked, so nothing of his is booked.
   await expect(page.getByRole("row", { name: /^Manish Bisht/ }).getByText("7d free", { exact: true })).toBeVisible();
 

@@ -3,12 +3,19 @@ import Link from "next/link";
 import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react/dist/ssr";
 import { CapacityBar, rise } from "@/app/(app)/pods/[slug]/pod-ui";
 import { day, isoDay } from "@/lib/format";
-import { bandwidthFrom, getBandwidth, shiftWeeks, BANDWIDTH_WEEKS, type Bandwidth } from "@/server/bandwidth";
+import {
+  bandwidthFrom,
+  getBandwidth,
+  shiftWeeks,
+  BANDWIDTH_WEEKS,
+  type Bandwidth,
+  type Span,
+} from "@/server/bandwidth";
 import { mondayOf } from "@/server/planning";
 import { DAY_MS } from "@/server/planning-days";
 import { requireViewer } from "@/server/session";
 
-type Cell = NonNullable<Bandwidth["pods"][number]["people"][number]["sprints"][number]>;
+type Person = Bandwidth["pods"][number]["people"][number];
 
 /** How far the arrows move: three sprints. */
 const STEP = 6;
@@ -147,17 +154,9 @@ async function Sheet({ searchParams }: Pick<PageProps<"/calendar">, "searchParam
                     >
                       {person.name}
                     </th>
-                    {person.sprints.map((c, i) => (
-                      <td
-                        key={sheet.weeks[i].weeks[0]}
-                        colSpan={sheet.weeks[i].weeks.length}
-                        className={`border-r border-b border-line px-2 py-2 align-top last:border-r-0 ${
-                          sheet.weeks[i].sprint ? "" : "bg-sidebar"
-                        }`}
-                      >
-                        {c && <SprintCell cell={c} max={max} />}
-                      </td>
-                    ))}
+                    <td colSpan={columns - 1} className="border-b border-line p-0 align-top">
+                      <Timeline person={person} runs={sheet.weeks} max={max} />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -173,59 +172,119 @@ async function Sheet({ searchParams }: Pick<PageProps<"/calendar">, "searchParam
   );
 }
 
-/** One person's sprint: the epics they work on, then how full the sprint is. */
-function SprintCell({ cell: c, max }: { cell: Cell; max: number }) {
-  const over = c.booked > c.capacity;
-  const rest = c.work.slice(SHOWN);
-  const chip = "block truncate rounded-md bg-fill px-1.5 py-1 text-ink";
+/**
+ * One person's sprints as one grid of week columns: each epic is a chip across the back-to-back sprints it runs
+ * through, in the same lane all the way, then how full each sprint is.
+ */
+function Timeline({ person, runs, max }: { person: Person; runs: Bandwidth["weeks"]; max: number }) {
+  const starts = runs.map((_, i) => runs.slice(0, i).reduce((n, r) => n + r.weeks.length, 1));
+  const across = (from: number, to: number) => `${starts[from]} / ${starts[to] + runs[to].weeks.length}`;
+  const hidden = person.sprints.map((_, i) => person.spans.filter((s) => s.lane >= SHOWN && s.from <= i && i <= s.to));
+  const lanes = Math.min(SHOWN, Math.max(1, ...person.spans.map((s) => s.lane + 1)));
+  const more = hidden.some((h) => h.length > 0);
+  // A padding row each end, so the sprint backgrounds and borders run the full height.
+  const bars = lanes + (more ? 3 : 2);
   return (
-    <div className="flex h-full flex-col gap-2">
-      {c.work.length ? (
-        <ul className="space-y-1">
-          {c.work.slice(0, SHOWN).map((w) => {
-            const tip = [w.label, ...w.tickets].join("\n");
-            return (
-              <li key={w.label}>
-                {w.url ? (
-                  <a
-                    href={w.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    title={tip}
-                    className={`${chip} transition hover:ring-1 hover:ring-line-strong`}
-                  >
-                    {w.label}
-                  </a>
-                ) : (
-                  <span title={tip} className={chip}>
-                    {w.label}
-                  </span>
-                )}
-              </li>
-            );
-          })}
-          {rest.length > 0 && (
-            <li title={rest.map((w) => w.label).join("\n")} className="px-1.5 text-ink-faint">
-              +{rest.length} more
-            </li>
-          )}
-        </ul>
-      ) : (
-        // Free bandwidth is what product looks for, so an empty sprint says how much.
-        <p className="px-1.5 py-1 whitespace-nowrap text-ink-faint tabular-nums">{n(c.capacity)}d free</p>
-      )}
-      {c.work.length > 0 && (
+    <div
+      className="grid"
+      style={{
+        gridTemplateColumns: `repeat(${starts.at(-1)! + runs.at(-1)!.weeks.length - 1}, minmax(0, 1fr))`,
+        gridTemplateRows: `0.5rem repeat(${bars - 1}, auto) 0.5rem`,
+      }}
+    >
+      {runs.map((r, i) => (
         <div
-          className="mt-auto flex items-center gap-2 px-1.5"
-          aria-label={`${n(c.booked)} of ${n(c.capacity)} days booked`}
-        >
-          <CapacityBar used={c.booked} capacity={c.capacity} max={max} tone="bg-accent" i={0} className="flex flex-1" />
-          <span className={`shrink-0 tabular-nums ${over ? "font-medium text-danger" : "text-ink-muted"}`}>
-            {n(c.booked)}/{n(c.capacity)}d
-          </span>
-        </div>
+          key={r.weeks[0]}
+          aria-hidden
+          style={{ gridColumn: across(i, i), gridRow: "1 / -1" }}
+          className={`${i < runs.length - 1 ? "border-r border-line" : ""} ${r.sprint ? "" : "bg-sidebar"}`}
+        />
+      ))}
+      {person.spans
+        .filter((s) => s.lane < SHOWN)
+        .map((s) => (
+          <Epic
+            key={`${s.from}-${s.lane}`}
+            work={s}
+            className="mx-2 mb-1"
+            style={{ gridColumn: across(s.from, s.to), gridRow: s.lane + 2 }}
+          />
+        ))}
+      {hidden.map(
+        (h, i) =>
+          h.length > 0 && (
+            <details
+              key={i}
+              className="group mx-2 mb-1 flex min-w-0 flex-col gap-1"
+              style={{ gridColumn: across(i, i), gridRow: lanes + 2 }}
+            >
+              <summary className="order-last cursor-pointer list-none rounded-md px-1.5 text-ink-faint transition-colors hover:text-accent [&::-webkit-details-marker]:hidden">
+                <span className="group-open:hidden">+{h.length} more</span>
+                <span className="hidden group-open:inline">Show less</span>
+              </summary>
+              <div className="space-y-1">
+                {h.map((w) => (
+                  <Epic key={w.label} work={w} />
+                ))}
+              </div>
+            </details>
+          ),
       )}
+      {person.sprints.map((c, i) => {
+        if (!c) return null;
+        const style = { gridColumn: across(i, i), gridRow: c.work.length ? bars : 2 };
+        // Free bandwidth is what product looks for, so an empty sprint says how much.
+        if (!c.work.length)
+          return (
+            <p key={i} style={style} className="mx-2 px-1.5 py-1 whitespace-nowrap text-ink-faint tabular-nums">
+              {n(c.capacity)}d free
+            </p>
+          );
+        const over = c.booked > c.capacity;
+        return (
+          <div
+            key={i}
+            style={style}
+            className="mx-2 mt-1 flex items-center gap-2 px-1.5"
+            aria-label={`${n(c.booked)} of ${n(c.capacity)} days booked`}
+          >
+            <CapacityBar
+              used={c.booked}
+              capacity={c.capacity}
+              max={max}
+              tone="bg-accent"
+              i={0}
+              className="flex flex-1"
+            />
+            <span className={`shrink-0 tabular-nums ${over ? "font-medium text-danger" : "text-ink-muted"}`}>
+              {n(c.booked)}/{n(c.capacity)}d
+            </span>
+          </div>
+        );
+      })}
     </div>
+  );
+}
+
+/** One epic chip: links to Jira when it can, hover lists its tickets. */
+function Epic({ work: w, className = "", style }: { work: Span; className?: string; style?: React.CSSProperties }) {
+  const tip = [w.label, ...w.tickets].join("\n");
+  const chip = `${className} block min-w-0 truncate rounded-md bg-fill px-1.5 py-1 text-ink`;
+  return w.url ? (
+    <a
+      href={w.url}
+      target="_blank"
+      rel="noreferrer"
+      title={tip}
+      style={style}
+      className={`${chip} transition hover:ring-1 hover:ring-line-strong`}
+    >
+      {w.label}
+    </a>
+  ) : (
+    <span title={tip} style={style} className={chip}>
+      {w.label}
+    </span>
   );
 }
 

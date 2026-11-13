@@ -94,6 +94,7 @@ describe("bandwidth", () => {
     expect(mayank.sprints[1]).toEqual({
       work: [
         {
+          key: "DTP-9001",
           label: "Territory",
           url: "https://delightree.atlassian.net/browse/DTP-9001",
           tickets: [expect.stringMatching(/^DTP-163 /)],

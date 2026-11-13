@@ -55,12 +55,14 @@ export async function getBandwidth(from: string) {
     pods: pods.map((page, i) => ({
       name: page.pod.name,
       slug: page.pod.slug,
-      people: page.members.map((m) => ({
-        id: m.id,
-        name: m.name,
-        // One per run of weeks; null where there is no sprint.
-        sprints: runs.map((r) => (r.sprint ? (cells[i].get(r.sprint.id)?.get(m.id) ?? null) : null)),
-      })),
+      people: page.members
+        .map((m) => ({
+          id: m.id,
+          name: m.name,
+          // One per run of weeks; null where there is no sprint.
+          sprints: runs.map((r) => (r.sprint ? (cells[i].get(r.sprint.id)?.get(m.id) ?? null) : null)),
+        }))
+        .map((m) => ({ ...m, spans: spansOf(m.sprints) })),
     })),
   };
 }
@@ -69,21 +71,22 @@ type Person = Awaited<ReturnType<typeof getCapacitySheet>>["load"]["people"][num
 
 /** A person's sprint: their work grouped by epic, most tickets first, then manual items, and their days. */
 function cell(p: Person, site: string | null) {
-  const epics = new Map<string, { label: string; url: string | null; tickets: string[] }>();
+  const epics = new Map<string, Work>();
   const loose: Person["tickets"] = [];
   for (const t of p.tickets) {
     if (!t.epic) loose.push(t);
     else {
-      const e = epics.get(t.epic.key) ?? { label: t.epic.summary, url: t.epic.url, tickets: [] };
+      const e = epics.get(t.epic.key) ?? { key: t.epic.key, label: t.epic.summary, url: t.epic.url, tickets: [] };
       e.tickets.push(`${t.key} ${t.summary}`);
       epics.set(t.epic.key, e);
     }
   }
-  const work = [
+  const work: Work[] = [
     ...[...epics.values()].sort((a, b) => b.tickets.length - a.tickets.length),
     ...(loose.length
       ? [
           {
+            key: null,
             label: `${loose.length} ${loose.length === 1 ? "ticket" : "tickets"} without an epic`,
             // One ticket opens itself; several open a Jira search for just those.
             url:
@@ -94,9 +97,43 @@ function cell(p: Person, site: string | null) {
           },
         ]
       : []),
-    ...p.items.map((i) => ({ label: i.title, url: null, tickets: [] })),
+    ...p.items.map((i) => ({ key: null, label: i.title, url: null, tickets: [] })),
   ];
   return { work, booked: p.calendarDays, capacity: p.capacity };
+}
+
+/** An epic, the tickets without one, or a manual item. Only epics have a `key`: they are what runs across sprints. */
+type Work = { key: string | null; label: string; url: string | null; tickets: string[] };
+/** A piece of work over the sprints `from` to `to` (indexes into a person's sprints), in its `lane` from the top. */
+export type Span = Work & { from: number; to: number; lane: number };
+
+/**
+ * A person's work as spans: an epic in back-to-back sprints is one span across them. Spans take the top-most lane
+ * free when they start, in sprint order and then each sprint's own order, so a continuing epic keeps its lane.
+ */
+export function spansOf(sprints: ({ work: Work[] } | null)[]) {
+  const spans: Span[] = [];
+  const last = new Map<string, Span>();
+  sprints.forEach((c, i) => {
+    for (const w of c?.work ?? []) {
+      const run = w.key === null ? undefined : last.get(w.key);
+      if (run?.to === i - 1) {
+        run.to = i;
+        run.tickets = [...new Set([...run.tickets, ...w.tickets])];
+        continue;
+      }
+      const span = { ...w, from: i, to: i, lane: 0 };
+      spans.push(span);
+      if (w.key !== null) last.set(w.key, span);
+    }
+  });
+  const ends: number[] = [];
+  for (const s of spans) {
+    const free = ends.findIndex((end) => end < s.from);
+    s.lane = free < 0 ? ends.length : free;
+    ends[s.lane] = s.to;
+  }
+  return spans;
 }
 
 /** The Monday `weeks` weeks on from the Monday `from`. */
