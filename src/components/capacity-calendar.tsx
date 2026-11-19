@@ -62,9 +62,10 @@ export function CalendarNote({ focusPercent }: { focusPercent: number }) {
 export function CapacityCalendar({ calendar }: { calendar: Calendar }) {
   const today = isoDay(new Date());
   return (
-    <div className="overflow-x-auto rounded-lg border border-line bg-surface shadow-card">
+    // Scrolls both ways in itself, so the weekday header can stick to its top.
+    <div className="max-h-[calc(100dvh-5rem)] overflow-auto rounded-lg border border-line bg-surface shadow-card">
       <div role="table" aria-label={`Capacity in ${monthLabel(calendar.month)}`} className="min-w-[52rem]">
-        <div role="row" className="grid grid-cols-5 border-b border-line">
+        <div role="row" className="sticky top-0 z-10 grid grid-cols-5 border-b border-line bg-surface">
           {WEEKDAYS.map((d) => (
             <div key={d} role="columnheader" className="px-3 py-2 text-xs font-medium text-ink-faint">
               {d}

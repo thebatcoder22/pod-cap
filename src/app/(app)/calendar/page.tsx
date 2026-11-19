@@ -62,7 +62,8 @@ async function Sheet({ searchParams }: Pick<PageProps<"/calendar">, "searchParam
             No sprints in these weeks yet. A sprint shows here once it is on the DTP board in Jira, with its dates.
           </p>
         )}
-        <div className="overflow-x-auto rounded-lg border border-line bg-surface shadow-card">
+        {/* Scrolls both ways in itself, so the sprint header can stick to its top while the names stick to its left. */}
+        <div className="max-h-[calc(100dvh-5rem)] overflow-auto rounded-lg border border-line bg-surface shadow-card">
           <table className="w-full min-w-[131rem] table-fixed border-separate border-spacing-0 text-xs [&_tbody:last-child_tr:last-child>*]:border-b-0">
             <caption className="sr-only">
               Bandwidth for the {BANDWIDTH_WEEKS} weeks from {label(sheet.from)}
@@ -75,7 +76,7 @@ async function Sheet({ searchParams }: Pick<PageProps<"/calendar">, "searchParam
                   <col key={w} />
                 ))}
             </colgroup>
-            <thead>
+            <thead className="sticky top-0 z-20">
               <tr>
                 <th
                   rowSpan={2}
@@ -90,7 +91,7 @@ async function Sheet({ searchParams }: Pick<PageProps<"/calendar">, "searchParam
                     colSpan={r.weeks.length}
                     scope="colgroup"
                     className={`truncate border-r border-line px-3 pt-2.5 pb-1 text-left last:border-r-0 ${
-                      r.sprint ? "font-medium text-ink" : "bg-sidebar font-normal text-ink-faint"
+                      r.sprint ? "bg-surface font-medium text-ink" : "bg-sidebar font-normal text-ink-faint"
                     }`}
                   >
                     {r.sprint?.name ?? "No sprint"}
@@ -106,7 +107,7 @@ async function Sheet({ searchParams }: Pick<PageProps<"/calendar">, "searchParam
                       aria-label={`${w === thisWeek ? "This week, week" : "Week"} of ${label(w)}`}
                       className={`border-b border-line px-3 pb-2 text-left font-normal tabular-nums ${
                         i === r.weeks.length - 1 ? "border-r last:border-r-0" : ""
-                      } ${r.sprint ? "" : "bg-sidebar"} ${w === thisWeek ? "font-medium text-accent" : "text-ink-faint"}`}
+                      } ${r.sprint ? "bg-surface" : "bg-sidebar"} ${w === thisWeek ? "font-medium text-accent" : "text-ink-faint"}`}
                     >
                       {/* A tick where each week after a sprint's first begins, so the dates read as columns. */}
                       <span
