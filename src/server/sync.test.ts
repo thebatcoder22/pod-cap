@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { syncRuns } from "@/db/schema";
+import { people, syncRuns } from "@/db/schema";
 import { resetDb } from "../../tests/db";
 import { fakeJira } from "../../tests/fake-jira";
 import dtpSprints from "../../tests/fixtures/dtp-board-267-sprints.json";
@@ -209,6 +210,35 @@ describe("Jira sync", () => {
     await runSync(jira.make);
 
     expect(await keys(VELOCITY, "432")).toEqual(["AS-19", "DTP-4625"]);
+  });
+
+  it("sizes a bug by its Original Estimate, as days of its first owner's main skill", async () => {
+    const jira = fakeJira();
+    const bug = jira.issue("DTP-4625");
+    Object.assign(bug.fields, {
+      issuetype: { id: "10004", name: "Bug", subtask: false },
+      timeoriginalestimate: 2 * 8 * 3600,
+    });
+    // A bug with a skill estimate keeps it, and a story's Original Estimate counts for nothing.
+    const estimated = structuredClone(bug);
+    Object.assign(estimated, { id: "69902", key: "DTP-9001" });
+    estimated.fields.customfield_11524 = 1; // BE Days
+    const story = structuredClone(bug);
+    Object.assign(story, { id: "69903", key: "DTP-9002" });
+    story.fields.issuetype = { id: "10001", name: "Story", subtask: false };
+    jira.issues.push(estimated, story);
+    await runSync(jira.make);
+
+    const [rahul] = await db
+      .select({ skill: people.mainSkill })
+      .from(people)
+      .where(eq(people.jiraAccountId, (bug.fields.assignee as { accountId: string }).accountId));
+    const { tickets } = await getSprintView(VELOCITY, "432");
+    expect(tickets.map((t) => [t.key, t.estimates])).toEqual([
+      ["DTP-4625", { [rahul.skill]: 2 }],
+      ["DTP-9001", { BE: 1 }],
+      ["DTP-9002", {}],
+    ]);
   });
 
   it("puts a ticket whose assignee is in no pod in its first Dev Owner's pod, unless an owner is in its POD", async () => {

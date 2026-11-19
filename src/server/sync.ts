@@ -1,7 +1,8 @@
-import { desc, eq, isNotNull, notInArray, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, notInArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   epics,
+  people,
   pods,
   SKILLS,
   sprints,
@@ -22,6 +23,11 @@ import type { Viewer } from "./viewer";
 
 export const BOARD_ID = 267;
 const EPIC = "Epic";
+// Jira's Bug screen has no skill estimate fields, so a bug is sized with Original Estimate instead.
+const BUG_TYPES = ["Bug", "Prod Bug"];
+// ponytail: Jira's default working day; read /rest/api/3/configuration/timetracking/options (needs admin) if the
+// site ever changes it.
+const JIRA_DAY_SECONDS = 8 * 60 * 60;
 // Task is AS's type; DTP has none.
 const PLANNABLE_TYPES = ["Story", "Improvement", "Tech Story", "Task", "Bug", "Prod Bug", "Dev Custom Task"];
 // AS is the AI SDLC project; it shares DTP's custom fields and board 267's sprints. "AS" is a JQL keyword, so quoted.
@@ -45,6 +51,7 @@ const FIELDS = [
   "parent",
   "created",
   "resolutiondate",
+  "timeoriginalestimate",
   ...Object.values(FIELD),
 ];
 // ponytail: resolved this soon after being created means it was logged already done. Jira's changelog would tell
@@ -70,6 +77,8 @@ export function estimateFields(fields: JiraField[]) {
   }
   return ids;
 }
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 export type SyncResult = { status: "succeeded" } | { status: "skipped" } | { status: "failed"; error: string };
 
@@ -197,6 +206,8 @@ async function pullAndDiff(makeClient: MakeJiraClient) {
           await w.update(pods).set({ jiraPodValue: value }).where(eq(pods.jiraPodOptionId, id));
         }
         await linkJiraAccounts(w);
+        // After linking, so an owner first seen in this sync has their skill.
+        await sizeBugs(w, issues.filter(isPlannable), estimateIds);
       });
       result = { status: "succeeded" };
     } catch (e) {
@@ -258,6 +269,8 @@ type IssueFields = {
   [FIELD.effort]?: { value: string } | null;
   created?: string;
   resolutiondate?: string | null;
+  /** Seconds. */
+  timeoriginalestimate?: number | null;
 };
 
 const fieldsOf = (issue: JiraIssue) => issue.fields as IssueFields;
@@ -304,6 +317,38 @@ function toTicket(issue: JiraIssue, estimateIds: Map<Skill, string>): typeof tic
       !!f.resolutiondate &&
       Date.parse(f.resolutiondate) - Date.parse(f.created) < LOGGED_DONE_WITHIN,
   };
+}
+
+/**
+ * A bug's Original Estimate as days of its first owner's main skill (the assignee, then the Dev Owners), when it
+ * has no skill estimates. A bug none of whose owners is in the platform stays unestimated.
+ */
+async function sizeBugs(w: Tx, issues: JiraIssue[], estimateIds: Map<Skill, string>) {
+  const bugs = issues.flatMap((i) => {
+    const f = fieldsOf(i);
+    const days = (f.timeoriginalestimate ?? 0) / JIRA_DAY_SECONDS;
+    const estimated = [...estimateIds.values()].some((id) => typeof i.fields[id] === "number");
+    return BUG_TYPES.includes(f.issuetype.name) && days > 0 && !estimated
+      ? [{ key: i.key, owners: [f.assignee, ...(f[FIELD.devOwners] ?? [])], days }]
+      : [];
+  });
+  if (!bugs.length) return;
+  const skills = new Map(
+    (
+      await w
+        .select({ accountId: people.jiraAccountId, skill: people.mainSkill })
+        .from(people)
+        .where(and(eq(people.active, true), isNotNull(people.jiraAccountId)))
+    ).map((p) => [p.accountId, p.skill]),
+  );
+  for (const bug of bugs) {
+    const skill = bug.owners.map((o) => o && skills.get(o.accountId)).find(Boolean);
+    if (skill)
+      await w
+        .update(tickets)
+        .set({ estimates: { [skill]: bug.days } })
+        .where(eq(tickets.key, bug.key));
+  }
 }
 
 function toEpic(issue: JiraIssue): typeof epics.$inferInsert {
